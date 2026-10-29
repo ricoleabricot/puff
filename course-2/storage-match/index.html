@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Storage match</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.tray{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.item{touch-action:none;user-select:none;-webkit-user-select:none;background:#fff;border:0;border-radius:16px;box-shadow:0 3px 10px rgba(120,60,40,.14);padding:4px 8px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:800;cursor:grab;line-height:1.1}
+.item small{display:block;font-weight:500;font-size:11px;opacity:.8}
+.item.sel{box-shadow:0 0 0 3px #F27E5E,0 4px 12px rgba(242,126,94,.4);transform:translateY(-2px)}
+.item .em{pointer-events:none;-webkit-user-drag:none}
+.ghost{position:fixed;z-index:9;pointer-events:none;opacity:.92;transform:rotate(-4deg) scale(1.05)}
+.needs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.need{background:#fff;border:0;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1),inset 0 0 0 2px #F6DCCF;padding:8px 6px;text-align:center;min-height:132px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .15s,box-shadow .15s}
+.need .em{width:40px;height:40px}
+.need b{font-size:14px;line-height:1.15}
+.need.hot{transform:translateY(-2px);box-shadow:0 6px 16px rgba(242,126,94,.35),inset 0 0 0 3px #F27E5E}
+.need.done{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E;cursor:default}
+.need .got{margin-top:auto;font-size:12px;font-weight:800;color:#237A4B;min-height:16px}
+.need.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.count{font-size:13px;text-align:center;margin-top:6px;opacity:.75}
+@media (max-width:560px){.needs{grid-template-columns:repeat(2,1fr)}.need .got:empty{display:none}.need{min-height:64px;align-items:center;flex-direction:row;text-align:left;flex-wrap:wrap}.need .got{margin-top:0;width:100%}.need .em{width:32px;height:32px}.tray{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Storage match</h1><p>Drag a storage onto each need. Or tap a storage, then tap a need. One storage can fit twice.</p></div></div>
+  <div class="tray" id="tray" aria-label="Storage options"></div>
+  <div class="needs" id="needs"></div>
+  <div class="count" id="count"></div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Pick a storage to start.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(e,cls){
+  const u=EB+encodeURIComponent(e[0])+'/3D/'+e[0].toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+e[1]+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+
+const ITEMS=[
+ {id:'EBS',s:'Network disk',e:['Floppy disk','💾']},
+ {id:'Instance store',s:'Disk in the host',e:['Memo','📝']},
+ {id:'EFS',s:'Shared folder',e:['Open file folder','📂']},
+ {id:'S3',s:'Files over HTTP',e:['Bucket','🪣']}
+];
+const NEEDS=[
+ {id:'boot',t:'Your server\'s main disk',k:'EBS',e:['Desktop computer','🖥️'],l:'EBS is the main disk: a network disk plugged into one instance, and it survives a stop.'},
+ {id:'shared',t:'Files shared by several servers',k:'EFS',e:['Link','🔗'],l:'EFS is a shared folder that many instances in many AZs open at once.'},
+ {id:'images',t:'Website images',k:'S3',e:['Framed picture','🖼️'],l:'S3 serves static sites and uploads over HTTP, and it\'s the cheapest per GB.'},
+ {id:'scratch',t:'Scratch data, lost on stop is fine',k:'Instance store',e:['Wastebasket','🗑️'],l:'Instance store is scratch paper on the desk: wiped on stop, included in the instance price.'},
+ {id:'backup',t:'Backups',k:'S3',e:['Package','📦'],l:'S3 for backups: it survives anything that happens to your instances, cheapest per GB.'}
+];
+let sel,missed,placed,drag,suppress;
+const needsEl=$('#needs'),tray=$('#tray'),fb=$('#fb'),endEl=$('#end');
+$('#heroEm').innerHTML=em(['Floppy disk','💾']);
+function start(){
+  sel=null;missed={};placed={};drag=null;suppress=false;
+  endEl.classList.add('hide');fb.classList.remove('hide');
+  tray.innerHTML=ITEMS.map(i=>'<button class="item" data-id="'+i.id+'">'+em(i.e)+'<span>'+i.id+'<small>'+i.s+'</small></span></button>').join('');
+  needsEl.innerHTML=[...NEEDS].sort(()=>Math.random()-.5).map(n=>'<button class="need" data-id="'+n.id+'" aria-label="Need: '+n.t+'">'+em(n.e)+'<b>'+n.t+'</b><span class="got"></span></button>').join('');
+  say(fb,'Pick a storage to start.');
+  upd();
+}
+function upd(){$('#count').textContent=Object.keys(placed).length+' of '+NEEDS.length+' needs matched'}
+function selectItem(id){
+  sel=sel===id?null:id;
+  tray.querySelectorAll('.item').forEach(b=>b.classList.toggle('sel',b.dataset.id===sel));
+  if(sel)say(fb,'Now tap the need that fits '+sel+'.');
+}
+function place(id,nid){
+  const n=NEEDS.find(x=>x.id===nid),el=needsEl.querySelector('[data-id="'+nid+'"]');
+  if(!n||placed[nid])return;
+  sel=null;tray.querySelectorAll('.item').forEach(b=>b.classList.remove('sel'));
+  if(n.k===id){
+    placed[nid]=1;el.classList.add('done');el.querySelector('.got').textContent='✓ '+id;
+    el.setAttribute('aria-label','Need: '+n.t+', matched with '+id);
+    say(fb,'✓ Yes! '+n.l,'ok');upd();
+    if(Object.keys(placed).length===NEEDS.length)finish();
+  }else{
+    missed[nid]=1;el.classList.add('shake');setTimeout(()=>el.classList.remove('shake'),400);
+    say(fb,'✗ Not '+id+'. Hint: '+hint(n),'bad');
+  }
+}
+function hint(n){return {boot:'it must survive a stop and plug into one server.',shared:'several servers open it at the same time.',images:'browsers fetch them over HTTP.',scratch:'it can vanish, so it may as well be free and fast.',backup:'cheapest per GB, and it survives whatever happens to your servers.'}[n.id]}
+function finish(){
+  const n=NEEDS.length-Object.keys(missed).length;
+  fb.classList.add('hide');endEl.classList.remove('hide');
+  endEl.innerHTML=em(n===NEEDS.length?['Trophy','🏆']:['Party popper','🎉'])+'<h2>All matched!</h2><div class="score">Score: '+n+' / '+NEEDS.length+' on the first try</div><p class="take">Treat the instance and its disks as disposable. Anything you can\'t lose goes to RDS, S3 or EFS.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+}
+tray.addEventListener('click',e=>{
+  const b=e.target.closest('.item');if(!b)return;
+  if(suppress){suppress=false;return}
+  selectItem(b.dataset.id);
+});
+needsEl.addEventListener('click',e=>{
+  const p=e.target.closest('.need');if(!p||placed[p.dataset.id])return;
+  if(sel)place(sel,p.dataset.id);else say(fb,'Pick a storage first, then tap a need.');
+});
+tray.addEventListener('dragstart',e=>e.preventDefault());
+tray.addEventListener('pointerdown',e=>{
+  const b=e.target.closest('.item');if(!b||e.button>0)return;
+  drag={id:b.dataset.id,b,x:e.clientX,y:e.clientY,g:null};
+});
+function needAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest('.need:not(.done)')}
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(!drag.g){
+    if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<8)return;
+    const r=drag.b.getBoundingClientRect(),g=drag.b.cloneNode(true);
+    g.className='item ghost';g.style.width=r.width+'px';
+    document.body.appendChild(g);drag.g=g;drag.dx=drag.x-r.left;drag.dy=drag.y-r.top;
+    drag.b.style.opacity='.35';
+  }
+  drag.g.style.left=(e.clientX-drag.dx)+'px';drag.g.style.top=(e.clientY-drag.dy)+'px';
+  const p=needAt(e.clientX,e.clientY);
+  needsEl.querySelectorAll('.need').forEach(x=>x.classList.toggle('hot',x===p));
+});
+function endDrag(e,drop){
+  if(!drag)return;
+  const d=drag;drag=null;
+  needsEl.querySelectorAll('.need').forEach(x=>x.classList.remove('hot'));
+  if(!d.g)return;
+  d.g.remove();d.b.style.opacity='';suppress=true;setTimeout(()=>suppress=false,0);
+  const p=drop&&needAt(e.clientX,e.clientY);
+  if(p)place(d.id,p.dataset.id);
+}
+document.addEventListener('pointerup',e=>endDrag(e,true));
+document.addEventListener('pointercancel',e=>endDrag(e,false));
+start();
+</script>
+</body>
+</html>

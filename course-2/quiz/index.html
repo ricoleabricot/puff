@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session 2 quiz</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#FFF4EE;--ink:#3A2A24;--ok:#3BAA6E;--bad:#E5534B;--soft:0 4px 16px rgba(120,60,40,.10)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.35;padding:10px;max-width:720px;margin:0 auto}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:12px 16px;box-shadow:var(--soft)}
+.hero h1{margin:0;font-size:19px;font-weight:800}
+.hero p{margin:2px 0 0;font-weight:600;font-size:14px}
+.card{background:#fff;border-radius:16px;box-shadow:var(--soft);padding:14px;margin-top:10px}
+.dots{display:flex;gap:7px;justify-content:center;margin-top:10px}
+.dot{width:12px;height:12px;border-radius:50%;background:#F2DDD3}
+.dot.on{background:#F27E5E;transform:scale(1.2)}.dot.ok{background:var(--ok)}.dot.no{background:var(--bad)}
+.tag{font-size:12px;font-weight:700;color:#C4583B;text-transform:uppercase;letter-spacing:.04em}
+.qrow{display:flex;gap:12px;align-items:center;margin:6px 0 10px}
+.qrow img{width:52px;height:52px;flex:none}
+.q{font-size:18px;font-weight:800;margin:0}
+.opts{display:grid;gap:8px}
+.opt{min-height:48px;text-align:left;background:#FFFAF7;border:2px solid #F2DDD3;border-radius:14px;padding:8px 12px;font-weight:600;display:flex;gap:8px;align-items:center}
+.opt:hover:not(:disabled){border-color:#F27E5E;background:#FFF0E8}
+.opt .mk{margin-left:auto;font-weight:900;font-size:18px}
+.opt.right{background:#DDF3E6;border-color:var(--ok)}.opt.right .mk{color:var(--ok)}
+.opt.wrong{background:#FBDAD7;border-color:var(--bad)}.opt.wrong .mk{color:var(--bad)}
+.opt:disabled{cursor:default;color:inherit}
+.fb{margin:10px 0 0;font-weight:700;min-height:2.7em}
+.fb.ok{color:#23814f}.fb.no{color:#C0392F}
+.btn{min-height:44px;border:0;border-radius:14px;background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;font-weight:800;padding:0 20px;box-shadow:var(--soft)}
+.center{text-align:center}.big{font-size:40px;font-weight:900;margin:0}
+.hide{display:none!important}#nx{margin-top:8px}
+</style>
+</head>
+<body>
+<div class="hero"><h1>Compute and data quiz</h1><p id="goal">8 questions. Pick the best answer.</p></div>
+<div class="card" id="card" aria-live="polite"></div>
+<div class="dots" id="dots" aria-hidden="true"></div>
+<script>
+const IMG=(n,f)=>`https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/${n}/3D/${f}_3d.png`;
+const Q=[
+ {img:IMG("Hotel","hotel"),t:"What is an EC2 instance?",
+  o:["A virtual machine you rent by the second, living in one AZ","A database AWS runs for you","A shared folder for many servers"],a:0,
+  why:"Like a hotel room: you pick the size, check in, check out, and AWS fixes the plumbing."},
+ {img:IMG("High%20voltage","high_voltage"),t:"Your t3 sits at 100% CPU for hours. What does that tell you?",
+  o:["All good, that's what T is for","You picked the wrong family","You need a bigger disk"],a:1,
+  why:"T instances burst on credits. A flat line at the top means throttling or extra credits on the bill."},
+ {img:IMG("Wastebasket","wastebasket"),t:"You stop an instance. Which data is wiped?",
+  o:["The EBS disk","The files in S3","The instance store"],a:2,
+  why:"Instance store is scratch paper on the desk: gone on stop. EBS, EFS and S3 survive."},
+ {img:IMG("Memo","memo"),t:"Where do you look first when user data didn't start your app?",
+  o:["/var/log/cloud-init-output.log","The S3 bucket policy","The RDS endpoint"],a:0,
+  why:"User data runs through cloud-init, and its output lands in that file."},
+ {img:IMG("Airplane","airplane"),t:"Which workload should never run on Spot?",
+  o:["A nightly batch job that saves its progress","Your only API server","Test runners that retry"],a:1,
+  why:"AWS can take Spot back with a two-minute warning. Your only API server would just go down."},
+ {img:IMG("File%20cabinet","file_cabinet"),t:"With RDS, which job is still yours?",
+  o:["Taking daily backups","Patching the operating system","Designing tables and indexes"],a:2,
+  why:"RDS handles backups, patching and failover. Table design, queries and connections stay yours."},
+ {img:IMG("Mobile%20phone","mobile_phone"),t:"Millions of lookups a day by device ID, no joins. Which database?",
+  o:["DynamoDB","RDS PostgreSQL","Redshift"],a:0,
+  why:"Huge volumes of lookups by key are DynamoDB's job, with no instance to size."},
+ {img:IMG("Link","link"),t:"Why does puff-api connect to puff-db by its endpoint name, not an IP?",
+  o:["Names are shorter to type","After a Multi-AZ failover, the name points to the twin","IPs are not allowed in security groups"],a:1,
+  why:"RDS moves the endpoint name to the twin. An IP would keep pointing at the dead database."}
+];
+const $=s=>document.querySelector(s);
+const card=$("#card"),dots=$("#dots"),goal=$("#goal");
+let i,score,res,locked;
+function drawDots(){dots.innerHTML=Q.map((_,k)=>`<span class="dot ${res[k]===undefined?(k===i?"on":""):(res[k]?"ok":"no")}"></span>`).join("")}
+function start(){i=0;score=0;res=[];goal.textContent="8 questions. Pick the best answer.";dots.classList.remove("hide");show()}
+function show(){
+  locked=false;drawDots();
+  const c=Q[i];
+  card.innerHTML=`<div class="tag">Question ${i+1} of ${Q.length}</div>
+   <div class="qrow"><img src="${c.img}" alt="" onerror="this.style.display='none'"><p class="q">${c.t}</p></div>
+   <div class="opts">${c.o.map((x,k)=>`<button class="opt" data-k="${k}"><span>${x}</span><span class="mk"></span></button>`).join("")}</div>
+   <p class="fb" id="fb"></p><div id="nx"></div>`;
+  card.querySelectorAll(".opt").forEach(b=>b.onclick=()=>pick(+b.dataset.k));
+}
+function pick(k){
+  if(locked)return;locked=true;
+  const c=Q[i],ok=k===c.a;
+  if(ok)score++;res[i]=ok;drawDots();
+  card.querySelectorAll(".opt").forEach((b,n)=>{
+    b.disabled=true;
+    if(n===c.a){b.classList.add("right");b.querySelector(".mk").textContent="✓"}
+    else if(n===k){b.classList.add("wrong");b.querySelector(".mk").textContent="✗"}
+  });
+  const fb=$("#fb");fb.className="fb "+(ok?"ok":"no");
+  fb.textContent=`${ok?"✓ Yes!":"✗ Not quite."} ${c.why}`;
+  $("#nx").innerHTML=`<button class="btn" id="n">${i<Q.length-1?"Next":"See my score"}</button>`;
+  $("#n").focus({preventScroll:true});
+  $("#n").onclick=()=>{i++;i<Q.length?show():end()};
+}
+function end(){
+  dots.classList.add("hide");goal.textContent="All done!";
+  const band=score===8?["Trophy","trophy","Perfect! Puff has compute and a database."]
+   :score>=6?["Party%20popper","party_popper","Great job! Just a couple of ideas to re-read."]
+   :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
+   :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
+  card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">
+   <p class="big">${score}/8</p><p class="fb ${score>=6?"ok":""}">${band[2]}</p>
+   <button class="btn" id="again">Play again</button></div>`;
+  $("#again").onclick=start;$("#again").focus({preventScroll:true});
+}
+start();
+</script>
+</body>
+</html>

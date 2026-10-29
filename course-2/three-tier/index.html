@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laptop to cloud: the 3-tier app</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.lbl{font-size:12px;font-weight:800;color:#C4583B;text-transform:uppercase;letter-spacing:.04em;margin:10px 2px 4px}
+.tray{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:52px}
+.item{touch-action:none;user-select:none;-webkit-user-select:none;background:#fff;border:0;border-radius:16px;box-shadow:0 3px 10px rgba(120,60,40,.14);padding:4px 8px;display:flex;align-items:center;gap:6px;font-weight:800;cursor:grab;line-height:1.1;text-align:left}
+.item small{display:block;font-weight:500;font-size:11px;opacity:.8}
+.item.sel{box-shadow:0 0 0 3px #F27E5E,0 4px 12px rgba(242,126,94,.4);transform:translateY(-2px)}
+.item.shake{animation:shake .35s}
+.item.miss::after{content:"\2717";color:#E5534B;font-weight:800;margin-left:auto}
+.item .em{pointer-events:none;-webkit-user-drag:none}
+.ghost{position:fixed;z-index:9;pointer-events:none;opacity:.92;transform:rotate(-4deg) scale(1.05)}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tier{background:#fff;border:0;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1),inset 0 0 0 2px #F6DCCF;padding:8px 6px;text-align:center;min-height:128px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .15s,box-shadow .15s,background .3s}
+.tier .em{width:40px;height:40px;filter:grayscale(.8);opacity:.7;transition:filter .4s,opacity .4s}
+.tier small{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;opacity:.7}
+.tier b{font-size:15px;line-height:1.1}
+.tier code{font-size:12px;background:#FFF0E8;border-radius:6px;padding:1px 5px}
+.tier .got{margin-top:auto;font-size:12px;font-weight:800;color:#237A4B;min-height:16px}
+.tier.hot{transform:translateY(-2px);box-shadow:0 6px 16px rgba(242,126,94,.35),inset 0 0 0 3px #F27E5E}
+.tier.lit{background:#E6F6EC;box-shadow:0 0 18px rgba(59,170,110,.45),inset 0 0 0 2px #3BAA6E;cursor:default}
+.tier.lit .em{filter:none;opacity:1}
+.flow{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:8px;font-size:12px;font-weight:700;flex-wrap:wrap}
+.flow span{padding:3px 8px;border-radius:10px;background:#F2DDD3;color:#8a6b5f;transition:background .4s,color .4s}
+.flow span.on{background:#3BAA6E;color:#fff}
+.board{margin-top:10px;text-align:center}
+.board h2{margin:0 0 6px;font-size:20px}
+.board ul{list-style:none;margin:0 auto 8px;padding:0;max-width:360px;text-align:left}
+.board li{padding:5px 10px;border-bottom:1px solid #F2DDD3;animation:pop .5s both}
+.board li:nth-child(2){animation-delay:.5s}.board li:nth-child(3){animation-delay:1s}
+.board .score{font-weight:800;margin:4px 0}
+.board .take{font-weight:700;margin:0 0 10px}
+@keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+@media (max-width:560px){.tray,.tiers{grid-template-columns:1fr}.tier .got:empty{display:none}.tier{min-height:0;flex-direction:row;flex-wrap:wrap;text-align:left;gap:6px}.tier .em{width:32px;height:32px}.tier .got{margin-top:0;width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Laptop to cloud</h1><p>Move each piece of the board app from your laptop to its AWS tier. Drag it, or tap a piece then a tier.</p></div></div>
+  <div class="lbl">On your laptop</div>
+  <div class="tray" id="tray" aria-label="Pieces on your laptop"></div>
+  <div class="lbl">On AWS</div>
+  <div class="tiers" id="tiers"></div>
+  <div class="flow" id="flow" aria-hidden="true"><span data-f="0">Browser</span>→<span data-f="1">S3</span>→<span data-f="2">EC2 :8080</span>→<span data-f="3">RDS :5432</span></div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Pick a piece to start.</div>
+  <div id="end" class="board card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(e,cls){
+  const u=EB+encodeURIComponent(e[0])+'/3D/'+e[0].toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+e[1]+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+const TIERS=[
+ {k:'pres',tier:'Presentation',svc:'S3',name:'puff-frontend-<login>',e:['Bucket','🪣'],f:[0,1]},
+ {k:'logic',tier:'Logic',svc:'EC2',name:'puff-api',e:['Desktop computer','🖥️'],f:[2]},
+ {k:'data',tier:'Data',svc:'RDS',name:'puff-db',e:['File cabinet','🗄️'],f:[3]}
+];
+const ITEMS=[
+ {id:'page',t:'index.html',s:'The browser page',k:'pres',e:['Globe with meridians','🌐'],l:'The page is static files: S3 serves it as a static website.'},
+ {id:'api',t:'API container',s:'Flask, built from the Dockerfile',k:'logic',e:['Whale','🐳'],l:'The API runs in Docker on EC2 puff-api, built by user data on first boot.'},
+ {id:'db',t:'PostgreSQL',s:'The db container',k:'data',e:['Elephant','🐘'],l:'The database moves to RDS puff-db: AWS takes the backups and patches.'}
+];
+let sel,missed,placed,drag,suppress;
+const tiersEl=$('#tiers'),tray=$('#tray'),fb=$('#fb'),endEl=$('#end');
+$('#heroEm').innerHTML=em(['Laptop','💻']);
+const esc=s=>s.replace(/</g,'&lt;');
+function start(){
+  sel=null;missed={};placed={};drag=null;suppress=false;
+  endEl.classList.add('hide');fb.classList.remove('hide');
+  $('#flow').querySelectorAll('span').forEach(s=>s.classList.remove('on'));
+  tiersEl.innerHTML=TIERS.map(t=>'<button class="tier" data-k="'+t.k+'" aria-label="'+t.tier+' tier, '+t.svc+'">'+em(t.e)+'<span><small>'+t.tier+' tier</small><br><b>'+t.svc+'</b> <code>'+esc(t.name)+'</code></span><span class="got"></span></button>').join('');
+  tray.innerHTML=[...ITEMS].sort(()=>Math.random()-.5).map(i=>'<button class="item" data-id="'+i.id+'">'+em(i.e)+'<span>'+i.t+'<small>'+i.s+'</small></span></button>').join('');
+  say(fb,'Pick a piece to start.');
+}
+function selectItem(id){
+  sel=sel===id?null:id;
+  tray.querySelectorAll('.item').forEach(b=>b.classList.toggle('sel',b.dataset.id===sel));
+  if(sel)say(fb,'Now tap the AWS tier for '+ITEMS.find(i=>i.id===sel).t+'.');
+}
+function place(id,k){
+  const it=ITEMS.find(i=>i.id===id),btn=tray.querySelector('[data-id="'+id+'"]'),t=TIERS.find(x=>x.k===k);
+  if(!it||!btn||placed[k])return;
+  sel=null;
+  if(it.k===k){
+    placed[k]=1;btn.remove();
+    const el=tiersEl.querySelector('[data-k="'+k+'"]');
+    el.classList.add('lit');el.querySelector('.got').textContent='✓ '+it.t;
+    t.f.forEach(f=>$('#flow [data-f="'+f+'"]').classList.add('on'));
+    say(fb,'✓ Yes! '+it.l,'ok');
+    if(Object.keys(placed).length===TIERS.length)setTimeout(finish,600);
+  }else{
+    missed[id]=1;btn.classList.add('miss','shake');btn.classList.remove('sel');
+    setTimeout(()=>btn.classList.remove('shake'),400);
+    say(fb,'✗ Not there. '+t.svc+' holds the '+t.tier.toLowerCase()+' tier. Which piece is that?','bad');
+  }
+}
+function finish(){
+  const n=ITEMS.length-Object.keys(missed).length;
+  fb.classList.add('hide');endEl.classList.remove('hide');
+  endEl.innerHTML=em(['Sunflower','🌻'])+'<h2>The board app is live!</h2><ul><li><b>Lea:</b> hello from S3</li><li><b>Sam:</b> the API answered</li><li><b>Noor:</b> and RDS remembered</li></ul><div class="score">Score: '+n+' / '+ITEMS.length+' on the first try</div><p class="take">Each tier only talks to its neighbor, so you can grow, protect or replace them separately.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+}
+tray.addEventListener('click',e=>{
+  const b=e.target.closest('.item');if(!b)return;
+  if(suppress){suppress=false;return}
+  selectItem(b.dataset.id);
+});
+tiersEl.addEventListener('click',e=>{
+  const p=e.target.closest('.tier');if(!p||placed[p.dataset.k])return;
+  if(sel)place(sel,p.dataset.k);else say(fb,'Pick a piece first, then tap a tier.');
+});
+tray.addEventListener('dragstart',e=>e.preventDefault());
+tray.addEventListener('pointerdown',e=>{
+  const b=e.target.closest('.item');if(!b||e.button>0)return;
+  drag={id:b.dataset.id,b,x:e.clientX,y:e.clientY,g:null};
+});
+function tierAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest('.tier:not(.lit)')}
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(!drag.g){
+    if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<8)return;
+    const r=drag.b.getBoundingClientRect(),g=drag.b.cloneNode(true);
+    g.className='item ghost';g.style.width=r.width+'px';
+    document.body.appendChild(g);drag.g=g;drag.dx=drag.x-r.left;drag.dy=drag.y-r.top;
+    drag.b.style.opacity='.35';
+  }
+  drag.g.style.left=(e.clientX-drag.dx)+'px';drag.g.style.top=(e.clientY-drag.dy)+'px';
+  const p=tierAt(e.clientX,e.clientY);
+  tiersEl.querySelectorAll('.tier').forEach(x=>x.classList.toggle('hot',x===p));
+});
+function endDrag(e,drop){
+  if(!drag)return;
+  const d=drag;drag=null;
+  tiersEl.querySelectorAll('.tier').forEach(x=>x.classList.remove('hot'));
+  if(!d.g)return;
+  d.g.remove();d.b.style.opacity='';suppress=true;setTimeout(()=>suppress=false,0);
+  const p=drop&&tierAt(e.clientX,e.clientY);
+  if(p)place(d.id,p.dataset.k);
+}
+document.addEventListener('pointerup',e=>endDrag(e,true));
+document.addEventListener('pointercancel',e=>endDrag(e,false));
+start();
+</script>
+</body>
+</html>

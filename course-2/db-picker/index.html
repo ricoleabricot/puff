@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Database picker</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px;margin-top:10px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.tag{font-size:12px;font-weight:700;color:#C4583B;text-transform:uppercase;letter-spacing:.04em}
+.qrow{display:flex;gap:12px;align-items:center;margin:4px 0 10px}
+.qrow .em{width:48px;height:48px}
+.q{font-size:17px;font-weight:800;margin:0}
+.opts{display:grid;grid-template-columns:repeat(var(--cols,2),1fr);gap:8px}
+.opt{text-align:left;background:#FFFAF7;border:2px solid #F2DDD3;border-radius:14px;padding:6px 10px;font-weight:700;display:flex;gap:8px;align-items:center;min-height:52px}
+.opt small{display:block;font-weight:500;font-size:12px;opacity:.8;line-height:1.2}
+.opt:hover:not(:disabled){border-color:#F27E5E;background:#FFF0E8}
+.opt .mk{margin-left:auto;font-weight:900;font-size:18px}
+.opt.right{background:#E6F6EC;border-color:#3BAA6E}.opt.right .mk{color:#237A4B}
+.opt.wrong{background:#FDECEA;border-color:#E5534B}.opt.wrong .mk{color:#C23B33}
+.opt:disabled{cursor:default}
+.fb{margin:10px 0 0;padding:8px 12px;border-radius:12px;font-weight:600;min-height:44px}
+.fb:empty{display:none}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.ev{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#FFF7E0;box-shadow:inset 0 0 0 2px #F2C14E;font-weight:700;display:flex;gap:8px;align-items:center;animation:pop .4s}
+.ev .em{animation:wobble .6s 2}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+@keyframes wobble{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+#nx{margin-top:8px;text-align:right}
+.dots{display:flex;gap:7px;justify-content:center;margin-top:10px}
+.dot{width:12px;height:12px;border-radius:50%;background:#F2DDD3}
+.dot.on{background:#F27E5E;transform:scale(1.2)}.dot.ok{background:#3BAA6E}.dot.no{background:#E5534B}
+.end{text-align:center}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (max-width:420px){.opts{grid-template-columns:1fr}.q{font-size:16px}.qrow .em{width:40px;height:40px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1 id="title"></h1><p id="goal"></p></div></div>
+  <div class="card" id="card"></div>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+</div>
+<script>
+const G={"title": "Database picker", "hero": ["File cabinet", "🗄️"], "unit": "App", "goal": "Pick the database that fits each app. Pick by how you'll read the data.", "opts": [{"l": "RDS", "s": "Relational, SQL", "e": ["File cabinet", "🗄️"]}, {"l": "DynamoDB", "s": "Lookups by key", "e": ["Ticket", "🎟️"]}, {"l": "Neptune", "s": "Graph", "e": ["Spider web", "🕸️"]}, {"l": "OpenSearch", "s": "Search index", "e": ["Magnifying glass tilted left", "🔍"]}], "rounds": [{"e": ["Shield", "🛡️"], "t": "An insurer's members, contracts and claims. They reference each other, and get queried in ways nobody predicted.", "a": 0, "why": "Relations and questions nobody has written yet go relational: RDS."}, {"e": ["Mobile phone", "📱"], "t": "A \"last seen\" time per phone, read and written millions of times a day by device ID.", "a": 1, "why": "Huge volumes of lookups by key: DynamoDB, no instance to size."}, {"e": ["Link", "🔗"], "t": "Spotting fraud rings: who is linked to whom, through which accounts.", "a": 2, "why": "Links between things are a graph: Neptune is built for fraud rings and social graphs."}, {"e": ["Speech balloon", "💬"], "t": "A search box that finds any board message by any word in it.", "a": 3, "why": "Full-text search is OpenSearch's job. Still, only add it once you can name the query it makes fast."}], "take": "Start with PostgreSQL. Add a purpose-built engine when you can name the query it makes fast."};
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(e,cls){
+  const u=EB+encodeURIComponent(e[0])+'/3D/'+e[0].toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+e[1]+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+const card=$('#card'),dots=$('#dots');
+$('#heroEm').innerHTML=em(G.hero);$('#title').textContent=G.title;$('#goal').textContent=G.goal;
+document.documentElement.style.setProperty('--cols',G.cols||2);
+let i,score,res,locked;
+function drawDots(){dots.innerHTML=G.rounds.map((_,k)=>'<span class="dot '+(res[k]===undefined?(k===i?'on':''):(res[k]?'ok':'no'))+'"></span>').join('')}
+function start(){i=0;score=0;res=[];dots.classList.remove('hide');show()}
+function show(){
+  locked=false;drawDots();
+  const r=G.rounds[i];
+  card.innerHTML='<div class="tag">'+G.unit+' '+(i+1)+' of '+G.rounds.length+'</div>'+
+   '<div class="qrow">'+em(r.e)+'<p class="q">'+r.t+'</p></div>'+
+   '<div class="opts">'+G.opts.map((o,k)=>'<button class="opt" data-k="'+k+'">'+em(o.e)+'<span>'+o.l+(o.s?'<small>'+o.s+'</small>':'')+'</span><span class="mk"></span></button>').join('')+'</div>'+
+   '<div id="ev" aria-live="polite"></div><div class="fb" id="fb" role="status" aria-live="polite"></div><div id="nx"></div>';
+  card.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(+b.dataset.k));
+}
+function pick(k){
+  if(locked)return;locked=true;
+  const r=G.rounds[i],ok=k===r.a;
+  if(ok)score++;res[i]=ok;drawDots();
+  card.querySelectorAll('.opt').forEach((b,n)=>{
+    b.disabled=true;
+    if(n===r.a){b.classList.add('right');b.querySelector('.mk').textContent='✓'}
+    else if(n===k){b.classList.add('wrong');b.querySelector('.mk').textContent='✗'}
+  });
+  const fb=$('#fb'),ev=r.ev&&r.ev[k];
+  const reveal=()=>{
+    fb.className='fb '+(ok?'ok':'bad');
+    fb.textContent=(ok?'✓ Yes! ':'✗ Not quite. ')+r.why;
+    $('#nx').innerHTML='<button class="btn" id="n">'+(i<G.rounds.length-1?'Next':'See my score')+'</button>';
+    $('#n').focus({preventScroll:true});
+    $('#n').onclick=()=>{i++;i<G.rounds.length?show():end()};
+  };
+  if(ev){
+    $('#ev').innerHTML='<div class="ev">'+em(ev.e)+'<span>'+ev.t+'</span></div>';
+    setTimeout(reveal,900);
+  }else reveal();
+}
+function end(){
+  dots.classList.add('hide');
+  const n=G.rounds.length;
+  card.innerHTML='<div class="end">'+em(score===n?['Trophy','🏆']:score>=n/2?['Party popper','🎉']:['Seedling','🌱'])+
+   '<h2>'+(score===n?'Perfect!':score>=n/2?'Nice work!':'Good start!')+'</h2>'+
+   '<div class="score">Score: '+score+' / '+n+'</div><p class="take">'+G.take+'</p>'+
+   '<button class="btn" id="again">Play again</button></div>';
+  $('#again').onclick=start;$('#again').focus({preventScroll:true});
+}
+start();
+</script>
+</body>
+</html>
