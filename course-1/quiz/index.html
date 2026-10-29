@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud quiz</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#FFF4EE;--ink:#3A2A24;--ok:#3BAA6E;--bad:#E5534B;--soft:0 4px 16px rgba(120,60,40,.10)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.35;padding:10px;max-width:720px;margin:0 auto}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:12px 16px;box-shadow:var(--soft)}
+.hero h1{margin:0;font-size:19px;font-weight:800}
+.hero p{margin:2px 0 0;font-weight:600;font-size:14px}
+.card{background:#fff;border-radius:16px;box-shadow:var(--soft);padding:14px;margin-top:10px}
+.dots{display:flex;gap:7px;justify-content:center;margin-top:10px}
+.dot{width:12px;height:12px;border-radius:50%;background:#F2DDD3}
+.dot.on{background:#F27E5E;transform:scale(1.2)}.dot.ok{background:var(--ok)}.dot.no{background:var(--bad)}
+.tag{font-size:12px;font-weight:700;color:#C4583B;text-transform:uppercase;letter-spacing:.04em}
+.qrow{display:flex;gap:12px;align-items:center;margin:6px 0 10px}
+.qrow img{width:52px;height:52px;flex:none}
+.q{font-size:18px;font-weight:800;margin:0}
+.opts{display:grid;gap:8px}
+.opt{min-height:48px;text-align:left;background:#FFFAF7;border:2px solid #F2DDD3;border-radius:14px;padding:8px 12px;font-weight:600;display:flex;gap:8px;align-items:center}
+.opt:hover:not(:disabled){border-color:#F27E5E;background:#FFF0E8}
+.opt .mk{margin-left:auto;font-weight:900;font-size:18px}
+.opt.right{background:#DDF3E6;border-color:var(--ok)}.opt.right .mk{color:var(--ok)}
+.opt.wrong{background:#FBDAD7;border-color:var(--bad)}.opt.wrong .mk{color:var(--bad)}
+.opt:disabled{cursor:default;color:inherit}
+.fb{margin:10px 0 0;font-weight:700;min-height:2.7em}
+.fb.ok{color:#23814f}.fb.no{color:#C0392F}
+.btn{min-height:44px;border:0;border-radius:14px;background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;font-weight:800;padding:0 20px;box-shadow:var(--soft)}
+.center{text-align:center}.big{font-size:40px;font-weight:900;margin:0}
+.hide{display:none!important}#nx{margin-top:8px}
+</style>
+</head>
+<body>
+<div class="hero"><h1>Cloud quiz</h1><p id="goal">8 questions. Pick the best answer.</p></div>
+<div class="card" id="card" aria-live="polite"></div>
+<div class="dots" id="dots" aria-hidden="true"></div>
+<script>
+const IMG=(n,f)=>`https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/${n}/3D/${f}_3d.png`;
+const Q=[
+ {img:IMG("Automobile","automobile"),t:"What does the cloud change compared to owning servers?",
+  o:["You rent capacity through an API and stop paying when you give it back","You buy faster servers","You no longer have anything to secure"],a:0,
+  why:"Like renting a car: AWS owns the hardware, you rent it by the second or hour."},
+ {img:IMG("Pizza","pizza"),t:"RDS, where AWS installs, updates and backs up PostgreSQL for you, is…",
+  o:["IaaS","SaaS","PaaS"],a:2,
+  why:"You only own the tables and data, AWS handles the rest: that's PaaS."},
+ {img:IMG("Shopping%20cart","shopping_cart"),t:"2 servers at 8:55, 4 at 9:00, back to 2 at 9:30, without you. That's…",
+  o:["Fault tolerance","Elasticity","Vertical scaling"],a:1,
+  why:"Elasticity adds and removes resources by itself, following demand."},
+ {img:IMG("Shield","shield"),t:"A server dies and traffic moves to the other one within seconds, after a short blip. That's…",
+  o:["High availability","Fault tolerance","Elasticity"],a:0,
+  why:"HA accepts a short blip and recovers fast. Fault tolerance would hide it completely."},
+ {img:IMG("Bank","bank"),t:"The link between a bank's two database copies goes down. What does the bank pick?",
+  o:["Availability: both sides keep accepting withdrawals","Neither, splits never happen","Consistency: one side stops accepting writes"],a:2,
+  why:"Otherwise you could take €100 on each side. CAP: during a split, pick one."},
+ {img:IMG("Bucket","bucket"),t:"A bucket was made public by mistake and leaked data. Whose fault?",
+  o:["AWS's, it's their storage","Yours, access settings are on the customer side","Nobody's"],a:1,
+  why:"AWS secures the cloud, you secure what you put in it: data, access, settings."},
+ {img:IMG("Office%20building","office_building"),t:"What is the standard way to get high availability on AWS?",
+  o:["Spread across 2 AZs","Buy a bigger server","Use only one Region and one AZ"],a:0,
+  why:"AZs have their own power and network, so one failing doesn't take you down."},
+ {img:IMG("Key","key"),t:"Which is least privilege for a deploy script?",
+  o:["s3:* on every resource, we'll tighten later","Admin access for now","Only GetObject and PutObject on one bucket's files"],a:2,
+  why:"Start from nothing and add only what's missing. Later never comes."}
+];
+const $=s=>document.querySelector(s);
+const card=$("#card"),dots=$("#dots"),goal=$("#goal");
+let i,score,res,locked;
+function drawDots(){dots.innerHTML=Q.map((_,k)=>`<span class="dot ${res[k]===undefined?(k===i?"on":""):(res[k]?"ok":"no")}"></span>`).join("")}
+function start(){i=0;score=0;res=[];goal.textContent="8 questions. Pick the best answer.";dots.classList.remove("hide");show()}
+function show(){
+  locked=false;drawDots();
+  const c=Q[i];
+  card.innerHTML=`<div class="tag">Question ${i+1} of ${Q.length}</div>
+   <div class="qrow"><img src="${c.img}" alt="" onerror="this.style.display='none'"><p class="q">${c.t}</p></div>
+   <div class="opts">${c.o.map((x,k)=>`<button class="opt" data-k="${k}"><span>${x}</span><span class="mk"></span></button>`).join("")}</div>
+   <p class="fb" id="fb"></p><div id="nx"></div>`;
+  card.querySelectorAll(".opt").forEach(b=>b.onclick=()=>pick(+b.dataset.k));
+}
+function pick(k){
+  if(locked)return;locked=true;
+  const c=Q[i],ok=k===c.a;
+  if(ok)score++;res[i]=ok;drawDots();
+  card.querySelectorAll(".opt").forEach((b,n)=>{
+    b.disabled=true;
+    if(n===c.a){b.classList.add("right");b.querySelector(".mk").textContent="✓"}
+    else if(n===k){b.classList.add("wrong");b.querySelector(".mk").textContent="✗"}
+  });
+  const fb=$("#fb");fb.className="fb "+(ok?"ok":"no");
+  fb.textContent=`${ok?"✓ Yes!":"✗ Not quite."} ${c.why}`;
+  $("#nx").innerHTML=`<button class="btn" id="n">${i<Q.length-1?"Next":"See my score"}</button>`;
+  $("#n").focus({preventScroll:true});
+  $("#n").onclick=()=>{i++;i<Q.length?show():end()};
+}
+function end(){
+  dots.classList.add("hide");goal.textContent="All done!";
+  const band=score===8?["Trophy","trophy","Perfect! You're ready to build Puff."]
+   :score>=6?["Party%20popper","party_popper","Great job! Just a couple of ideas to re-read."]
+   :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
+   :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
+  card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">
+   <p class="big">${score}/8</p><p class="fb ${score>=6?"ok":""}">${band[2]}</p>
+   <button class="btn" id="again">Play again</button></div>`;
+  $("#again").onclick=start;$("#again").focus({preventScroll:true});
+}
+start();
+</script>
+</body>
+</html>

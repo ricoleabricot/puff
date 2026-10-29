@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pick a region</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#FFF4EE;--ink:#3A2A24;--ok:#3BAA6E;--bad:#E5534B;--mid:#E9A23B;--soft:0 4px 16px rgba(120,60,40,.10)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.35;padding:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:12px 16px;box-shadow:var(--soft)}
+.hero h1{margin:0;font-size:19px;font-weight:800}
+.hero p{margin:2px 0 0;font-weight:600;font-size:14px}
+.app{display:grid;gap:10px;margin-top:10px}
+@media(min-width:640px){.app{grid-template-columns:1.1fr 1fr;align-items:start}}
+.card{background:#fff;border-radius:16px;box-shadow:var(--soft);padding:12px}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:#F2DDD3}
+.dot.on{background:#F27E5E}.dot.ok{background:var(--ok)}.dot.no{background:var(--bad)}
+.map{position:relative;aspect-ratio:2/1;border-radius:12px;background:#FFE9DD;overflow:hidden}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.pin{position:absolute;width:44px;height:44px;transform:translate(-50%,-50%);background:none;border:0;padding:0;display:grid;place-items:center}
+.pin i{width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#F27E5E;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .15s}
+.pin:hover i,.pin:focus-visible i{transform:rotate(-45deg) scale(1.2)}
+.pin b{position:absolute;top:34px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:800;white-space:nowrap;background:rgba(255,255,255,.85);border-radius:6px;padding:0 4px;pointer-events:none}
+.pin[disabled]{cursor:default}
+.pin.sel i{background:#3A2A24}
+.pin.good i{background:var(--ok)}.pin.bad i{background:var(--bad)}
+.pin .mk{position:absolute;top:-2px;right:0;font-size:13px;font-weight:900;background:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center}
+.pin.good .mk{color:var(--ok)}.pin.bad .mk{color:var(--bad)}
+@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(59,170,110,.0),0 0 0 4px rgba(59,170,110,.5)}}
+.pin.hint i{animation:pulse 1s 2}
+.who{display:flex;gap:10px;align-items:center}
+.who img{width:48px;height:48px;flex:none}
+.who h2{margin:0;font-size:16px}
+.who p{margin:2px 0 0;font-size:14px}
+.tag{font-size:12px;font-weight:700;color:#C4583B;text-transform:uppercase;letter-spacing:.04em}
+.meters{margin-top:8px;display:grid;gap:5px}
+.m{display:grid;grid-template-columns:78px 1fr;gap:6px;align-items:center;font-size:13px}
+.m span.l{font-weight:700}
+.bar{position:relative;background:#F6E6DD;border-radius:8px;height:24px;overflow:hidden}
+.bar>i{position:absolute;inset:0 auto 0 0;border-radius:8px;transition:width .5s}
+.bar>em{position:relative;font-style:normal;font-weight:700;padding:0 8px;line-height:24px;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.25);white-space:nowrap}
+.good>i{background:var(--ok)}.mid>i{background:var(--mid)}.bad>i{background:var(--bad)}
+.fb{margin:8px 0 0;font-weight:700;min-height:2.6em}
+.fb.ok{color:#23814f}.fb.no{color:#C0392F}
+.btn{min-height:44px;border:0;border-radius:14px;background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;font-weight:800;padding:0 20px;box-shadow:var(--soft)}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid #F2DDD3;box-shadow:none}
+.note{font-size:11.5px;opacity:.75;margin:6px 0 8px}
+.zoom{margin-top:8px;border:2px dashed #F27E5E;border-radius:14px;padding:8px;background:#FFFAF7}
+.zoom h3{margin:0 0 6px;font-size:14px}
+.azs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.az{min-height:96px;border:2px solid #F2DDD3;background:#fff;border-radius:12px;padding:6px 4px;display:grid;justify-items:center;align-content:center;gap:2px;font-size:12px;font-weight:700}
+.az img{width:44px;height:44px;transition:filter .3s}
+.az small{font-weight:700;font-size:12px}
+.az.on small{color:#23814f}
+.az.off{background:#EFE7E3;border-color:#C9BDB7}
+.az.off img{filter:grayscale(1) brightness(.5)}
+.az.off small{color:var(--bad)}
+.big{font-size:34px;font-weight:900;margin:0}
+.center{text-align:center}
+.hide{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="hero"><h1>Pick a region</h1><p id="goal">Tap the best AWS region for each client.</p></div>
+<div class="app">
+  <div>
+    <div class="card">
+      <div class="map" id="map">
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden="true">
+          <g fill="#fff" stroke="#F6D2C2" stroke-width="2" stroke-linejoin="round">
+            <path d="M25 40 Q60 15 112 28 L138 52 Q142 82 122 100 L104 124 Q94 134 84 120 L58 92 Q30 76 25 40Z"/>
+            <path d="M106 138 Q132 132 142 152 L126 186 Q112 192 108 172Z"/>
+            <path d="M172 44 Q200 28 244 36 L254 60 Q238 82 206 80 L178 72Z"/>
+            <path d="M192 92 Q232 86 248 106 L238 152 Q216 178 206 152 L192 116Z"/>
+            <path d="M262 34 Q322 18 374 44 L378 80 Q352 96 322 86 L292 102 Q266 92 260 62Z"/>
+            <path d="M352 72 q10-12 16 2 q-4 16 -14 12z"/>
+          </g>
+        </svg>
+      </div>
+      <div class="dots" id="dots" aria-hidden="true"></div>
+      <p class="note">Not to scale, just a sketch.</p>
+    </div>
+  </div>
+  <div class="card" id="panel" aria-live="polite"></div>
+</div>
+<script>
+const IMG=(n,f)=>`https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/${n}/3D/${f}_3d.png`;
+const R={
+  "us-east-1":{city:"N. Virginia",x:28,y:46},
+  "eu-west-3":{city:"Paris",x:46,y:33},
+  "eu-central-1":{city:"Frankfurt",x:59,y:24},
+  "ap-northeast-1":{city:"Tokyo",x:88,y:40}
+};
+const lat={
+  hosp:{"eu-west-3":5,"eu-central-1":10,"us-east-1":80,"ap-northeast-1":230},
+  start:{"us-east-1":10,"eu-west-3":80,"eu-central-1":90,"ap-northeast-1":150},
+  game:{"ap-northeast-1":10,"us-east-1":150,"eu-west-3":230,"eu-central-1":220}
+};
+const clients=[
+ {k:"hosp",img:IMG("Hospital","hospital"),name:"A French hospital",need:"Stores patients' health data. Users are in France.",good:["eu-west-3","eu-central-1"],law:true,
+  ok:"Yes! Health data has to stay in Europe, and Paris or Frankfurt are only ~10 ms apart.",
+  no:{"us-east-1":"Not quite: EU rules want health data in Europe, and Virginia is ~80 ms from Paris.","ap-northeast-1":"Not quite: far from France and outside Europe. Pick Paris or Frankfurt."}},
+ {k:"start",img:IMG("Rocket","rocket"),name:"A US startup",need:"US users, tight budget, wants every service.",good:["us-east-1"],
+  ok:"Yes! us-east-1 is close to US users, among the cheapest, and has every service.",
+  no:"Not quite: farther from US users and usually pricier. us-east-1 is cheap, close and complete."},
+ {k:"game",img:IMG("Video%20game","video_game"),name:"A game studio",need:"Players are in Japan. Every millisecond counts.",good:["ap-northeast-1"],
+  ok:"Yes! Tokyo is the closest region to players in Japan, so the lowest latency.",
+  no:"Not quite: that's a long trip for every move. Tokyo is the closest to Japan."}
+];
+const $=s=>document.querySelector(s);
+const map=$("#map"),panel=$("#panel"),dots=$("#dots"),goal=$("#goal");
+let step,score,res,picked,azOpen,cut;
+
+function pins(enabled){
+  map.querySelectorAll(".pin").forEach(p=>p.remove());
+  for(const id in R){
+    const r=R[id],b=document.createElement("button");
+    b.className="pin";b.dataset.id=id;b.style.left=r.x+"%";b.style.top=r.y+"%";
+    b.setAttribute("aria-label",`${id}, ${r.city}`);
+    b.innerHTML=`<i></i><b>${r.city}</b>`;
+    b.onclick=()=>enabled(id);
+    map.appendChild(b);
+  }
+}
+const pin=id=>map.querySelector(`[data-id="${id}"]`);
+function drawDots(){
+  dots.innerHTML=clients.map((c,i)=>`<span class="dot ${res[i]===undefined?(i===step?"on":""):(res[i]?"ok":"no")}"></span>`).join("")+`<span class="dot ${step===3?"on":""}"></span>`;
+}
+function start(){
+  step=0;score=0;res=[];picked=false;pins(pick);show();
+}
+function show(){
+  picked=false;
+  map.querySelectorAll(".pin").forEach(p=>{p.className="pin";p.disabled=false;p.querySelector(".mk")?.remove()});
+  drawDots();
+  const c=clients[step];
+  goal.textContent="Tap the best AWS region for this client.";
+  panel.innerHTML=`<div class="tag">Client ${step+1} of 3</div>
+   <div class="who"><img src="${c.img}" alt="" onerror="this.style.display='none'"><div><h2>${c.name}</h2><p>${c.need}</p></div></div>
+   <div id="out"></div>`;
+}
+function level(v,g,m){return v<=g?"good":v<=m?"mid":"bad"}
+function meter(label,cls,fill,txt,icon){
+  return `<div class="m"><span class="l">${label}</span><div class="bar ${cls}"><i style="width:${fill}%"></i><em>${icon} ${txt}</em></div></div>`;
+}
+function pick(id){
+  if(step>2){return openRegion(id)}
+  if(picked)return;
+  picked=true;
+  const c=clients[step],okp=c.good.includes(id);
+  const ms=lat[c.k][id],approx=!(c.k==="hosp"&&(id==="eu-central-1"))&&!(c.k==="hosp"&&id==="us-east-1");
+  const ll=level(ms,20,100),lawOk=c.law?id.startsWith("eu-"):true,cheap=id==="us-east-1";
+  const icon={good:"✓",mid:"~",bad:"✗"};
+  const fb=okp?c.ok:(typeof c.no==="string"?c.no:c.no[id]);
+  if(okp)score++;
+  res[step]=okp;
+  map.querySelectorAll(".pin").forEach(p=>p.disabled=true);
+  const p=pin(id);p.classList.add(okp?"good":"bad");
+  p.insertAdjacentHTML("beforeend",`<span class="mk">${okp?"✓":"✗"}</span>`);
+  if(!okp)c.good.forEach(g=>pin(g).classList.add("hint"));
+  drawDots();
+  $("#out").innerHTML=`<div class="tag" style="margin-top:8px">${id} (${R[id].city})</div><div class="meters">
+    ${meter("Latency",ll,Math.max(10,100-ms/2.4),`~${ms} ms${approx?"*":""}`,icon[ll])}
+    ${meter("Law",lawOk?"good":"bad",lawOk?100:14,lawOk?"OK":"Not OK",lawOk?"✓":"✗")}
+    ${meter("Price",cheap?"good":"mid",cheap?90:50,cheap?"Cheaper":"Pricier",cheap?"✓":"~")}
+    ${meter("Services",cheap?"good":"mid",cheap?100:70,cheap?"Every one, first":"Some come later",cheap?"✓":"~")}
+   </div>
+   <p class="fb ${okp?"ok":"no"}">${okp?"✓":"✗"} ${fb}</p>
+   <p class="note">* approximate. Only Paris-Frankfurt ~10 ms and Paris-Virginia ~80 ms come from the course.</p>
+   <button class="btn" id="next">${step<2?"Next client":"Last step"}</button>`;
+  $("#next").focus({preventScroll:true});
+  $("#next").onclick=()=>{step++;step<3?show():az()};
+}
+function az(){
+  step=3;drawDots();
+  map.querySelectorAll(".pin").forEach(p=>{p.className="pin";p.disabled=false;p.querySelector(".mk")?.remove()});
+  goal.textContent="A Region holds several Availability Zones (AZs).";
+  panel.innerHTML=`<div class="tag">Bonus step</div>
+   <div class="who"><img src="${IMG("Office%20building","office_building")}" alt="" onerror="this.style.display='none'"><div><h2>Look inside a region</h2><p>Tap a region on the map to zoom in.</p></div></div><div id="out"></div>`;
+}
+function openRegion(id){
+  map.querySelectorAll(".pin").forEach(p=>p.classList.remove("sel"));
+  pin(id).classList.add("sel");
+  cut=[false,false,false];
+  const ids=["a","b","c"];
+  $("#out").innerHTML=`<div class="zoom"><h3>${id}: 3 Availability Zones</h3>
+    <div class="azs">${ids.map((x,i)=>`<button class="az on" data-i="${i}" aria-pressed="false"><img src="${IMG("Office%20building","office_building")}" alt=""><span>${id}${x}</span><small>✓ running</small></button>`).join("")}</div></div>
+    <p class="fb" id="azfb">Tap a building to cut its power.</p>
+    <p class="note">Each AZ has its own power and network.</p>
+    <button class="btn hide" id="done">Finish</button>`;
+  document.querySelectorAll(".az").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;cut[i]=!cut[i];
+    b.classList.toggle("off",cut[i]);b.classList.toggle("on",!cut[i]);
+    b.setAttribute("aria-pressed",cut[i]);
+    b.querySelector("small").textContent=cut[i]?"✗ no power":"✓ running";
+    const n=cut.filter(Boolean).length,up=3-n;
+    $("#azfb").className="fb "+(up?"ok":"no");
+    $("#azfb").textContent=n===0?"All 3 running. Tap one to cut its power."
+      :up===0?"✗ All 3 down: that's why you spread across AZs. Tap one to restore."
+      :`✓ ${up} AZ${up>1?"s":""} still running, your app stays up. That's why you spread across 2 AZs.`;
+    if(n)$("#done").classList.remove("hide");
+  });
+  $("#done").onclick=end;
+}
+function end(){
+  step=4;drawDots();
+  map.querySelectorAll(".pin").forEach(p=>p.disabled=true);
+  const msg=score===3?"Perfect! Law, latency and price: you can pick a region for a real constraint."
+    :score===2?"Nice! Re-check the one you missed: law, latency, price, services."
+    :"Good start. Look at the four criteria again and give it another go.";
+  goal.textContent="Done!";
+  panel.innerHTML=`<div class="center"><img src="${IMG("Trophy","trophy")}" width="64" height="64" alt="" onerror="this.style.display='none'">
+   <p class="big">${score}/3</p><p class="fb ${score===3?"ok":""}">${msg}</p>
+   <p>Pick by law, latency, price, services. Spread across 2 AZs.</p>
+   <button class="btn" id="again">Play again</button></div>`;
+  $("#again").onclick=start;$("#again").focus({preventScroll:true});
+}
+start();
+</script>
+</body>
+</html>

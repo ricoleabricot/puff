@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Supermarket checkout</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.ok-c{color:#237A4B}.bad-c{color:#C23B33}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.ctl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ctl .full{grid-column:1/-1}
+@media (min-width:600px){.ctl{grid-template-columns:1.2fr 1fr 1fr;align-items:end}.ctl .full.sl{grid-column:auto}.ctl .full.row2{grid-column:1/-1}}
+.ctl label,.grp-t{font-weight:800;font-size:13px;display:block;margin-bottom:4px}
+.seg{display:flex;background:#FFE9DE;border-radius:14px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:11px;font-weight:700;font-size:13px;line-height:1.15;padding:4px 6px}
+.seg button[aria-pressed=true]{background:#fff;box-shadow:0 2px 6px rgba(120,60,40,.18);color:#C94E30}
+.seg button[aria-pressed=true]::before{content:"\2713 "}
+input[type=range]{width:100%;height:44px;accent-color:#F27E5E;margin:0}
+.row2{display:flex;gap:8px}
+.row2 .btn{flex:1;font-size:14px;padding:0 10px}
+.scene{margin-top:8px;padding:8px}
+.lanes{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.lane{border-radius:12px;background:#FFF4EE;min-height:76px;padding:4px 2px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:11px;font-weight:700;box-shadow:inset 0 0 0 2px #F6DCCF;transition:opacity .3s}
+.lane.closed{opacity:.35;box-shadow:inset 0 0 0 2px #E7DDD7;background:#F1ECE9}
+.lane.gone{box-shadow:inset 0 0 0 2px #E5534B}
+.lane .em{width:30px;height:30px}
+.lane .slot{height:32px;display:flex;align-items:center;justify-content:center}
+.lane .slot.out{opacity:.25}
+.lane .desk{font-size:10px;opacity:.7}
+.line{margin-top:8px;display:flex;flex-wrap:wrap;gap:1px;min-height:74px;align-content:flex-start;background:#FFF9F6;border-radius:12px;padding:6px}
+.line .em{width:22px;height:22px}
+.line .more{font-weight:800;font-size:13px;align-self:center;margin-left:4px}
+.stats{display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:13px;margin-top:6px;flex-wrap:wrap}
+.cap{margin-top:8px;padding:8px 12px;border-radius:12px;background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;font-weight:800;min-height:44px;display:flex;align-items:center}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.opts button{border:0;border-radius:14px;background:#fff;box-shadow:0 3px 10px rgba(120,60,40,.14);font-weight:800;padding:8px}
+.opts button.right{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.opts button.wrong{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.q{font-size:17px;font-weight:800;margin:4px 0}
+.qn{font-size:13px;opacity:.7;font-weight:700}
+@media (max-width:420px){.lane{min-height:92px}.lane .em{width:26px;height:26px}.line .em{width:20px;height:20px}.opts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Saturday at the supermarket</h1><p>Change the crowd and the team, then watch the line.</p></div></div>
+
+  <div id="sim">
+    <div class="ctl">
+      <div class="full sl"><label for="crowd">Customers arriving: <span id="crowdV"></span></label><input id="crowd" type="range" min="0" max="10" value="3"></div>
+      <div><span class="grp-t" id="g1">Team</span><div class="seg" role="group" aria-labelledby="g1"><button data-mode="fixed" aria-pressed="true">Fixed</button><button data-mode="elastic" aria-pressed="false">Elastic</button></div></div>
+      <div><span class="grp-t" id="g2">Cashiers per checkout</span><div class="seg" role="group" aria-labelledby="g2"><button data-per="1" aria-pressed="true">1</button><button data-per="2" aria-pressed="false">2</button></div></div>
+      <div class="full row2"><button class="btn" id="fire">Fire a cashier</button><button class="btn ghost" id="add">+ Add a checkout</button><button class="btn" id="toQuiz" style="background:#3A2A24">Quiz time</button></div>
+    </div>
+    <div class="card scene">
+      <div class="lanes" id="lanes"></div>
+      <div class="line" id="line" aria-label="Waiting line"></div>
+      <div class="stats"><span id="sWait"></span><span id="sCash"></span></div>
+    </div>
+    <div class="cap" id="cap" role="status" aria-live="polite">Scalability: more checkouts serve more people</div>
+      </div>
+
+  <div id="quiz" class="hide">
+    <div class="card" style="margin-top:10px"><div class="qn" id="qn"></div><div class="q" id="qt"></div><div class="opts" id="qo"></div></div>
+    <div id="fb" class="fb" role="status" aria-live="polite"></div>
+    <div style="text-align:center;margin-top:10px"><button class="btn hide" id="next">Next</button></div>
+  </div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+
+$('#heroEm').innerHTML=em('Shopping cart','🛒');
+const FACES=[['Grinning face','😀'],['Smiling face with sunglasses','😎'],['Thinking face','🤔'],['Money-mouth face','🤑']];
+const MAXL=6,RATE=.7,TICK=600;
+let S;
+function init(){
+  S={mode:'fixed',per:1,level:3,fixedN:2,q:0,acc:0,lanes:[],tick:0,blip:0,cool:0,msg:'',msgT:0};
+  for(let i=0;i<MAXL;i++)S.lanes.push({open:i<2,out:[0,0]});
+  S.q=4;
+}
+function working(l){return l.out.slice(0,S.per).filter(t=>t<=0).length}
+function openCount(){return S.lanes.filter(l=>l.open).length}
+function note(m){S.msg=m;S.msgT=6}
+function setOpen(n){
+  // keep lanes contiguous from the left
+  S.lanes.forEach((l,i)=>{l.open=i<n});
+}
+function step(){
+  S.tick++;
+  const arr=S.level*.4;
+  S.acc+=arr;
+  const add=Math.floor(S.acc);S.acc-=add;S.q+=add;
+  // fired cashiers come back
+  S.lanes.forEach(l=>l.out=l.out.map(t=>t>0?t-1:0));
+  // elastic scaling
+  if(S.mode==='elastic'){
+    const want=Math.max(1,Math.min(MAXL,Math.ceil(arr/RATE+S.q/14)));
+    const n=openCount();
+    if(want>n){setOpen(n+1);note('Elasticity: cashiers follow the crowd')}
+    else if(want<n&&S.tick%3===0){setOpen(n-1);note('Elasticity: extra cashiers go home when the line shrinks')}
+  }
+  // serve
+  if(S.blip>0)S.blip--;
+  else{
+    let cap=0;
+    S.lanes.forEach(l=>{if(l.open&&working(l)>0)cap+=RATE});
+    S.cool+=cap;const s=Math.floor(S.cool);S.cool-=s;
+    S.q=Math.max(0,S.q-s);
+    if(S.q===0)S.cool=0;
+  }
+  if(S.msgT>0)S.msgT--;
+  render();
+}
+function caption(){
+  if(S.msgT>0)return S.msg;
+  if(S.blip>0)return 'High availability: a short blip, then customers use the next checkout';
+  if(S.mode==='fixed'&&S.q>16)return 'Fixed team: the line grows and nobody comes to help';
+  if(S.mode==='elastic')return 'Elasticity: cashiers follow the crowd';
+  if(S.per===2)return 'Fault tolerance: two cashiers per checkout, so a loss goes unnoticed';
+  return 'Scalability: more checkouts serve more people';
+}
+function render(){
+  $('#crowdV').textContent=S.level===0?'none':S.level<4?'a few':S.level<8?'many':'a crowd';
+  $('#lanes').innerHTML=S.lanes.map((l,i)=>{
+    const slots=[0,1].slice(0,S.per).map(j=>{
+      const out=l.out[j]>0;
+      return '<div class="slot'+(out?' out':'')+'">'+(l.open?(out?'<span aria-label="cashier left">'+em('Door','🚪')+'</span>':em('Cowboy hat face','🤠')):'')+'</div>';
+    }).join('');
+    const down=l.open&&working(l)===0;
+    return '<div class="lane '+(l.open?'':'closed ')+(down?'gone':'')+'" aria-label="Checkout '+(i+1)+(l.open?(down?', no cashier':', open'):', closed')+'"><span class="desk">'+(l.open?(down?'✗ empty':'✓ open'):'closed')+'</span>'+(l.open?slots:'<div class="slot"></div>')+'</div>';
+  }).join('');
+  const shown=Math.min(S.q,innerWidth<500?42:56);
+  let h='';
+  for(let i=0;i<shown;i++){const f=FACES[i%4];h+=em(f[0],f[1]);}
+  if(S.q>shown)h+='<span class="more">+'+(S.q-shown)+'</span>';
+  $('#line').innerHTML=h||'<span style="opacity:.6;font-weight:700;padding:4px">Nobody waiting</span>';
+  $('#sWait').textContent='Waiting: '+S.q;
+  const people=S.lanes.filter(l=>l.open).length*S.per;
+  $('#sCash').textContent='Cashiers paid: '+people;
+  $('#cap').textContent=caption();
+}
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{
+  S.mode=b.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  $('#add').disabled=S.mode==='elastic';
+  if(S.mode==='fixed')setOpen(S.fixedN);
+  note(S.mode==='elastic'?'Elasticity: cashiers follow the crowd':'Fixed team: same checkouts all day');
+  render();
+});
+document.querySelectorAll('[data-per]').forEach(b=>b.onclick=()=>{
+  S.per=+b.dataset.per;
+  document.querySelectorAll('[data-per]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  note(S.per===2?'Fault tolerance: two cashiers per checkout, so a loss goes unnoticed':'One cashier per checkout: cheaper, but a loss is visible');
+  render();
+});
+$('#crowd').oninput=e=>{S.level=+e.target.value;render()};
+$('#add').onclick=()=>{
+  if(S.mode!=='fixed')return;
+  if(S.fixedN>=MAXL){note('All 6 checkouts are open');render();return}
+  S.fixedN++;setOpen(S.fixedN);note('Scalability: more checkouts serve more people (you added it by hand)');render();
+};
+$('#fire').onclick=()=>{
+  const cands=[];
+  S.lanes.forEach((l,i)=>{if(l.open)for(let j=0;j<S.per;j++)if(l.out[j]<=0)cands.push([i,j])});
+  if(!cands.length){note('Nobody left to fire');render();return}
+  const [i,j]=cands[Math.floor(Math.random()*cands.length)];
+  const l=S.lanes[i];l.out[j]=14;
+  if(S.per===1){S.blip=3;note('High availability: a short blip, then customers use the next checkout')}
+  else note('Fault tolerance: the other cashier keeps going, nobody notices');
+  render();
+};
+let timer;
+function run(){clearInterval(timer);timer=setInterval(step,TICK)}
+document.addEventListener('visibilitychange',()=>{document.hidden?clearInterval(timer):(S&&!$('#sim').classList.contains('hide')&&run())});
+
+/* quiz */
+const QS=[
+ {a:'Elasticity',t:'Extra cashiers are called in when the line grows, and sent home after.',f:'Elasticity adds and removes resources by itself, following demand.'},
+ {a:'Scalability',t:'More checkouts serve more people.',f:'Scalability means it can handle more load if you add resources.'},
+ {a:'High availability',t:'A cashier leaves, customers walk to the next checkout.',f:'High availability stays up when something fails, with at most a short blip.'},
+ {a:'Fault tolerance',t:'Two cashiers per checkout, nobody notices if one leaves.',f:'Fault tolerance keeps working with zero visible interruption.'}
+];
+const WORDS=['Elasticity','Scalability','High availability','Fault tolerance'];
+let qi,score,answered;
+function startQuiz(){
+  clearInterval(timer);
+  $('#sim').classList.add('hide');$('#end').classList.add('hide');$('#quiz').classList.remove('hide');
+  qi=0;score=0;showQ();
+}
+function showQ(){
+  answered=false;
+  const q=QS[qi];
+  $('#qn').textContent='Question '+(qi+1)+' of 4: which word is this?';
+  $('#qt').textContent=q.t;
+  $('#qo').innerHTML=WORDS.map(w=>'<button data-w="'+w+'">'+w+'</button>').join('');
+  say($('#fb'),'Pick a word.');
+  $('#next').classList.add('hide');
+  $('#qo').querySelectorAll('button').forEach(b=>b.onclick=()=>answer(b));
+}
+function answer(b){
+  if(answered)return;answered=true;
+  const q=QS[qi],ok=b.dataset.w===q.a;
+  if(ok)score++;
+  $('#qo').querySelectorAll('button').forEach(x=>{
+    if(x.dataset.w===q.a){x.classList.add('right');x.textContent='✓ '+x.dataset.w}
+    else if(x===b){x.classList.add('wrong');x.textContent='✗ '+x.dataset.w}
+    x.disabled=true;
+  });
+  say($('#fb'),(ok?'✓ Yes! ':'✗ Not quite. ')+q.f,ok?'ok':'bad');
+  $('#next').textContent=qi===3?'See my score':'Next';
+  $('#next').classList.remove('hide');$('#next').focus();
+}
+$('#next').onclick=()=>{
+  if(qi<3){qi++;showQ();return}
+  $('#quiz').classList.add('hide');
+  const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em('Trophy','🏆')+'<h2>Checkout closed!</h2><div class="score">Score: '+score+' / 4</div><p class="take">Elastic follows demand, fault tolerant hides the failure.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=()=>{e.classList.add('hide');begin()};
+  $('#again').focus();
+};
+$('#toQuiz').onclick=startQuiz;
+function begin(){
+  init();
+  $('#crowd').value=3;
+  document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mode==='fixed'));
+  document.querySelectorAll('[data-per]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.per==='1'));
+  $('#add').disabled=false;
+  $('#quiz').classList.add('hide');$('#sim').classList.remove('hide');
+  render();run();
+}
+begin();
+</script>
+</body>
+</html>

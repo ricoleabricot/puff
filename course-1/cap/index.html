@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAP: two notebooks</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.ok-c{color:#237A4B}.bad-c{color:#C23B33}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.steps{display:flex;gap:6px;margin-top:10px}
+.steps span{flex:1;text-align:center;font-size:12px;font-weight:800;padding:5px 2px;border-radius:10px;background:#FFE9DE;color:#9a6a5a}
+.steps span.on{background:#fff;color:#C94E30;box-shadow:0 2px 6px rgba(120,60,40,.18)}
+.steps span.done{background:#E6F6EC;color:#237A4B}
+.books{display:grid;grid-template-columns:1fr 64px 1fr;gap:6px;margin-top:10px;align-items:stretch}
+.nb{background:#fff;border-radius:14px;box-shadow:0 4px 14px rgba(120,60,40,.1);border-left:8px solid #F27E5E;padding:8px 10px;min-height:104px;min-width:0}
+.nb h3{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:6px}
+.nb h3 .em{width:24px;height:24px}
+.nb ul{list-style:none;margin:0;padding:0;font-size:14px;font-weight:700}
+.nb li{padding:2px 0;border-bottom:1px dashed #F0CDBE;overflow-wrap:anywhere}
+.nb li.old{opacity:.85}
+.nb li .tag{font-size:11px;color:#C23B33;margin-left:4px}
+.nb .empty{opacity:.5;font-weight:600;font-size:13px}
+.nb.pop{animation:pop .5s}
+@keyframes pop{30%{box-shadow:0 0 0 4px #3BAA6E55,0 4px 14px rgba(120,60,40,.1)}}
+.link{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:800;text-align:center}
+.link .wire{width:100%;height:5px;border-radius:3px;background:#3BAA6E;position:relative;overflow:hidden}
+.link .wire::after{content:"";position:absolute;top:0;left:-30%;width:30%;height:100%;background:#fff8;animation:flow 1.4s linear infinite}
+@keyframes flow{to{left:100%}}
+.link.cut .wire{background:repeating-linear-gradient(90deg,#E5534B 0 6px,transparent 6px 12px)}
+.link.cut .wire::after{display:none}
+.link.cut{color:#C23B33}
+.ctl{margin-top:10px}
+.ctl .t{font-weight:800;font-size:16px;margin:0 0 4px}
+.ctl .d{margin:0 0 8px;font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row input{flex:1;min-width:140px;min-height:44px;border:2px solid #F0CDBE;border-radius:12px;padding:0 12px;font:inherit;background:#fff;color:inherit}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choices button{border:0;border-radius:14px;background:#fff;box-shadow:0 3px 10px rgba(120,60,40,.16),inset 0 0 0 2px #F0CDBE;font-weight:800;padding:8px 10px;min-height:56px;line-height:1.2}
+.choices button b{display:block;font-size:12px;opacity:.7}
+.choices button:disabled{opacity:.6}
+.choices button.pick{box-shadow:inset 0 0 0 3px #3A2A24}
+@media (max-width:480px){.books{grid-template-columns:1fr 38px 1fr}.nb{padding:6px 7px}.link .lbl{display:none}.choices{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Two notebooks, one phone line</h1><p>Paris and Lyon keep the same notebook. What happens when the line breaks?</p></div></div>
+  <div class="steps" id="steps"><span>1 Write</span><span>2 Cut</span><span>3 Choose</span></div>
+  <div class="books">
+    <div class="nb" id="nbP"></div>
+    <div class="link" id="link"><span id="linkEm"></span><div class="wire"></div><span class="lbl" id="linkL">phone line</span></div>
+    <div class="nb" id="nbL"></div>
+  </div>
+  <div class="card ctl" id="ctl"></div>
+  <div id="fb" class="fb" role="status" aria-live="polite"></div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+
+$('#heroEm').innerHTML=em('Notebook','📓');
+let phase,score,msg;
+const nbP=$('#nbP'),nbL=$('#nbL'),link=$('#link'),ctl=$('#ctl'),fb=$('#fb'),endEl=$('#end');
+function nb(el,city,e,lines){
+  el.innerHTML='<h3>'+em(e[0],e[1])+city+'</h3>'+(lines.length?'<ul>'+lines.map(l=>'<li class="'+(l.old?'old':'')+'">'+l.t+(l.old?'<span class="tag">✗ old</span>':'')+'</li>').join('')+'</ul>':'<div class="empty">Empty</div>');
+}
+function pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}
+function setSteps(n){[...$('#steps').children].forEach((s,i)=>{s.className=i<n?'done':i===n?'on':'';s.textContent=(i<n?'✓ ':'')+['1 Write','2 Cut','3 Choose'][i]})}
+function setLink(cut){
+  link.classList.toggle('cut',cut);
+  $('#linkEm').innerHTML=cut?em('Scissors','✂️'):em('Telephone','☎️');
+  $('#linkL').textContent=cut?'cut ✗':'phone line';
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function start(){
+  score=0;phase=0;endEl.classList.add('hide');fb.classList.remove('hide');
+  setLink(false);setSteps(0);
+  nb(nbP,'Paris',['Cityscape','🏙️'],[]);nb(nbL,'Lyon',['House','🏠'],[]);
+  ctl.innerHTML='<p class="t">Step 1: write a message</p><p class="d">Type in the Paris notebook. Lyon gets a copy by phone.</p><form class="row" id="f"><input id="m" value="Lunch at 12" maxlength="30" aria-label="Message"><button class="btn" type="submit">Write in Paris</button></form>';
+  say(fb,'Write something and watch both notebooks.');
+  $('#f').onsubmit=e=>{
+    e.preventDefault();
+    const v=esc($('#m').value.trim()||'Hello');
+    $('#f').querySelector('button').disabled=true;
+    nb(nbP,'Paris',['Cityscape','🏙️'],[{t:v}]);pop(nbP);
+    say(fb,'Calling Lyon…');
+    setTimeout(()=>{
+      nb(nbL,'Lyon',['House','🏠'],[{t:v}]);pop(nbL);
+      say(fb,'✓ Both copies match. Every change goes through the line.','ok');
+      setSteps(1);
+      ctl.innerHTML='<p class="t">Step 2: the line breaks</p><p class="d">A digger cuts the cable. Paris and Lyon can no longer talk.</p><button class="btn" id="cut">✂ Cut the line</button>';
+      $('#cut').onclick=cut;$('#cut').focus();
+    },700);
+  };
+}
+function cut(){
+  setLink(true);setSteps(2);
+  say(fb,'✗ The line is cut. This is called a partition.','bad');
+  bank();
+}
+function choices(onPick){
+  return '<div class="choices"><button data-c="C">Refuse to answer<b>Consistency</b></button><button data-c="A">Answer with what I have<b>Availability</b></button></div>';
+}
+function bank(){
+  nb(nbP,'Paris',['Cityscape','🏙️'],[{t:'Balance: €0'}]);
+  nb(nbL,'Lyon',['House','🏠'],[{t:'Balance: €100',old:1}]);
+  ctl.innerHTML='<p class="t">Step 3: the bank</p><p class="d">You had €100 and took it all out in Paris. Now someone asks Lyon for €100. What should Lyon do?</p>'+choices();
+  wire('C',
+    {C:['Lyon says "try again later". Nobody can take €100 twice. Right for a bank.',1],
+     A:['Lyon pays €100 too. €200 left the bank and it only had €100.',0]},board);
+}
+function board(){
+  nb(nbP,'Paris',['Cityscape','🏙️'],[{t:'Lunch at 12'}]);
+  nb(nbL,'Lyon',['House','🏠'],[{t:'(new message missing)',old:1}]);
+  ctl.innerHTML='<p class="t">Step 3 again: the board app</p><p class="d">A message was posted in Paris. A student opens the board in Lyon. What should Lyon do?</p>'+choices();
+  wire('A',
+    {C:['Lyon shows an error until the line is back, just for a message that could wait.',0],
+     A:['Lyon shows the list without the new message. It shows up 20 s later. Nobody cares.',1]},end);
+}
+function wire(right,res,next){
+  ctl.querySelectorAll('button[data-c]').forEach(b=>b.onclick=()=>{
+    const [t,ok]=res[b.dataset.c];
+    if(ok)score++;
+    ctl.querySelectorAll('button[data-c]').forEach(x=>{x.disabled=true;if(x===b)x.classList.add('pick')});
+    say(fb,(ok?'✓ ':'✗ ')+t+(ok?'':' Better: '+(right==='C'?'Refuse (Consistency).':'Answer (Availability).')),ok?'ok':'bad');
+    const n=document.createElement('button');n.className='btn';n.style.marginTop='8px';n.textContent=next===end?'See my score':'Next: the board app';
+    n.onclick=next;ctl.appendChild(n);n.focus();
+  });
+}
+function end(){
+  fb.classList.add('hide');endEl.classList.remove('hide');
+  endEl.innerHTML=em('Light bulb','💡')+'<h2>Line fixed, notebooks synced</h2><div class="score">Score: '+score+' / 2</div><p class="take">Networks break, so you choose C or A when they do.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+}
+start();
+</script>
+</body>
+</html>

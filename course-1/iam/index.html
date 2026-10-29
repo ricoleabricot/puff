@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Read an IAM policy</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#FFF4EE;--ink:#3A2A24;--ok:#3BAA6E;--bad:#E5534B;--soft:0 4px 16px rgba(120,60,40,.10)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.35;padding:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:12px 16px;box-shadow:var(--soft)}
+.hero h1{margin:0;font-size:19px;font-weight:800}
+.hero p{margin:2px 0 0;font-weight:600;font-size:14px}
+.app{display:grid;gap:10px;margin-top:10px}
+@media(min-width:640px){.app{grid-template-columns:1.2fr 1fr;align-items:start}}
+.card{background:#fff;border-radius:16px;box-shadow:var(--soft);padding:10px}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.ln{display:block;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:3px 6px;white-space:pre-wrap;word-break:break-all;font:inherit;min-height:28px}
+@media(pointer:coarse){.ln.tap{min-height:44px;display:flex;align-items:center}}
+.ln.tap{border-left:4px solid #F2DDD3;background:#FFFAF7;margin:2px 0}
+.ln.tap:hover{background:#FFE9DD}
+.ln.tap.sel{background:#FFD9CB;border-left-color:#F27E5E}
+.ln.win{background:#D8F1E3;border-left-color:var(--ok)}
+.ln.lose{background:#FBDAD7;border-left-color:var(--bad)}
+.ln.plain{min-height:0;padding:1px 6px;color:#8A766D}
+.ln.ind1{padding-left:18px}.ln.ind2{padding-left:30px}.ln.ind3{padding-left:42px}#nx{margin-top:8px}
+.tag{font-size:12px;font-weight:700;color:#C4583B;text-transform:uppercase;letter-spacing:.04em}
+.exp{margin:0;font-weight:700;min-height:3.4em}
+.exp.ok{color:#23814f}.exp.no{color:#C0392F}
+.btn{min-height:44px;border:0;border-radius:14px;background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;font-weight:800;padding:0 20px;box-shadow:var(--soft)}
+.row{display:flex;gap:10px;margin:10px 0}
+.row .btn{flex:1}
+.yes{background:var(--ok)}.nope{background:var(--bad)}
+.q{font-size:17px;font-weight:800;margin:6px 0}
+.q code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#FFF0E8;border-radius:6px;padding:1px 5px;word-break:break-all}
+.dots{display:flex;gap:6px;margin-bottom:6px}
+.dot{width:10px;height:10px;border-radius:50%;background:#F2DDD3}
+.dot.on{background:#F27E5E}.dot.ok{background:var(--ok)}.dot.no{background:var(--bad)}
+.who{display:flex;gap:10px;align-items:center}.who img{width:48px;height:48px;flex:none}
+.center{text-align:center}.big{font-size:34px;font-weight:900;margin:0}
+.hide{display:none!important}
+.note{font-size:12px;opacity:.75;margin:4px 0 0}
+</style>
+</head>
+<body>
+<div class="hero"><h1>Read an IAM policy</h1><p id="goal">Tap a line to see what it means.</p></div>
+<div class="app">
+  <div class="card code" id="policy" role="group" aria-label="IAM policy JSON"></div>
+  <div class="card" id="panel" aria-live="polite"></div>
+</div>
+<script>
+const IMG=(n,f)=>`https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/${n}/3D/${f}_3d.png`;
+const B="arn:aws:s3:::puff-frontend-jdupont";
+// id, indent, text, explanation (null = plain, not tappable)
+const L=[
+ [null,0,"{"],
+ ["ver",1,'"Version": "2012-10-17",',"Version: the policy language version. Always 2012-10-17, leave it as is."],
+ [null,1,'"Statement": ['],
+ [null,2,"{"],
+ ["sid1",3,'"Sid": "ReadWriteFrontendFiles",',"Sid: just a name tag for this statement. This one is about files."],
+ ["eff1",3,'"Effect": "Allow",',"Effect Allow: opens a door that is closed by default."],
+ ["act1",3,'"Action": ["s3:GetObject", "s3:PutObject"],',"Action (service:operation): read a file (GetObject) and upload a file (PutObject)."],
+ ["res1",3,`"Resource": "${B}/*"`,"Resource ends with /*: the files inside the bucket, not the bucket itself."],
+ [null,2,"},"],
+ [null,2,"{"],
+ ["sid2",3,'"Sid": "ListFrontendBucket",',"Sid: a name tag. This one is about listing the bucket."],
+ ["eff2",3,'"Effect": "Allow",',"Effect Allow: opens another door."],
+ ["act2",3,'"Action": "s3:ListBucket",',"ListBucket: see what is inside the bucket. Listing is a bucket action."],
+ ["res2",3,`"Resource": "${B}"`,"Resource without /*: the bucket itself. Listing needs this one, files need the /* one."],
+ [null,2,"},"],
+ [null,2,"{"],
+ ["sid3",3,'"Sid": "NeverDeleteBuckets",',"Sid: a name tag. It says what this statement is for."],
+ ["eff3",3,'"Effect": "Deny",',"Effect Deny: an explicit Deny always wins over any Allow, from any policy."],
+ ["act3",3,'"Action": "s3:DeleteBucket",',"DeleteBucket: only this action is blocked, nothing else."],
+ ["res3",3,'"Resource": "*"',"Resource *: every bucket. None can be deleted."],
+ [null,2,"}"],
+ [null,1,"]"],
+ [null,0,"}"]
+];
+const Q=[
+ {t:"Read the file <code>puff-frontend-jdupont/index.html</code>?",a:true,lines:["act1","res1"],
+  why:"Statement 1 allows s3:GetObject on the files (/*) of this bucket."},
+ {t:"Upload a file to <code>puff-frontend-jdupont</code>?",a:true,lines:["act1","res1"],
+  why:"Statement 1 also allows s3:PutObject on the files of this bucket."},
+ {t:"List the files of the bucket <code>puff-frontend-jdupont</code>?",a:true,lines:["act2","res2"],
+  why:"Statement 2 allows s3:ListBucket on the bucket itself (no /*)."},
+ {t:"Delete the bucket <code>puff-frontend-jdupont</code>?",a:false,lines:["eff3","act3"],
+  why:"Statement 3 is an explicit Deny on s3:DeleteBucket, and a Deny always wins."},
+ {t:"Read the files of another bucket, <code>other-bucket</code>?",a:false,lines:["res1"],
+  why:"No line allows it: the Resource only covers puff-frontend-jdupont, and everything else is denied by default."}
+];
+const $=s=>document.querySelector(s);
+const pol=$("#policy"),panel=$("#panel"),goal=$("#goal");
+let qi,score,res,locked;
+
+pol.innerHTML=L.map(([id,ind,txt,ex])=>id
+ ?`<button class="ln tap ind${ind}" data-id="${id}">${txt.replace(/</g,"&lt;")}</button>`
+ :`<div class="ln plain ind${ind}">${txt}</div>`).join("");
+const byId={};L.forEach(l=>{if(l[0])byId[l[0]]=l});
+const lines=()=>pol.querySelectorAll(".tap");
+pol.addEventListener("click",e=>{
+  const b=e.target.closest(".tap");if(!b||mode!=="read")return;
+  lines().forEach(x=>x.classList.remove("sel"));b.classList.add("sel");
+  $("#exp").textContent=byId[b.dataset.id][3];
+  seen.add(b.dataset.id);
+  const left=Object.keys(byId).length-seen.size;
+  $("#prog").textContent=left>0?`${seen.size}/${Object.keys(byId).length} lines read`:"All lines read!";
+  if(seen.size>=6)$("#go").classList.remove("hide");
+});
+let mode="read",seen=new Set();
+function read(){
+  mode="read";seen=new Set();
+  lines().forEach(x=>x.className=x.className.replace(/\b(sel|win|lose)\b/g,"").trim());
+  goal.textContent="Tap a line to see what it means.";
+  panel.innerHTML=`<div class="who"><img src="${IMG("Scroll","scroll")}" alt="" onerror="this.style.display='none'"><div><div class="tag">Step 1</div><b>A deploy script's policy</b></div></div>
+   <p class="exp" id="exp" style="margin-top:8px">Tap any line on the left.</p>
+   <p class="note" id="prog">0/${Object.keys(byId).length} lines read</p>
+   <div class="row"><button class="btn hide" id="go">Ready for questions</button></div>
+   <p class="note">Tip: read 6 lines or more to unlock the questions.</p>`;
+  $("#go").onclick=ask;
+}
+function dotsHtml(){return `<div class="dots" aria-hidden="true">${Q.map((_,i)=>`<span class="dot ${res[i]===undefined?(i===qi?"on":""):(res[i]?"ok":"no")}"></span>`).join("")}</div>`}
+function ask(){
+  mode="quiz";qi=0;score=0;res=[];
+  q();
+}
+function q(){
+  locked=false;
+  lines().forEach(x=>x.classList.remove("sel","win","lose"));
+  goal.textContent="Can this identity do it? Yes or No.";
+  const c=Q[qi];
+  panel.innerHTML=`${dotsHtml()}<div class="tag">Question ${qi+1} of ${Q.length}</div>
+   <p class="q">Can this identity… ${c.t}</p>
+   <div class="row"><button class="btn yes" data-a="1">✓ Yes</button><button class="btn nope" data-a="0">✗ No</button></div>
+   <p class="exp" id="fb"></p><div id="nx"></div>`;
+  panel.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>answer(b.dataset.a==="1"));
+}
+function answer(v){
+  if(locked)return;locked=true;
+  const c=Q[qi],right=v===c.a;
+  if(right)score++;res[qi]=right;
+  c.lines.forEach(id=>pol.querySelector(`[data-id="${id}"]`).classList.add(c.a?"win":"lose"));
+  const el=pol.querySelector(`[data-id="${c.lines[0]}"]`);el.scrollIntoView({block:"nearest",behavior:"smooth"});
+  const fb=$("#fb");fb.className="exp "+(right?"ok":"no");
+  fb.textContent=`${right?"✓ Correct!":"✗ Not quite."} The answer is ${c.a?"Yes":"No"}. ${c.why}`;
+  panel.querySelector(".dots").outerHTML=dotsHtml();
+  panel.querySelectorAll("[data-a]").forEach(b=>b.disabled=true);
+  $("#nx").innerHTML=`<button class="btn" id="n">${qi<Q.length-1?"Next question":"See result"}</button>`;
+  $("#n").focus({preventScroll:true});
+  $("#n").onclick=()=>{qi++;qi<Q.length?q():end()};
+}
+function end(){
+  mode="end";
+  lines().forEach(x=>x.classList.remove("sel","win","lose"));
+  goal.textContent="Done!";
+  const msg=score===5?"Perfect! You read that policy like a pro.":score>=3?"Nice! Re-read the lines you missed.":"Good start. Tap the lines again and retry.";
+  panel.innerHTML=`<div class="center"><img src="${IMG("Key","key")}" width="64" height="64" alt="" onerror="this.style.display='none'">
+   <p class="big">${score}/5</p><p class="exp ${score===5?"ok":""}">${msg}</p>
+   <p><b>Everything is denied until allowed, and an explicit Deny always wins.</b></p>
+   <button class="btn" id="again">Play again</button></div>`;
+  $("#again").onclick=read;$("#again").focus({preventScroll:true});
+}
+read();
+</script>
+</body>
+</html>
