@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CloudTrail detective</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:10px 12px;margin-top:8px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.case{font-weight:700;display:flex;gap:8px;align-items:center}
+.case code,.det code{font:12.5px ui-monospace,Menlo,monospace;background:#FFF0E8;border-radius:6px;padding:1px 4px}
+.grid{display:grid;gap:0 8px}
+@media(min-width:620px){.grid{grid-template-columns:1.15fr 1fr;align-items:start}}
+.head{font-size:12px;font-weight:700;color:#C4583B;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.ev{display:grid;grid-template-columns:44px 1fr;gap:0 8px;width:100%;text-align:left;background:#FFFAF7;border:2px solid #F2DDD3;border-radius:12px;padding:4px 8px;margin:4px 0;font:12.5px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace}
+.ev:hover{border-color:#F27E5E}
+.ev .t{font-weight:800;grid-row:span 2;align-self:center}
+.ev .n{font-weight:800;overflow-wrap:anywhere}
+.ev .u{opacity:.75;overflow-wrap:anywhere}
+.ev.sel{background:#FFE3D6;border-color:#F27E5E}
+.ev.right{background:#DDF3E6;border-color:#3BAA6E}
+.ev.wrong{background:#FBDAD7;border-color:#E5534B}
+.det pre{margin:6px 0;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#FFFAF7;border-radius:10px;padding:8px}
+.q{font-size:17px;font-weight:800;margin:4px 0 8px}
+.opts{display:grid;gap:6px;grid-template-columns:1fr 1fr}
+.opt{background:#FFFAF7;border:2px solid #F2DDD3;border-radius:12px;padding:4px 8px;font:13px ui-monospace,Menlo,monospace;font-weight:700;display:flex;align-items:center;gap:6px;text-align:left;overflow-wrap:anywhere}
+.opt:hover:not(:disabled){border-color:#F27E5E}
+.opt.right{background:#DDF3E6;border-color:#3BAA6E}.opt.wrong{background:#FBDAD7;border-color:#E5534B}
+.opt:disabled{cursor:default}
+.mk{margin-left:auto;font-weight:900}
+.row{display:flex;justify-content:flex-end;margin-top:8px}
+.dots{display:flex;gap:6px;margin-bottom:4px}
+.dot{width:10px;height:10px;border-radius:50%;background:#F2DDD3}
+.dot.on{background:#F27E5E}.dot.ok{background:#3BAA6E}.dot.no{background:#E5534B}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>CloudTrail detective</h1><p id="goal">Someone opened port 22 to the whole internet on <code>puff-api-sg</code>. Find the event.</p></div></div>
+  <div class="grid">
+    <div class="card"><div class="head">Event history (newest first)</div><div id="list"></div></div>
+    <div class="card det" id="panel" aria-live="polite"></div>
+  </div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Tap an event to read its details.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+$('#heroEm').innerHTML=em('Video camera','📹');
+const ACC='123456789012';
+const E=[
+ {id:'revoke',t:'15:10',n:'RevokeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-api-sg",\n"fromPort": 22, "toPort": 22,\n"cidrIp": "0.0.0.0/0"',why:'Port 22 again, but Revoke closes a door. This is the fix, not the cause.'},
+ {id:'getp',t:'14:51',n:'GetParameter',u:'i-0a1b2c3d4e5f67890',r:'LabRole',ip:'10.0.3.25',p:'"name": "/puff/db/password",\n"withDecryption": true',why:'That is the instance reading its password at boot. Nothing to do with port 22.'},
+ {id:'auth22',t:'14:32',n:'AuthorizeSecurityGroupIngress',u:'tom',r:'oncall',ip:'198.51.100.7',p:'"groupId": "puff-api-sg",\n"fromPort": 22, "toPort": 22,\n"cidrIp": "0.0.0.0/0"',why:'Authorize opens a door: port 22, from 0.0.0.0/0, on puff-api-sg. Got it.'},
+ {id:'desc',t:'14:05',n:'DescribeSecurityGroups',u:'sam',r:'engineers',ip:'203.0.113.24',p:'"groupIds": ["puff-api-sg"]',why:'Describe only reads. Looking at a security group changes nothing.'},
+ {id:'auth5432',t:'11:05',n:'AuthorizeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-db-sg",\n"fromPort": 5432, "toPort": 5432,\n"sourceGroup": "puff-api-sg"',why:'Same action, but port 5432, only from puff-api-sg. That is the database door, chained on purpose.'},
+ {id:'auth443',t:'09:48',n:'AuthorizeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-alb-sg",\n"fromPort": 443, "toPort": 443,\n"cidrIp": "0.0.0.0/0"',why:'Open to the internet, but port 443 on the load balancer. That one is meant to be public.'},
+ {id:'run',t:'09:12',n:'RunInstances',u:'lea',r:'platform',ip:'203.0.113.10',p:'"instanceType": "t3.micro",\n"iamInstanceProfile": "LabInstanceProfile"',why:'Launching a server opens no port by itself.'}
+];
+const Q=[
+ {q:'Who opened it?',o:['lea','tom','sam','i-0a1b2c3d4e5f67890'],a:'tom',why:'The session name in userIdentity is tom.'},
+ {q:'When?',o:['09:48','11:05','14:32','15:10'],a:'14:32',why:'eventTime says 14:32. At 15:10 lea closed it again.'},
+ {q:'Through which role?',o:['platform','engineers','LabRole','oncall'],a:'oncall',why:'The ARN says assumed-role/oncall/tom: he was on duty with the oncall role.'}
+];
+let sel,phase,missed,qi,score,res,locked;
+function say(m,k){const f=$('#fb');f.className='fb '+(k||'');f.textContent=m}
+function start(){
+  sel=null;phase='find';missed=0;qi=0;score=0;res=[];
+  $('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  $('#goal').innerHTML='Someone opened port 22 to the whole internet on <code>puff-api-sg</code>. Find the event.';
+  $('#list').innerHTML=E.map(e=>'<button class="ev" data-id="'+e.id+'" aria-label="'+e.t+' '+e.n+' by '+e.u+'"><span class="t">'+e.t+'</span><span class="n">'+e.n+'</span><span class="u">'+e.u+'</span></button>').join('');
+  $('#panel').innerHTML='<div class="head">Event details</div><p>Pick an event on the list. Read <code>requestParameters</code> carefully.</p>';
+  say('Tap an event to read its details.');
+}
+function json(e){
+  return '{\n"eventTime": "2026-11-18T'+e.t+':00Z",\n"eventName": "'+e.n+'",\n"userIdentity": {\n  "type": "AssumedRole",\n  "arn": "arn:aws:sts::'+ACC+':assumed-role/'+e.r+'/'+e.u+'"\n},\n"sourceIPAddress": "'+e.ip+'",\n"requestParameters": {\n'+e.p.replace(/^/gm,'  ')+'\n}\n}';
+}
+$('#list').addEventListener('click',ev=>{
+  const b=ev.target.closest('.ev');if(!b||phase!=='find')return;
+  sel=E.find(x=>x.id===b.dataset.id);
+  $('#list').querySelectorAll('.ev').forEach(x=>x.classList.toggle('sel',x===b));
+  $('#panel').innerHTML='<div class="head">Event details</div><pre>'+json(sel)+'</pre><button class="btn" id="acc">This one opened port 22</button>';
+  $('#acc').onclick=accuse;
+  say('Reading '+sel.n+' at '+sel.t+'.');
+  if(window.innerWidth<620)$('#panel').scrollIntoView({block:'nearest',behavior:'smooth'});
+});
+function accuse(){
+  const b=$('#list [data-id="'+sel.id+'"]');
+  if(sel.id==='auth22'){
+    b.classList.remove('sel');b.classList.add('right');
+    if(!missed)score++;
+    say('✓ '+sel.why,'ok');phase='ask';
+    $('#goal').textContent='Now answer like a detective, from the event JSON.';
+    setTimeout(ask,0);
+  }else{
+    missed++;b.classList.remove('sel');b.classList.add('wrong');b.disabled=true;
+    say('✗ Not this one. '+sel.why,'bad');
+    $('#panel').innerHTML='<div class="head">Event details</div><p>✗ Ruled out. Try another event.</p>';
+  }
+}
+function dots(){return '<div class="dots" aria-hidden="true">'+Q.map((_,i)=>'<span class="dot '+(res[i]===undefined?(i===qi?'on':''):(res[i]?'ok':'no'))+'"></span>').join('')+'</div>'}
+function ask(){
+  locked=false;const c=Q[qi];
+  $('#panel').innerHTML=dots()+'<pre>'+json(E.find(x=>x.id==='auth22'))+'</pre><p class="q">'+c.q+'</p><div class="opts">'+c.o.map(o=>'<button class="opt" data-o="'+o+'"><span>'+o+'</span><span class="mk"></span></button>').join('')+'</div><div id="nx"></div>';
+  $('#panel').querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(b));
+}
+function pick(b){
+  if(locked)return;locked=true;
+  const c=Q[qi],ok=b.dataset.o===c.a;if(ok)score++;res[qi]=ok;
+  $('#panel').querySelectorAll('.opt').forEach(x=>{x.disabled=true;
+    if(x.dataset.o===c.a){x.classList.add('right');x.querySelector('.mk').textContent='✓'}
+    else if(x===b){x.classList.add('wrong');x.querySelector('.mk').textContent='✗'}});
+  $('#panel').querySelector('.dots').outerHTML=dots();
+  say((ok?'✓ Yes! ':'✗ Not quite. ')+c.why,ok?'ok':'bad');
+  $('#nx').innerHTML='<div class="row"><button class="btn" id="n">'+(qi<Q.length-1?'Next':'Close the case')+'</button></div>';
+  $('#n').focus({preventScroll:true});
+  $('#n').onclick=()=>{qi++;qi<Q.length?ask():finish()};
+}
+function finish(){
+  phase='end';$('#fb').classList.add('hide');$('#goal').textContent='Case closed!';
+  const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em(score===4?'Trophy':'Magnifying glass tilted left',score===4?'🏆':'🔍')+'<h2>Case closed</h2><div class="score">Score: '+score+' / 4</div><p class="take">tom, role oncall, 14:32, from 198.51.100.7. A short conversation instead of a long investigation.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();e.scrollIntoView({block:'nearest'});
+}
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Secret hunt</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:10px 12px;margin-top:8px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.files{display:grid;gap:8px}
+@media(min-width:620px){.files{grid-template-columns:1.25fr 1fr}}
+.fname{font-weight:800;font-size:13px;display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.fname .em{width:22px;height:22px}
+.code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#FFFAF7;border-radius:10px;padding:6px 8px;overflow-wrap:anywhere}
+.code div{min-height:22px}
+.c{color:#8A766D}
+.tok{font:inherit;min-height:34px;background:#fff;border:2px dashed #F0CDBE;border-radius:8px;padding:0 4px;margin:2px 0;text-align:left;overflow-wrap:anywhere}
+.tok:hover{background:#FFF0E8}
+.tok.found{background:#FDECEA;border:2px solid #E5534B;color:#C23B33}
+.tok.found::before{content:"\1F511 "}
+.tok.nope{background:#F4F1EF;border-style:solid;border-color:#D9CFCA;color:#8A766D}
+.tok.nope::after{content:" \2717"}
+@media(pointer:coarse){.tok{min-height:40px}}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.count{font-weight:800}
+.item{display:flex;gap:8px;align-items:center;font-weight:800}
+.item code{font:13px ui-monospace,Menlo,monospace;background:#FFF0E8;border-radius:6px;padding:1px 5px;overflow-wrap:anywhere}
+.opts{display:grid;gap:6px;margin-top:8px}
+@media(min-width:620px){.opts{grid-template-columns:1fr 1fr 1fr}}
+.opt{background:#FFFAF7;border:2px solid #F2DDD3;border-radius:14px;padding:6px 10px;font-weight:700;display:flex;gap:8px;align-items:center;text-align:left}
+.opt:hover:not(:disabled){border-color:#F27E5E}
+.opt .em{width:30px;height:30px}
+.opt.right{background:#DDF3E6;border-color:#3BAA6E}.opt.wrong{background:#FBDAD7;border-color:#E5534B}
+.opt:disabled{cursor:default}
+.mk{margin-left:auto;font-weight:900}
+.tag{font-size:12px;font-weight:700;color:#C4583B;text-transform:uppercase;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Secret hunt</h1><p id="goal">Step 1: tap every secret hiding in these two files.</p></div></div>
+  <div id="hunt">
+    <div class="files">
+      <div class="card"><div class="fname" id="f1"></div><div class="code" id="c1"></div></div>
+      <div class="card"><div class="fname" id="f2"></div><div class="code" id="c2"></div></div>
+    </div>
+    <div class="bar"><span class="count" id="count"></span><button class="btn hide" id="next">Now, where do they live?</button></div>
+  </div>
+  <div id="place" class="card hide"></div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Dashed boxes are values. Some are secrets, some are plain settings.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+$('#heroEm').innerHTML=em('Magnifying glass tilted left','🔍');
+$('#f1').innerHTML=em('Scroll','📜')+'user-data.sh (EC2 user data)';
+$('#f2').innerHTML=em('Memo','📝')+'deploy.env (on a laptop)';
+
+// value tokens: id, text, secret?, why
+const T={
+ host:{t:'puff-db.xxxxxxxxxxxx.us-east-1.rds.amazonaws.com',s:0,w:'The hostname is a setting: knowing it does not let anyone in.'},
+ name:{t:'puff',s:0,w:'The database name is a plain setting, not a secret.'},
+ user:{t:'puff',s:0,w:'The user name alone opens nothing. The password does.'},
+ pw:{t:'Puff2026pw',s:1,w:'The database password, in clear in user data. Anyone with EC2 read access can read it.'},
+ port:{t:'8080:8080',s:0,w:'A port number is a setting. Nothing to hide here.'},
+ region:{t:'us-east-1',s:0,w:'The region is a plain setting.'},
+ akid:{t:'AKIA0000EXAMPLE00000',s:1,g:'key',w:'An access key (AKIA...). It never expires on its own, and bots find these in public repos within minutes.'},
+ sak:{t:'wJalrXUtnEXAMPLESECRETKEY0000',s:1,g:'key',w:'The secret half of that access key. Together they work until someone deletes them.'},
+ tok:{t:'tok_live_EXAMPLE_9f3k2',s:1,w:'An API token grants access, so it is a secret.'},
+ alb:{t:'puff-alb',s:0,w:'A resource name is a setting, not a secret.'}
+};
+const tk=id=>'<button class="tok" data-id="'+id+'">'+T[id].t+'</button>';
+const c=s=>'<span class="c">'+s+'</span>';
+const F1=[
+ c('#!/bin/bash'),
+ c('# ...install Docker, write the app, build the image...'),
+ 'docker run -d --name puff-api --restart always \\',
+ '&nbsp;&nbsp;-p '+tk('port')+' \\',
+ '&nbsp;&nbsp;-e DB_HOST='+tk('host')+' \\',
+ '&nbsp;&nbsp;-e DB_NAME='+tk('name')+' -e DB_USER='+tk('user')+' \\',
+ '&nbsp;&nbsp;-e DB_PASSWORD='+tk('pw')+' \\',
+ '&nbsp;&nbsp;puff-api'
+];
+const F2=[
+ 'AWS_REGION='+tk('region'),
+ 'AWS_ACCESS_KEY_ID='+tk('akid'),
+ 'AWS_SECRET_ACCESS_KEY='+tk('sak'),
+ 'ALB_NAME='+tk('alb'),
+ 'NOTIFY_API_TOKEN='+tk('tok')
+];
+const SECRETS=Object.keys(T).filter(k=>T[k].s);
+// step 2 decisions
+const P=[
+ {lbl:'DB_PASSWORD',a:'sec',w:'A password goes in Parameter Store as a SecureString, encrypted with KMS, read at boot through the instance role.'},
+ {lbl:'NOTIFY_API_TOKEN',a:'sec',w:'A token grants access, so SecureString. Never in Git, never in user data.'},
+ {lbl:'AWS access key (AKIA...)',a:'role',w:'Nobody should hold a key that never expires. Humans sign in through SSO, machines get a role, and both get temporary credentials.'},
+ {lbl:'DB_HOST',a:'plain',w:'The hostname is a plain setting: a normal String parameter or config is fine.'},
+ {lbl:'DB_USER',a:'plain',w:'The user name alone opens nothing, so plain text is fine. The password is what you protect.'}
+];
+const O=[
+ {k:'sec',t:'Parameter Store SecureString',e:['Locked','🔒']},
+ {k:'plain',t:'Plain text is fine',e:['Memo','📝']},
+ {k:'role',t:'Delete it, use a role',e:['Identification card','🪪']}
+];
+let found,wrong,pi,pscore,locked;
+function say(m,k){const f=$('#fb');f.className='fb '+(k||'');f.textContent=m}
+function start(){
+  found=new Set();wrong=0;
+  $('#c1').innerHTML=F1.map(l=>'<div>'+l+'</div>').join('');
+  $('#c2').innerHTML=F2.map(l=>'<div>'+l+'</div>').join('');
+  $('#hunt').classList.remove('hide');$('#place').classList.add('hide');$('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  $('#next').classList.add('hide');
+  $('#goal').textContent='Step 1: tap every secret hiding in these two files.';
+  say('Dashed boxes are values. Some are secrets, some are plain settings.');
+  cnt();
+}
+function cnt(){$('#count').textContent='Secrets found: '+found.size+' of '+SECRETS.length}
+$('#hunt').addEventListener('click',e=>{
+  const b=e.target.closest('.tok');if(!b||b.classList.contains('found')||b.classList.contains('nope'))return;
+  const v=T[b.dataset.id];
+  if(v.s){
+    found.add(b.dataset.id);b.classList.add('found');b.setAttribute('aria-label','secret found: '+v.t);
+    say('✓ Secret! '+v.w,'ok');cnt();
+    if(found.size===SECRETS.length){
+      $('#next').classList.remove('hide');$('#next').focus({preventScroll:true});
+      say('✓ All '+SECRETS.length+' secrets found. Now pick where each value should live.','ok');
+    }
+  }else{
+    wrong++;b.classList.add('nope');b.setAttribute('aria-label','not a secret: '+v.t);
+    say('✗ Not a secret. '+v.w,'bad');
+  }
+});
+$('#next').onclick=()=>{pi=0;pscore=0;$('#hunt').classList.add('hide');$('#place').classList.remove('hide');$('#goal').textContent='Step 2: where should each value live?';ask()};
+function ask(){
+  locked=false;const p=P[pi];
+  $('#place').innerHTML='<div class="tag">Value '+(pi+1)+' of '+P.length+'</div><div class="item">'+em('Key','🔑')+'<code>'+p.lbl+'</code></div>'+
+   '<div class="opts">'+O.map(o=>'<button class="opt" data-k="'+o.k+'">'+em(o.e[0],o.e[1])+'<span>'+o.t+'</span><span class="mk"></span></button>').join('')+'</div><div id="nx"></div>';
+  say('Pick one.');
+  $('#place').querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(b));
+}
+function pick(b){
+  if(locked)return;locked=true;
+  const p=P[pi],ok=b.dataset.k===p.a;if(ok)pscore++;
+  $('#place').querySelectorAll('.opt').forEach(x=>{x.disabled=true;
+    if(x.dataset.k===p.a){x.classList.add('right');x.querySelector('.mk').textContent='✓'}
+    else if(x===b){x.classList.add('wrong');x.querySelector('.mk').textContent='✗'}});
+  say((ok?'✓ Yes! ':'✗ Not quite. ')+p.w,ok?'ok':'bad');
+  $('#nx').innerHTML='<div class="bar"><span></span><button class="btn" id="n">'+(pi<P.length-1?'Next':'See my score')+'</button></div>';
+  $('#n').focus({preventScroll:true});
+  $('#n').onclick=()=>{pi++;pi<P.length?ask():finish()};
+}
+function finish(){
+  $('#place').classList.add('hide');$('#fb').classList.add('hide');
+  $('#goal').textContent='Done!';
+  const e=$('#end');e.classList.remove('hide');
+  const perfect=!wrong&&pscore===P.length;
+  e.innerHTML=em(perfect?'Trophy':'Party popper',perfect?'🏆':'🎉')+'<h2>Secrets out of sight!</h2><div class="score">Score: '+pscore+' / '+P.length+' placed right, '+wrong+' wrong '+(wrong===1?'tap':'taps')+' in the hunt</div><p class="take">Never in Git, never in user data, never in an image. Readable only by who needs it.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+}
+start();
+</script>
+</body>
+</html>

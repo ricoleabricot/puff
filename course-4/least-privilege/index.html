@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Least privilege meter</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:10px 12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.task{margin-top:8px;font-weight:700;display:flex;gap:8px;align-items:center}
+.task code,.chip code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.task code{background:#FFF0E8;border-radius:6px;padding:1px 5px}
+.grid{display:grid;gap:8px;margin-top:8px}
+@media(min-width:620px){.grid{grid-template-columns:1fr 1fr;align-items:start}}
+.grp{margin-bottom:6px}
+.grp h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#C4583B}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:#FFFAF7;border:2px solid #F2DDD3;border-radius:12px;padding:2px 8px;font-size:14px;font-weight:700;display:flex;gap:6px;align-items:center;text-align:left}
+.chip .mk{width:18px;text-align:center;font-weight:900}
+.chip[aria-pressed="true"]{background:#FFE3D6;border-color:#F27E5E}
+.chip[aria-pressed="true"] .mk::before{content:"\2713"}
+.chip[aria-pressed="false"] .mk::before{content:"\25CB";opacity:.5}
+pre{margin:0;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-all;background:#FFFAF7;border-radius:10px;padding:8px;max-height:200px;overflow:auto}
+.meter{margin-top:0}
+.hero code{font:13px ui-monospace,Menlo,monospace;background:rgba(255,255,255,.25);border-radius:6px;padding:0 4px}
+.bar{position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;border-radius:12px;overflow:hidden;height:30px;font-size:12px;font-weight:800}
+.bar span{display:flex;align-items:center;justify-content:center;opacity:.55}
+.bar .lo{background:#FBDAD7}.bar .mid{background:#D8F1E3}.bar .hi{background:#FBDAD7}
+.bar span.on{opacity:1;box-shadow:inset 0 0 0 3px #3A2A24}
+.verdict{font-weight:800;font-size:16px;margin-top:6px;display:flex;gap:6px;align-items:center}
+.row{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.note{font-size:13px;opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Least privilege meter</h1><p>Task: the Puff API reads <code>/puff/db/password</code> (a SecureString) at boot. Toggle until the meter says "just right", then ship.</p></div></div>
+  <div class="grid">
+    <div class="card" id="controls"></div>
+    <div>
+      <div class="card meter">
+        <div class="bar" aria-hidden="true"><span class="lo" id="mLo">Not enough</span><span class="mid" id="mMid">Just right</span><span class="hi" id="mHi">Too much</span></div>
+        <div class="verdict" id="verdict"></div>
+        <div class="row"><button class="btn" id="ship">Ship this policy</button><span class="note" id="tries"></span></div>
+      </div>
+      <div class="card" style="margin-top:8px"><div class="grp"><h3>Your policy</h3></div><pre id="json" aria-label="Policy JSON preview"></pre></div>
+    </div>
+  </div>
+  <div id="fb" class="fb" role="status" aria-live="polite">This is the policy many people write on day one. Tighten it.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+$('#heroEm').innerHTML=em('Key','🔑');
+
+const GROUPS=[
+ {h:'SSM actions',items:[
+  {id:'get',t:'ssm:GetParameter',on:'GetParameter reads one parameter. That is the job.',off:'Without GetParameter the API cannot read its password.'},
+  {id:'put',t:'ssm:PutParameter',on:'PutParameter lets it overwrite the password. The API only reads.',off:'Good, the API never writes parameters.'},
+  {id:'del',t:'ssm:DeleteParameter',on:'DeleteParameter lets a hacked API delete parameters.',off:'Good, nothing to delete here.'},
+  {id:'ssmall',t:'ssm:*',on:'ssm:* means every SSM action, delete included.',off:'Bye ssm:*, the star means everything.'}
+ ]},
+ {h:'KMS actions',items:[
+  {id:'dec',t:'kms:Decrypt',on:'A SecureString is encrypted with KMS, so reading it needs kms:Decrypt.',off:'Without kms:Decrypt the SecureString stays locked.'},
+  {id:'kmsall',t:'kms:*',on:'kms:* is every KMS action. Way more than decrypting.',off:'Bye kms:*, decrypting is all it needs.'}
+ ]},
+ {h:'SSM resource',radio:'res',items:[
+  {id:'resAll',t:'*',on:'Resource * means every parameter in the account.',off:''},
+  {id:'resPuff',t:'parameter/puff/db/*',on:'Only the /puff/db/ path. A hacked API reads its own password and nothing else.',off:''}
+ ]},
+ {h:'KMS guard',items:[
+  {id:'via',t:'Only through Parameter Store (kms:ViaService)',on:'Decrypt now only works when the request comes through Parameter Store.',off:'Without the guard, kms:Decrypt on * can decrypt anything KMS lets it touch.'}
+ ]}
+];
+const ALL={};GROUPS.forEach(g=>g.items.forEach(i=>{ALL[i.id]=Object.assign({radio:g.radio},i)}));
+let S,tries;
+function start(){
+  S={get:false,put:false,del:false,ssmall:true,dec:false,kmsall:true,resAll:true,resPuff:false,via:false};
+  tries=0;
+  $('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  say('This is the policy many people write on day one. Tighten it.');
+  render();
+}
+function say(m,k){const f=$('#fb');f.className='fb '+(k||'');f.textContent=m}
+function render(){
+  $('#controls').innerHTML=GROUPS.map(g=>'<div class="grp"><h3>'+g.h+'</h3><div class="chips"'+(g.radio?' role="radiogroup" aria-label="'+g.h+'"':'')+'>'+
+    g.items.map(i=>'<button class="chip" data-id="'+i.id+'" '+(g.radio?'role="radio" aria-checked="'+S[i.id]+'" ':'')+'aria-pressed="'+S[i.id]+'"><span class="mk" aria-hidden="true"></span><code>'+i.t+'</code></button>').join('')+'</div></div>').join('');
+  $('#json').textContent=policy();
+  meter();
+  $('#tries').textContent=tries?('Tries: '+tries):'';
+}
+function policy(){
+  const sa=[];if(S.ssmall)sa.push('ssm:*');if(S.get)sa.push('ssm:GetParameter');if(S.put)sa.push('ssm:PutParameter');if(S.del)sa.push('ssm:DeleteParameter');
+  const ka=[];if(S.kmsall)ka.push('kms:*');if(S.dec)ka.push('kms:Decrypt');
+  const fmt=a=>a.length===1?JSON.stringify(a[0]):JSON.stringify(a).replace(/,/g,', ');
+  const st=[];
+  if(sa.length)st.push('    {\n      "Effect": "Allow",\n      "Action": '+fmt(sa)+',\n      "Resource": "'+(S.resPuff?'arn:aws:ssm:us-east-1:123456789012:parameter/puff/db/*':'*')+'"\n    }');
+  if(ka.length)st.push('    {\n      "Effect": "Allow",\n      "Action": '+fmt(ka)+',\n      "Resource": "*"'+(S.via?',\n      "Condition": { "StringEquals": { "kms:ViaService": "ssm.us-east-1.amazonaws.com" } }':'')+'\n    }');
+  return '{\n  "Version": "2012-10-17",\n  "Statement": [\n'+st.join(',\n')+'\n  ]\n}';
+}
+function check(){
+  const lack=[],extra=[];
+  if(!S.get&&!S.ssmall)lack.push('the API cannot read the parameter: add ssm:GetParameter.');
+  if(!S.dec&&!S.kmsall)lack.push('the SecureString is encrypted with KMS: add kms:Decrypt.');
+  if(S.ssmall)extra.push('ssm:* also lets a hacked API delete every parameter.');
+  if(S.put)extra.push('PutParameter lets it overwrite the password.');
+  if(S.del)extra.push('DeleteParameter lets it delete parameters.');
+  if(S.kmsall)extra.push('kms:* is every KMS action, not only decrypt.');
+  if(S.resAll)extra.push('Resource * means every parameter in the account.');
+  if(S.dec&&!S.kmsall&&!S.via)extra.push('kms:Decrypt on * without the guard can decrypt anything KMS lets it touch.');
+  return {lack,extra};
+}
+function meter(){
+  const r=check(),v=$('#verdict');
+  ['mLo','mMid','mHi'].forEach(id=>$('#'+id).classList.remove('on'));
+  if(r.lack.length){$('#mLo').classList.add('on');v.innerHTML='✗ Not enough';v.style.color='#C23B33'}
+  else if(r.extra.length){$('#mHi').classList.add('on');v.innerHTML='✗ Too much ('+r.extra.length+' extra '+(r.extra.length>1?'doors':'door')+' open)';v.style.color='#C23B33'}
+  else{$('#mMid').classList.add('on');v.innerHTML='✓ Just right';v.style.color='#237A4B'}
+  return r;
+}
+$('#controls').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  const it=ALL[b.dataset.id];
+  if(it.radio){GROUPS.find(g=>g.radio===it.radio).items.forEach(i=>S[i.id]=false);S[it.id]=true}
+  else S[it.id]=!S[it.id];
+  render();
+  const r=check(),good=(S[it.id]&&!/^(put|del|ssmall|kmsall|resAll)$/.test(it.id))||(!S[it.id]&&/^(put|del|ssmall|kmsall)$/.test(it.id));
+  say((good?'✓ ':'✗ ')+(S[it.id]?it.on:it.off),good?'ok':'bad');
+  const nb=$('#controls [data-id="'+it.id+'"]');if(nb)nb.focus({preventScroll:true});
+});
+$('#ship').onclick=()=>{
+  tries++;
+  const r=check();
+  if(!r.lack.length&&!r.extra.length){finish();return}
+  $('#tries').textContent='Tries: '+tries;
+  say('✗ Not yet: '+(r.lack[0]||r.extra[0]),'bad');
+};
+function finish(){
+  $('#fb').classList.add('hide');
+  const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em(tries===1?'Trophy':'Party popper',tries===1?'🏆':'🎉')+'<h2>Just right!</h2><div class="score">Score: shipped on try '+tries+'</div><p class="take">One read action, one path, decrypt only through Parameter Store.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+  e.scrollIntoView({block:'nearest'});
+}
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alarm tuner</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:10px 12px;margin-top:8px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.mt{font:12px ui-monospace,Menlo,monospace;font-weight:700;color:#C4583B}
+svg{width:100%;height:auto;display:block}
+.ctl{display:grid;gap:8px}
+@media(min-width:620px){.ctl{grid-template-columns:1.4fr 1fr}}
+label{font-weight:800;display:block}
+input[type=range]{width:100%;height:44px;accent-color:#F27E5E}
+.seg{display:flex;gap:6px;margin-top:4px}
+.seg button{flex:1;background:#FFFAF7;border:2px solid #F2DDD3;border-radius:12px;font-weight:800}
+.seg button[aria-pressed="true"]{background:#FFE3D6;border-color:#F27E5E}
+.seg button[aria-pressed="true"]::before{content:"\2713 "}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.stat{border-radius:12px;padding:6px 8px;background:#FFFAF7;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat small{font-size:12px;font-weight:700}
+.stat.good{background:#E6F6EC}.stat.badc{background:#FDECEA}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:8px}
+.legend{font-size:12px;opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Alarm tuner</h1><p>Set the threshold and period so <code>puff-alb-5xx</code> sends one email, for the real outage only.</p></div></div>
+  <div class="card">
+    <div class="mt" id="mtitle"></div>
+    <svg id="chart" viewBox="0 0 600 160" role="img" aria-label="Chart of ALB 5xx errors over one hour"></svg>
+    <div class="legend">Grey band: the container was down (the real outage). Bars: what the alarm sees per period. Red bells: ALARM emails.</div>
+  </div>
+  <div class="card ctl">
+    <div><label for="th">Threshold: <span id="thv"></span> errors or more per period</label><input type="range" id="th" min="1" max="40" step="1"></div>
+    <div><label id="plab">Period</label><div class="seg" role="group" aria-labelledby="plab"><button data-p="1">1 min</button><button data-p="5">5 min</button></div></div>
+  </div>
+  <div class="stats" aria-hidden="true">
+    <div class="stat" id="sEm"><b id="nEm"></b><small>ALARM emails</small></div>
+    <div class="stat" id="sFa"><b id="nFa"></b><small>False alarms</small></div>
+    <div class="stat" id="sOu"><b id="nOu"></b><small>Real outage</small></div>
+  </div>
+  <div class="row"><span class="legend" id="tries"></span><button class="btn" id="lock">Lock in this alarm</button></div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Right now every tiny blip wakes you up. Tune it.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+$('#heroEm').innerHTML=em('Bell','🔔');
+// HTTPCode_ELB_5XX_Count per minute over one hour. Outage: minutes 40 to 47.
+const D=new Array(60).fill(0);
+Object.entries({5:1,9:2,14:1,17:3,18:1,22:4,27:1,31:2,33:3,40:18,41:26,42:31,43:29,44:30,45:27,46:24,47:9,55:4}).forEach(([m,v])=>D[+m]=v);
+const O0=40,O1=48;
+let th,p,tries;
+function evalAlarm(){
+  const w=[];for(let s=0;s<60;s+=p){let sum=0;for(let m=s;m<s+p;m++)sum+=D[m];w.push({s,e:s+p,sum,al:sum>=th})}
+  const eps=[];w.forEach(x=>{if(!x.al)return;const l=eps[eps.length-1];if(l&&l.e===x.s)l.e=x.e;else eps.push({s:x.s,e:x.e})});
+  eps.forEach(x=>x.real=x.s<O1&&x.e>O0);
+  const real=eps.filter(x=>x.real),fa=eps.length-real.length;
+  const delay=real.length?real[0].s+p-O0:null;
+  return {w,eps,real:real.length,fa,delay,win:eps.length===1&&real.length===1};
+}
+function draw(r){
+  const W=Math.round(Math.min(600,Math.max(300,$('#chart').parentNode.clientWidth-24))),H=160,L=30,B=128,T=24;$('#chart').setAttribute('viewBox','0 0 '+W+' '+H);const pw=(W-L-6)/60,max=Math.max(th,...r.w.map(x=>x.sum))*1.1,y=v=>B-(B-T)*v/max;
+  let s='';
+  s+='<rect x="'+(L+O0*pw)+'" y="'+T+'" width="'+((O1-O0)*pw)+'" height="'+(B-T)+'" fill="#3A2A24" opacity=".08"/>';
+  s+='<text x="'+(L+O0*pw+3)+'" y="'+(T-6)+'" font-size="11" font-weight="700" fill="#3A2A24" opacity=".7">real outage</text>';
+  r.w.forEach(x=>{const h=B-y(x.sum);s+='<rect x="'+(L+x.s*pw+1)+'" y="'+y(x.sum)+'" width="'+(p*pw-2)+'" height="'+h+'" rx="2" fill="'+(x.al?'#E5534B':'#F6B9A3')+'"/>'});
+  s+='<line x1="'+L+'" x2="'+(W-4)+'" y1="'+y(th)+'" y2="'+y(th)+'" stroke="#3A2A24" stroke-width="2" stroke-dasharray="6 4"/>';
+  s+='<text x="'+(L-4)+'" y="'+(y(th)+4)+'" font-size="11" text-anchor="end" font-weight="800" fill="#3A2A24">'+th+'</text>';
+  s+='<line x1="'+L+'" x2="'+(W-4)+'" y1="'+B+'" y2="'+B+'" stroke="#3A2A24" opacity=".4"/>';
+  [0,15,30,45,60].forEach(m=>s+='<text x="'+(L+m*pw)+'" y="'+(B+14)+'" font-size="11" text-anchor="'+(m?(m===60?'end':'middle'):'start')+'" fill="#3A2A24" opacity=".7">'+m+' min</text>');
+  r.eps.forEach(x=>{const cx=L+(x.s+p)*pw;s+='<text x="'+cx+'" y="'+(B+30)+'" font-size="14" text-anchor="middle">🔔</text><text x="'+(cx+10)+'" y="'+(B+29)+'" font-size="12" font-weight="900" fill="'+(x.real?'#237A4B':'#C23B33')+'">'+(x.real?'✓':'✗')+'</text>'});
+  $('#chart').innerHTML=s;
+  $('#chart').setAttribute('aria-label','Errors per '+p+' minute period. Threshold '+th+'. '+r.eps.length+' alarm emails, '+r.fa+' false.');
+}
+function render(){
+  $('#thv').textContent=th;$('#th').value=th;
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.p===p));
+  $('#mtitle').textContent='HTTPCode_ELB_5XX_Count, Sum per '+p+' min';
+  const r=evalAlarm();draw(r);
+  $('#nEm').textContent=r.eps.length;$('#nFa').textContent=(r.fa?'✗ ':'✓ ')+r.fa;
+  $('#nOu').textContent=r.real?(r.real>1?'✗ '+r.real+' emails':'✓ caught'):'✗ missed';
+  $('#sEm').className='stat '+(r.eps.length===1?'good':'badc');
+  $('#sFa').className='stat '+(r.fa?'badc':'good');
+  $('#sOu').className='stat '+(r.real===1?'good':'badc');
+  return r;
+}
+function verdict(r){
+  if(r.win)return['✓ One email, for the real outage, '+r.delay+' min after it started.'+(p===5?' Try 1 min: same email, sooner.':''),'ok'];
+  if(!r.real&&r.fa)return['✗ You missed the outage and still got '+r.fa+' false '+(r.fa>1?'alarms':'alarm')+'.','bad'];
+  if(!r.real)return['✗ Silence. The outage never crossed '+th+', so nobody knows the board app is down.','bad'];
+  if(r.real>1)return['✗ '+r.real+' emails for one outage: the errors dip under '+th+' and the alarm flaps.','bad'];
+  return['✗ '+r.fa+' false '+(r.fa>1?'alarms':'alarm')+': small blips wake you up for nothing.','bad'];
+}
+function say(m,k){const f=$('#fb');f.className='fb '+(k||'');f.textContent=m}
+function update(){const r=render();const v=verdict(r);say(v[0],v[1])}
+function start(){
+  th=1;p=1;tries=0;$('#tries').textContent='';
+  $('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  render();say('Right now every tiny blip wakes you up. Tune it.');
+}
+$('#th').addEventListener('input',e=>{th=+e.target.value;update()});
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{p=+b.dataset.p;update()});
+$('#lock').onclick=()=>{
+  tries++;$('#tries').textContent='Tries: '+tries;
+  const r=evalAlarm();
+  if(!r.win){say('✗ Not yet. '+verdict(r)[0].slice(2),'bad');return}
+  $('#fb').classList.add('hide');
+  const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em(p===1&&tries===1?'Trophy':'Party popper',p===1?'🏆':'🎉')+'<h2>One email, the right one!</h2><div class="score">Score: threshold '+th+', period '+p+' min, email '+r.delay+' min after the outage, try '+tries+'</div><p class="take">Alert on what users feel. An email at 3am should mean users are hurting.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();e.scrollIntoView({block:'nearest'});
+};
+window.addEventListener('resize',()=>render());
+start();
+</script>
+</body>
+</html>
