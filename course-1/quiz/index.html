@@ -100,7 +100,7 @@ function pick(k){
 function end(){
   dots.classList.add("hide");goal.textContent="All done!";
   const band=score===8?["Trophy","trophy","Perfect! You're ready to build Puff."]
-   :score>=6?["Party%20popper","party_popper","Great job! Just a couple of ideas to re-read."]
+   :score>=6?["Party%20popper","party_popper","Great job! A couple of ideas to re-read."]
    :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
    :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
   card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">

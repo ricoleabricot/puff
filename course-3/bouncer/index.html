@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The bouncer: security group vs network ACL</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.rule{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:8px 10px;font-size:13px;transition:box-shadow .2s}
+.rule h2{margin:0 0 4px;font-size:14px;display:flex;align-items:center;gap:6px}
+.rule h2 .em{width:24px;height:24px}
+.rule small{display:block;opacity:.75;margin-bottom:4px}
+.rule code{font:12.5px ui-monospace,Menlo,monospace}
+.rule ul{margin:0;padding-left:16px}
+.rule li{margin:1px 0}
+.rule.hot{box-shadow:0 4px 14px rgba(242,126,94,.3),inset 0 0 0 3px #F27E5E}
+.req{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.req .tag{font-size:12px;font-weight:700;opacity:.7}
+.req .what{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.req .what .em{width:36px;height:36px}
+.req code{font:13px ui-monospace,Menlo,monospace;background:#FFF0E8;border-radius:6px;padding:1px 5px}
+.ch{display:flex;gap:8px}
+.ch .btn{flex:1}
+@media (max-width:520px){.rules{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>The bouncer</h1><p>Read the rules. Does each packet get in, or is it blocked?</p></div></div>
+  <div class="rules">
+    <div class="rule" id="sg"><h2><span id="sgEm"></span>Security groups</h2><small>One door each. Allow only, anything not listed is out. Stateful: remembers who it let in.</small>
+      <ul><li><code>puff-alb-sg</code>: TCP 80 from <code>0.0.0.0/0</code></li><li><code>puff-api-sg</code>: TCP 8080 from <code>puff-alb-sg</code></li><li><code>puff-db-sg</code>: TCP 5432 from <code>puff-api-sg</code></li></ul></div>
+    <div class="rule" id="nacl"><h2><span id="naclEm"></span>Network ACL, public subnets</h2><small>Whole street. Lowest number first, first match wins. Stateless: no memory.</small>
+      <ul><li>In 90: DENY all from <code>203.0.113.0/24</code></li><li>In 100: ALLOW TCP 80 from <code>0.0.0.0/0</code></li><li>In *: DENY all</li><li>Out 100: ALLOW TCP 80 to <code>0.0.0.0/0</code></li><li>Out *: DENY all</li></ul></div>
+  </div>
+  <div class="card req" id="req" aria-live="polite"></div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Pick Gets in or Blocked.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+const R=[
+ {f:'sg',tag:'Request 1 of 6 · at the door of puff-db',e:['File cabinet','🗄️'],t:'TCP <code>5432</code> from <code>puff-api</code> (it wears <code>puff-api-sg</code>)',a:1,
+  w:'puff-db-sg lets in port 5432 from anything wearing puff-api-sg.'},
+ {f:'sg',tag:'Request 2 of 6 · at the door of puff-db',e:['Bellhop bell','🛎️'],t:'TCP <code>5432</code> from <code>puff-alb</code> (it wears <code>puff-alb-sg</code>)',a:0,
+  w:'Only puff-api-sg is on puff-db-sg\'s guest list. The ALB never talks to the database.'},
+ {f:'sg',tag:'Request 3 of 6 · at the door of puff-api',e:['Laptop','💻'],t:'TCP <code>22</code> (SSH) from <code>puff-alb</code>',a:0,
+  w:'puff-api-sg only lists 8080. A security group only allows, so anything not listed stays out.'},
+ {f:'nacl',tag:'Request 4 of 6 · at the edge of the public subnets',e:['Mobile phone','📱'],t:'TCP <code>80</code> from <code>198.51.100.7</code>',a:1,
+  w:'Rule 90 doesn\'t match, rule 100 does: ALLOW.'},
+ {f:'nacl',tag:'Request 5 of 6 · at the edge of the public subnets',e:['Stop sign','🛑'],t:'TCP <code>80</code> from <code>203.0.113.50</code>',a:0,
+  w:'Rule 90 matches first and says DENY. Rule 100 is never read. That\'s how you block one IP range.'},
+ {f:'nacl',tag:'Request 6 of 6 · at the edge of the public subnets',e:['Locked','🔒'],t:'TCP <code>443</code> from <code>198.51.100.7</code>',a:0,
+  w:'No numbered rule matches 443, so the * rule at the bottom says DENY.'},
+ {f:'sg',tag:'The reply · leaving puff-alb',e:['Envelope','✉️'],t:'Request 4 got in. The ALB answers <code>198.51.100.7</code> on port <code>50123</code>. Does <code>puff-alb-sg</code> let the reply out?',a:1,
+  w:'A security group is stateful: it remembers who it let in, so the reply goes out automatically.',bonus:1},
+ {f:'nacl',tag:'The reply · leaving the public subnet',e:['Hourglass not done','⏳'],t:'Same reply, port <code>50123</code>. Does the network ACL let it out?',a:0,
+  w:'A NACL is stateless: Out 100 only allows port 80, and replies go to ports 1024 to 65535. Dropped. From outside it looks like a timeout.',bonus:1}
+];
+let i,score,locked;
+const req=$('#req'),fb=$('#fb'),endEl=$('#end');
+$('#heroEm').innerHTML=em('Shield','🛡️');$('#sgEm').innerHTML=em('Door','🚪');$('#naclEm').innerHTML=em('Motorway','🛣️');
+function start(){i=0;score=0;endEl.classList.add('hide');req.classList.remove('hide');fb.classList.remove('hide');show()}
+function show(){
+  locked=false;const r=R[i];
+  $('#sg').classList.toggle('hot',r.f==='sg');$('#nacl').classList.toggle('hot',r.f==='nacl');
+  const yes=r.bonus?'Goes out':'Gets in';
+  req.innerHTML='<div class="tag">'+r.tag+'</div><div class="what">'+em(r.e[0],r.e[1])+'<span>'+r.t+'</span></div>'+
+   '<div class="ch"><button class="btn" data-a="1">✓ '+yes+'</button><button class="btn ghost" data-a="0">✗ Blocked</button></div>';
+  say(fb,r.bonus?'Now the stateful vs stateless part.':'Pick '+yes+' or Blocked.');
+}
+function pick(a){
+  if(locked)return;locked=true;
+  const r=R[i],ok=a===r.a;if(ok)score++;
+  req.querySelectorAll('.ch button').forEach(b=>{b.disabled=true});
+  say(fb,(ok?'✓ Right! ':'✗ Not quite. ')+(r.a?'It passes. ':'Blocked. ')+r.w,ok?'ok':'bad');
+  req.insertAdjacentHTML('beforeend','<button class="btn" id="nx">'+(i<R.length-1?'Next':'See my score')+'</button>');
+  $('#nx').focus({preventScroll:true});
+  $('#nx').onclick=()=>{i++;i<R.length?show():finish()};
+}
+function finish(){
+  $('#sg').classList.remove('hot');$('#nacl').classList.remove('hot');
+  req.classList.add('hide');fb.classList.add('hide');endEl.classList.remove('hide');
+  endEl.innerHTML=em(score>=6?'Trophy':'Thinking face',score>=6?'🏆':'🤔')+'<h2>Shift over!</h2><div class="score">Score: '+score+' / '+R.length+'</div><p class="take">Security groups remember and do most of the work. NACLs forget, so replies need their own rule.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+}
+req.addEventListener('click',e=>{const b=e.target.closest('.ch button');if(b)pick(+b.dataset.a)});
+start();
+</script>
+
+</body>
+</html>

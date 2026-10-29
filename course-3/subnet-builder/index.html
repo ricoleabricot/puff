@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Subnet builder: public or private</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.vpc{margin-top:8px;border-radius:16px;padding:8px;background:#FFFAF7;box-shadow:inset 0 0 0 2px #F6DCCF}
+.vpc h2{margin:0 0 6px;font-size:15px;display:flex;align-items:center;gap:6px}
+.rts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.rt{background:#fff;border-radius:12px;padding:6px 10px;font-size:13px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.rt b{display:flex;align-items:center;gap:6px;font-size:14px}
+.rt code{font:12.5px ui-monospace,Menlo,monospace}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sn{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:6px 10px;display:flex;flex-direction:column;gap:3px}
+.sn .top{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.sn .top b{font-size:15px}
+.sn code{font:12.5px ui-monospace,Menlo,monospace;opacity:.8}
+.sn .job{font-size:13px;display:flex;align-items:center;gap:6px}
+.sn .job .em{width:24px;height:24px}
+.st{font-size:13px;font-weight:700;border-radius:10px;padding:3px 8px;background:#F7EDE8;align-self:flex-start}
+.st.pub{background:#FFE8DC;color:#A8452A}.st.priv{background:#E8ECF8;color:#3B4C8A}
+.sn.done{box-shadow:0 4px 14px rgba(120,60,40,.1),inset 0 0 0 2px #3BAA6E}
+.sn.wrong{box-shadow:0 4px 14px rgba(120,60,40,.1),inset 0 0 0 2px #E5534B}
+.acts{display:flex;gap:6px}
+.acts button{flex:1;border:0;border-radius:12px;background:#FFF0E8;box-shadow:inset 0 0 0 2px #F0CDBE;font-weight:700;font-size:13px;padding:0 6px}
+.acts button[aria-pressed="true"]{background:#F27E5E;color:#fff;box-shadow:none}
+@media (max-width:520px){.grid,.rts{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Subnet builder</h1><p>Give each subnet a route table so its resident can do its job.</p></div></div>
+  <div class="vpc">
+    <h2><span id="vpcEm"></span>puff-vpc <code>10.0.0.0/16</code></h2>
+    <div class="rts">
+      <div class="rt"><b><span id="pubEm"></span>IGW table</b><code>10.0.0.0/16 → local · 0.0.0.0/0 → igw-...</code></div>
+      <div class="rt"><b><span id="privEm"></span>NAT table</b><code>10.0.0.0/16 → local · 0.0.0.0/0 → nat-...</code></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Tap a table button on each subnet.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+const SUB=[
+ {id:'A',cidr:'10.0.0.0/20',az:'us-east-1a',job:'puff-alb and the NAT gateway',e:['Bellhop bell','🛎️'],k:'igw',
+  ok:'Public! The ALB greets visitors from the internet, and the NAT gateway must sit in a public subnet to get out.',
+  no:'With the NAT table, nobody on the internet can start a conversation here, so visitors never reach the ALB.'},
+ {id:'B',cidr:'10.0.16.0/20',az:'us-east-1b',job:'puff-alb, second AZ',e:['Bellhop bell','🛎️'],k:'igw',
+  ok:'Public! An ALB needs public subnets in at least two AZs.',
+  no:'The ALB needs a public subnet in this AZ too, so it needs the IGW table.'},
+ {id:'C',cidr:'10.0.128.0/20',az:'us-east-1a',job:'puff-api',e:['Gear','⚙️'],k:'nat',
+  ok:'Private! No road in, and the API still downloads Docker and its image through the NAT.',
+  no:'The IGW table gives this street a road from the internet. The API should only go out, through the NAT.'},
+ {id:'D',cidr:'10.0.144.0/20',az:'us-east-1b',job:'puff-db',e:['File cabinet','🗄️'],k:'nat',
+  ok:'Private! The database has no road in from the internet, only the local route from the API.',
+  no:'The IGW table opens a road from the internet to your database. That was session 2\'s problem.'}
+];
+let att,missed;
+const grid=$('#grid'),fb=$('#fb'),endEl=$('#end');
+$('#heroEm').innerHTML=em('Construction','🚧');$('#vpcEm').innerHTML=em('Houses','🏘️');
+$('#pubEm').innerHTML=em('Globe with meridians','🌐');$('#privEm').innerHTML=em('Outbox tray','📤');
+function start(){
+  att={};missed={};endEl.classList.add('hide');fb.classList.remove('hide');
+  grid.innerHTML=SUB.map(s=>'<div class="sn" id="sn'+s.id+'"><div class="top"><b>Subnet '+s.id+'</b><code>'+s.cidr+' · '+s.az+'</code></div>'+
+   '<div class="job">'+em(s.e[0],s.e[1])+'Will hold: '+s.job+'</div>'+
+   '<span class="st" id="st'+s.id+'">No route table yet</span>'+
+   '<div class="acts"><button data-s="'+s.id+'" data-k="igw" aria-pressed="false">IGW table</button><button data-s="'+s.id+'" data-k="nat" aria-pressed="false">NAT table</button></div></div>').join('');
+  say(fb,'Tap a table button on each subnet.');
+}
+function attach(id,k){
+  const s=SUB.find(x=>x.id===id),card=$('#sn'+id),st=$('#st'+id);
+  att[id]=k;
+  card.querySelectorAll('.acts button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));
+  st.className='st '+(k==='igw'?'pub':'priv');
+  st.textContent=k==='igw'?'0.0.0.0/0 → igw: 🌐 Public':'0.0.0.0/0 → nat: 🔒 Private';
+  const ok=k===s.k;
+  card.classList.toggle('done',ok);card.classList.toggle('wrong',!ok);
+  if(ok)say(fb,'✓ Subnet '+id+': '+s.ok,'ok');else{missed[id]=1;say(fb,'✗ Subnet '+id+': '+s.no,'bad')}
+  if(SUB.every(x=>att[x.id]===x.k))setTimeout(finish,900);
+}
+function finish(){
+  const n=SUB.length-Object.keys(missed).length;
+  fb.classList.add('hide');endEl.classList.remove('hide');
+  endEl.innerHTML=em('Party popper','🎉')+'<h2>Puff\'s network is ready!</h2><div class="score">Score: '+n+' / '+SUB.length+' on the first try</div><p class="take">Same subnets, same kind of addresses. The only difference is the route table.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+}
+grid.addEventListener('click',e=>{const b=e.target.closest('.acts button');if(b)attach(b.dataset.s,b.dataset.k)});
+start();
+</script>
+
+</body>
+</html>
