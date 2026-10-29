@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ship a buggy release</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.picks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.pk{background:#fff;border:0;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1),inset 0 0 0 2px #F6DCCF;padding:6px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:2px}
+.pk small{font-weight:600;font-size:12px;opacity:.8}
+.pk[aria-pressed="true"]{box-shadow:0 6px 16px rgba(242,126,94,.35),inset 0 0 0 3px #F27E5E}
+.pk .done{color:#237A4B;font-size:12px}
+.pk:disabled{opacity:.5;cursor:default}
+.stage{margin-top:8px}
+.row{display:flex;align-items:center;gap:6px;margin:4px 0;flex-wrap:wrap}
+.row .lbl{font-size:12px;font-weight:800;width:58px;flex:none}
+.srv{width:52px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;transition:opacity .3s,background .3s}
+.srv.v1{background:#DCEBFF;color:#1F4E8C;box-shadow:inset 0 0 0 2px #7FA9E0}
+.srv.v2{background:#FBDAD7;color:#9E2A23;box-shadow:inset 0 0 0 2px #E5534B}
+.srv.idle{opacity:.35}
+.users{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:6px;max-width:360px}
+.users .em{width:100%;height:auto;max-width:28px;aspect-ratio:1}
+.log{font-weight:700;margin-top:6px;min-height:22px}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.stat{background:#FFF0E8;border-radius:10px;padding:4px 10px;font-size:13px;font-weight:700}
+.go{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #F2DDD3}
+th{font-size:12px;opacity:.75}
+.q{font-weight:800;font-size:16px;margin:4px 0 8px}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.opt{background:#FFFAF7;border:2px solid #F2DDD3;border-radius:14px;font-weight:700}
+.opt:hover:not(:disabled){border-color:#F27E5E}
+.opt.right{background:#DDF3E6;border-color:#3BAA6E}
+.opt.wrong{background:#FBDAD7;border-color:#E5534B}
+.opt:disabled{cursor:default}
+@media (max-width:420px){.srv{width:44px}.opts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Ship a buggy release</h1><p>Release a broken v2 with each strategy. Count the users hit and how fast you get back.</p></div></div>
+  <div id="play">
+    <div class="picks" id="picks"></div>
+    <div class="card stage">
+      <div id="rows"></div>
+      <div class="users" id="users" aria-hidden="true"></div>
+      <div class="log" id="log"></div>
+      <div class="stats" id="stats"></div>
+      <div class="go" id="goBox"></div>
+    </div>
+    <div class="card hide" id="tbl" style="margin-top:8px"></div>
+  </div>
+  <div class="card hide" id="quiz" style="margin-top:10px"></div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Pick a strategy, then release.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(msg,kind){const f=$('#fb');f.className='fb '+(kind||'');f.textContent=msg}
+$('#heroEm').innerHTML=em('Rocket','🚀');
+
+const B=[1,1,1,1],G=[2,2,2,2];
+const S={
+ rolling:{n:'Rolling',e:['Repeat button','🔁'],s:'One at a time',back:'Slow (another rolling deploy)',extra:'None',
+  steps:[
+   {rows:[['puff-tg',B,1]],share:0,log:'puff-asg runs 4 servers, all on v1.'},
+   {rows:[['puff-tg',[2,1,1,1],1]],share:.25,log:'Instance refresh: server 1 now runs v2.'},
+   {rows:[['puff-tg',[2,2,1,1],1]],share:.5,log:'Server 2 runs v2. Alarm! Errors behind puff-alb.'},
+   {rows:[['puff-tg',[1,2,1,1],1]],share:.25,log:'Rolling back means another rolling deploy: server 1 back to v1.'},
+   {rows:[['puff-tg',B,1]],share:0,log:'Server 2 back to v1. Fixed, but it took a while.'}]},
+ bluegreen:{n:'Blue/green',e:['Blue circle','🔵'],s:'Flip all at once',back:'Seconds (point back at blue)',extra:'Double for a while',
+  steps:[
+   {rows:[['blue',B,1]],share:0,log:'The blue fleet serves everyone on v1.'},
+   {rows:[['blue',B,1],['green',G,0]],share:0,log:'A full green fleet is built next to it: 8 servers for now.'},
+   {rows:[['blue',B,0],['green',G,1]],share:1,log:'Listener flipped to green. Everyone is on v2. Alarm!'},
+   {rows:[['blue',B,1],['green',G,0]],share:0,log:'Listener pointed back at blue. Fixed in seconds.'}]},
+ canary:{n:'Canary',e:['Bird','🐦'],s:'10% first',back:'Seconds (share back to 0)',extra:'A little',
+  steps:[
+   {rows:[['blue',B,1]],share:0,log:'The blue fleet serves everyone on v1.'},
+   {rows:[['blue',B,1],['green',[2],1]],share:.1,log:'Listener splits 90/10. Alarm! The 10% on v2 see errors.'},
+   {rows:[['blue',B,1],['green',[2],0]],share:0,log:'v2 share set back to 0. Fixed in seconds.'}]}
+};
+const QS=[
+ {q:'Your budget can\'t pay for any extra servers, even for an hour.',a:'rolling',why:'Rolling swaps servers in place, no extra cost. The price is a slow way back.'},
+ {q:'You want a way back in seconds and can pay for a second fleet for a while.',a:'bluegreen',why:'Blue/green keeps the old fleet alive, so going back is one listener flip.'},
+ {q:'You want a few real users to try v2 first, and your alarms are good.',a:'canary',why:'Canary sends a small share first. Without good alarms you won\'t see the 10% failing.'}
+];
+let cur,done,running,hit,qi,score;
+
+function draw(st){
+  $('#rows').innerHTML=st.rows.map(([l,vs,live])=>'<div class="row"><span class="lbl">'+l+'</span>'+vs.map(v=>'<div class="srv v'+v+(live?'':' idle')+'">v'+v+(v===2?' ✗':'')+'</div>').join('')+'</div>').join('');
+  const n=Math.round(st.share*20);
+  $('#users').innerHTML=Array.from({length:20},(_,i)=>i<n?em('Face with thermometer','🤒'):em('Slightly smiling face','🙂')).join('');
+  $('#log').textContent=st.log;
+}
+function drawPicks(){
+  $('#picks').innerHTML=Object.entries(S).map(([k,s])=>'<button class="pk" data-k="'+k+'" aria-pressed="'+(k===cur)+'"'+(running?' disabled':'')+'>'+em(s.e[0],s.e[1])+s.n+'<small>'+s.s+'</small>'+(done[k]?'<span class="done">✓ tried</span>':'')+'</button>').join('');
+}
+function pick(k){cur=k;drawPicks();draw(S[k].steps[0]);$('#stats').innerHTML='';say(S[k].n+' selected. Hit "Release buggy v2".')}
+function start(){
+  cur='rolling';done={};running=false;qi=0;score=0;
+  $('#play').classList.remove('hide');$('#quiz').classList.add('hide');$('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  $('#tbl').classList.add('hide');$('#goBox').innerHTML='<button class="btn" id="go">Release buggy v2</button>';$('#go').onclick=release;
+  drawPicks();draw(S.rolling.steps[0]);$('#stats').innerHTML='';
+  say('Pick a strategy, then release.');
+}
+$('#picks').addEventListener('click',e=>{const b=e.target.closest('.pk');if(b&&!running)pick(b.dataset.k)});
+function release(){
+  if(running)return;running=true;hit=0;$('#go').disabled=true;drawPicks();
+  const s=S[cur],steps=s.steps;let i=0;
+  const tick=()=>{
+    const st=steps[i];draw(st);say(st.log);hit=Math.max(hit,Math.round(st.share*20));
+    $('#stats').innerHTML='<span class="stat">Users hit: '+hit+' of 20</span><span class="stat">Step '+(i+1)+' of '+steps.length+'</span>';
+    i++;
+    if(i<steps.length)setTimeout(tick,1100);
+    else{
+      running=false;done[cur]={hit,back:s.back,extra:s.extra,steps:steps.length-1};
+      $('#stats').innerHTML='<span class="stat">✗ Users hit: '+hit+' of 20</span><span class="stat">↩ Way back: '+s.back+'</span><span class="stat">＋ Extra servers: '+s.extra+'</span>';
+      say('✓ '+s.n+': '+hit+' of 20 users hit. '+s.back+'.','ok');
+      drawPicks();drawTable();$('#go').disabled=false;
+      if(Object.keys(done).length===3){$('#goBox').innerHTML='<button class="btn" id="toQuiz">Now pick for 3 teams</button>';$('#toQuiz').onclick=quiz;$('#toQuiz').focus({preventScroll:true})}
+    }
+  };
+  tick();
+}
+function drawTable(){
+  const t=$('#tbl');t.classList.remove('hide');
+  t.innerHTML='<table><tr><th>Strategy</th><th>Users hit</th><th>Way back</th><th>Extra servers</th></tr>'+Object.entries(done).map(([k,d])=>'<tr><td><b>'+S[k].n+'</b></td><td>'+d.hit+' / 20</td><td>'+d.back+'</td><td>'+d.extra+'</td></tr>').join('')+'</table>';
+}
+function quiz(){
+  $('#play').classList.add('hide');const q=$('#quiz');q.classList.remove('hide');
+  const Q=QS[qi];
+  q.innerHTML='<div style="font-size:13px;opacity:.75">Team '+(qi+1)+' of '+QS.length+'</div><p class="q">'+Q.q+'</p><div class="opts">'+Object.entries(S).map(([k,s])=>'<button class="opt" data-k="'+k+'">'+s.n+'</button>').join('')+'</div><div class="go" id="nx"></div>';
+  say('Which strategy fits?');
+  q.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const ok=b.dataset.k===Q.a;if(ok)score++;
+    q.querySelectorAll('.opt').forEach(x=>{x.disabled=true;
+      if(x.dataset.k===Q.a){x.classList.add('right');x.textContent='✓ '+x.textContent}
+      else if(x===b){x.classList.add('wrong');x.textContent='✗ '+x.textContent}});
+    say((ok?'✓ Yes! ':'✗ Not quite. ')+Q.why,ok?'ok':'bad');
+    $('#nx').innerHTML='<button class="btn" id="n">'+(qi<QS.length-1?'Next team':'See my score')+'</button>';
+    $('#n').focus({preventScroll:true});
+    $('#n').onclick=()=>{qi++;qi<QS.length?quiz():end()};
+  });
+}
+function end(){
+  $('#quiz').classList.add('hide');$('#fb').classList.add('hide');
+  const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em(score===3?'Trophy':'Thinking face',score===3?'🏆':'🤔')+'<h2>Release shipped!</h2><div class="score">Score: '+score+' / 3 teams matched</div><p class="take">Keep the old version alive and going back takes seconds.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+}
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Puff's monthly bill</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.step{font-weight:800;margin:10px 0 6px;display:flex;gap:8px;align-items:center}
+.step .tag{background:#FFE3D8;color:#A2442A;border-radius:10px;padding:2px 8px;font-size:12px;flex:none}
+.lines{display:grid;gap:6px}
+.line{display:flex;align-items:center;gap:8px;background:#FFFAF7;border:2px solid #F2DDD3;border-radius:12px;padding:4px 10px;text-align:left;font-weight:700;width:100%;position:relative;overflow:hidden}
+.line .nm{flex:1;z-index:1}
+.line .pr{z-index:1;font-variant-numeric:tabular-nums;min-width:62px;text-align:right}
+.line .bar{position:absolute;left:0;top:0;bottom:0;background:#FFE3D8;transition:width .4s}
+.line[aria-pressed="true"]{border-color:#F27E5E;background:#FFF0E8}
+.line.right{border-color:#3BAA6E}
+.line.wrong{border-color:#E5534B}
+.line.extra .nm{color:#A2442A}
+.line:disabled{cursor:default;color:inherit}
+.total{display:flex;justify-content:space-between;font-weight:800;font-size:18px;margin-top:8px;padding:6px 10px;background:#3A2A24;color:#fff;border-radius:12px}
+.whatifs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.wi{background:#fff;border:2px solid #F2DDD3;border-radius:12px;padding:4px 10px;font-weight:700;font-size:13px;text-align:left;display:flex;align-items:center;gap:6px}
+.wi[aria-pressed="true"]{background:#FFE3D8;border-color:#F27E5E}
+.wi .sw{margin-left:auto;font-size:12px;background:#F2DDD3;border-radius:8px;padding:1px 6px;flex:none}
+.wi[aria-pressed="true"] .sw{background:#F27E5E;color:#fff}
+.wi:disabled{opacity:.45;cursor:default}
+.note{font-size:12px;opacity:.75;margin-top:6px}
+.go{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:480px){.whatifs{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Puff's monthly bill</h1><p>Find the 3 lines that surprise people, then play with what-ifs.</p></div></div>
+  <div class="step"><span class="tag" id="stepTag">Step 1 of 2</span><span id="stepTxt"></span></div>
+  <div class="card">
+    <div class="lines" id="lines"></div>
+    <div class="total" id="total"></div>
+    <div class="whatifs hide" id="whatifs" style="margin-top:8px"></div>
+    <div class="go" id="go"></div>
+    <div class="note">Rough public On-Demand prices, us-east-1, 730 h a month, low traffic. Check calculator.aws for today's numbers.</div>
+  </div>
+  <div id="fb" class="fb" role="status" aria-live="polite"></div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(msg,kind){const f=$('#fb');f.className='fb '+(kind||'');f.textContent=msg}
+$('#heroEm').innerHTML=em('Receipt','🧾');
+
+const SURPRISE=['nat','alb','ip'];
+const WI=[
+ {k:'four',l:'4 API servers, not 2',m:'+$17: doubling the servers (and their disks). Servers were never the big line.'},
+ {k:'small',l:'Database one size up',m:'+$13: db.t3.small costs about twice the hourly price of db.t3.micro.'},
+ {k:'idle',l:'Test stack left running',m:'+$37: a forgotten puff-cfn NAT gateway and its IP bill all month, zero visitors.'},
+ {k:'data',l:'500 GB via the NAT',m:'+$23: ~$0.045 per GB through the NAT. Your S3 gateway endpoint makes S3 traffic free.'},
+ {k:'nonat',l:'No NAT gateway',m:'-$37: cheaper, but private servers lose their way out to the internet (updates, image pulls).'}
+];
+let phase,picked,score,w,tried;
+
+function bill(){
+  const L=[
+   {k:'ec2',n:'API servers (EC2 t3.micro × '+(w.four?4:2)+')',p:w.four?30:15},
+   {k:'ebs',n:'Server disks (EBS 8 GB × '+(w.four?4:2)+')',p:w.four?4:2},
+   {k:'rds',n:'Database (RDS '+(w.small?'db.t3.small':'db.t3.micro')+')',p:w.small?29:16},
+   {k:'alb',n:'Load balancer (ALB)',p:22},
+   {k:'nat',n:'NAT gateway'+(w.data&&!w.nonat?' + 500 GB':''),p:w.nonat?0:33+(w.data?22.5:0)},
+   {k:'ip',n:'Public IPv4 × '+(w.nonat?2:3),p:w.nonat?7.3:11},
+   {k:'s3',n:'S3 + CloudFront',p:1},
+   {k:'cw',n:'Alarms, SNS, Lambda',p:.4}
+  ];
+  if(w.idle)L.push({k:'idle',n:'Forgotten test stack (NAT + IP)',p:37,x:1});
+  return L;
+}
+function money(p){return p===0?'$0':p<1?'<$1':'~$'+Math.round(p)}
+function draw(){
+  const L=bill(),max=Math.max(...L.map(l=>l.p)),tot=L.reduce((a,l)=>a+l.p,0),hidden=phase==='pick';
+  $('#lines').innerHTML=L.map(l=>{
+    let cls='line'+(l.x?' extra':'');
+    if(phase==='reveal'&&picked.includes(l.k))cls+=SURPRISE.includes(l.k)?' right':' wrong';
+    const mark=phase==='reveal'&&picked.includes(l.k)?(SURPRISE.includes(l.k)?'✓ ':'✗ '):'';
+    return '<button class="'+cls+'" data-k="'+l.k+'" aria-pressed="'+(picked.includes(l.k))+'"'+(phase!=='pick'?' disabled':'')+'><span class="bar" style="width:'+(hidden?0:Math.round(l.p/max*100))+'%"></span><span class="nm">'+mark+l.n+'</span><span class="pr">'+(hidden?'$ ?':money(l.p))+'</span></button>';
+  }).join('');
+  $('#total').innerHTML='<span>Total per month</span><span>'+(hidden?'~$100':'~$'+Math.round(tot))+'</span>';
+}
+function start(){
+  phase='pick';picked=[];score=0;w={};tried={};
+  $('#end').classList.add('hide');$('#fb').classList.remove('hide');$('#whatifs').classList.add('hide');
+  $('#stepTag').textContent='Step 1 of 2';
+  $('#stepTxt').textContent='Tap the 3 lines that make up about two thirds of the bill.';
+  $('#go').innerHTML='<button class="btn" id="check" disabled>Check my 3</button>';
+  $('#check').onclick=check;
+  draw();say('Prices are hidden. Pick 3 lines.');
+}
+$('#lines').addEventListener('click',e=>{
+  const b=e.target.closest('.line');if(!b||phase!=='pick')return;
+  const k=b.dataset.k;
+  if(picked.includes(k))picked=picked.filter(x=>x!==k);
+  else if(picked.length<3)picked.push(k);
+  else{say('You already picked 3. Tap one again to unpick it.');return}
+  draw();$('#check').disabled=picked.length!==3;
+  say(picked.length+' of 3 picked.');
+});
+function check(){
+  phase='reveal';score=picked.filter(k=>SURPRISE.includes(k)).length;draw();
+  say((score===3?'✓ Yes! ':'✗ '+score+' of 3. ')+'NAT gateway, load balancer and public IPs: ~$66 of ~$100. The two API servers are only ~$15.',score===3?'ok':'bad');
+  $('#go').innerHTML='<button class="btn" id="next">Now try what-ifs</button>';
+  $('#next').onclick=whatifs;$('#next').focus({preventScroll:true});
+}
+function drawWi(){
+  $('#whatifs').innerHTML=WI.map(x=>'<button class="wi" data-k="'+x.k+'" aria-pressed="'+!!w[x.k]+'"'+(x.k==='data'&&w.nonat?' disabled':'')+'>'+(tried[x.k]?'✓ ':'')+x.l+'<span class="sw">'+(w[x.k]?'ON':'OFF')+'</span></button>').join('');
+}
+function whatifs(){
+  phase='play';picked=[];draw();
+  $('#stepTag').textContent='Step 2 of 2';
+  $('#stepTxt').textContent='Flip every what-if once and watch the total.';
+  $('#whatifs').classList.remove('hide');drawWi();
+  $('#go').innerHTML='<button class="btn" id="fin" disabled>Finish</button>';
+  $('#fin').onclick=end;
+  say('0 of 5 what-ifs tried.');
+}
+$('#whatifs').addEventListener('click',e=>{
+  const b=e.target.closest('.wi');if(!b||b.disabled)return;
+  const k=b.dataset.k,x=WI.find(i=>i.k===k);
+  w[k]=!w[k];if(k==='nonat'&&w.nonat)w.data=false;
+  if(w[k])tried[k]=1;
+  draw();drawWi();
+  const n=Object.keys(tried).length;
+  say(w[k]?'✓ '+x.m+' ('+n+' of 5 tried)':'Back off. Total ~$'+Math.round(bill().reduce((a,l)=>a+l.p,0))+'.',w[k]?'ok':'');
+  $('#fin').disabled=n<5;
+  const nb=$('#whatifs [data-k="'+k+'"]');if(nb)nb.focus({preventScroll:true});
+});
+function end(){
+  $('#fb').classList.add('hide');
+  const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em(score===3?'Money with wings':'Thinking face',score===3?'💸':'🤔')+'<h2>Bill read!</h2><div class="score">Score: '+score+' / 3 surprises found</div><p class="take">Idle network pieces cost more than your servers. Delete what you don\'t use.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();e.scrollIntoView({block:'nearest'});
+}
+start();
+</script>
+</body>
+</html>

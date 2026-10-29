@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Read the change set</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.mission{margin-top:10px;font-weight:800;display:flex;gap:8px;align-items:center}
+.mission .tag{background:#FFE3D8;color:#A2442A;border-radius:10px;padding:2px 8px;font-size:12px;flex:none}
+.grid{display:grid;grid-template-columns:1.1fr 1fr;gap:10px;margin-top:8px}
+.toggles{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tg{background:#FFFAF7;border:2px solid #F2DDD3;border-radius:12px;padding:0 10px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:4px}
+.tg[aria-pressed="true"]{background:#FFE3D8;border-color:#F27E5E}
+.tg:disabled{opacity:.45;cursor:default}
+pre{margin:0;background:#2E211C;color:#FCE9DF;border-radius:12px;padding:8px 0;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto}
+pre span{display:block;padding:0 10px;white-space:pre}
+pre .add{background:rgba(59,170,110,.35)}
+pre .add::before{content:"+ ";color:#8FE3B0}
+pre .del{background:rgba(229,83,75,.35);text-decoration:line-through}
+pre .del::before{content:"- ";color:#FF9C95}
+pre .mod{background:rgba(242,190,94,.35)}
+pre .mod::before{content:"~ ";color:#FFD58A}
+pre .same::before{content:"  "}
+h3{margin:0 0 6px;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #F2DDD3}
+th{font-size:12px;opacity:.75}
+.empty{opacity:.6;font-style:italic;font-size:13px;padding:6px 0}
+.preds{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px;margin-top:6px}
+.pred{background:#FFFAF7;border:2px solid #F2DDD3;border-radius:12px;font-weight:700;font-size:14px}
+.pred:hover:not(:disabled){border-color:#F27E5E}
+.pred.right{background:#DDF3E6;border-color:#3BAA6E}
+.pred.wrong{background:#FBDAD7;border-color:#E5534B}
+.pred:disabled{cursor:default}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.status{margin-top:8px;font:700 13px ui-monospace,Menlo,monospace;background:#FFF0E8;border-radius:10px;padding:6px 10px}
+.count{font-size:13px;opacity:.75}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Read the change set</h1><p>Toggle a line in the template, predict what CloudFormation will do, then deploy.</p></div></div>
+  <div class="mission"><span class="tag" id="round"></span><span id="mission"></span></div>
+  <div class="grid">
+    <div class="card">
+      <div class="toggles" id="toggles"></div>
+      <pre id="tpl" aria-label="Template puff-network.yaml"></pre>
+    </div>
+    <div class="card">
+      <h3>Change set</h3>
+      <div id="cs"></div>
+      <div id="predBox" class="hide"><div style="font-weight:700;margin-top:8px">What will the change set say?</div><div class="preds" id="preds"></div></div>
+      <div class="acts" id="acts"></div>
+      <div class="status" id="status">puff-network: CREATE_COMPLETE</div>
+    </div>
+  </div>
+  <div id="fb" class="fb" role="status" aria-live="polite"></div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(msg,kind){const f=$('#fb');f.className='fb '+(kind||'');f.textContent=msg}
+$('#heroEm').innerHTML=em('Scroll','📜');
+
+const TOGGLES=[
+ {k:'subnet',l:'＋ Subnet B'},
+ {k:'tag',l:'＋ Project tag'},
+ {k:'cidr',l:'✎ VPC CIDR'},
+ {k:'db',l:'🗑 DbSecurityGroup'}
+];
+const ROUNDS=[
+ {k:'subnet',m:'Give Puff a second public subnet.',a:'Add',why:'A new logical ID in the template means a new resource: Add.'},
+ {k:'tag',m:'Add a Project tag to the VPC (for the bill).',a:'Modify',why:'A tag is an in-place change: Modify, Replacement False.'},
+ {k:'cidr',m:'Change the VPC CidrBlock to 10.1.0.0/16.',a:'Replace',why:'A new CidrBlock means a brand-new VPC: Modify with Replacement True.'},
+ {k:'db',m:'Remove DbSecurityGroup from the template.',a:'Remove',why:'Gone from the template means gone from AWS: Remove.'},
+ {k:null,m:'Deploy the exact same file again.',a:'None',why:'Declarative and idempotent: same file, nothing to do. "No changes to deploy".'}
+];
+const PREDS=[['Add','Add'],['Modify','Modify'],['Replace','Replace'],['Remove','Remove'],['None','No changes']];
+let r,score,deployed,draft,phase;
+
+function lines(s,base){
+  const L=[];
+  const st=(on,was)=>on&&!was?'add':!on&&was?'del':'same';
+  L.push(['same','Resources:']);
+  L.push(['same','  PuffVpc:']);
+  L.push(['same','    Type: AWS::EC2::VPC']);
+  L.push(['same','    Properties:']);
+  L.push([s.cidr!==base.cidr?'mod':'same','      CidrBlock: '+(s.cidr?'10.1.0.0/16':'10.0.0.0/16')]);
+  L.push(['same','      Tags:']);
+  L.push(['same','        - Key: Name']);
+  L.push(['same','          Value: puff-vpc']);
+  if(s.tag||base.tag){const c=st(s.tag,base.tag);L.push([c,'        - Key: Project']);L.push([c,'          Value: puff'])}
+  L.push(['same','  PublicSubnetA:']);
+  L.push(['same','    Type: AWS::EC2::Subnet']);
+  L.push(['same','    Properties:']);
+  L.push(['same','      VpcId: !Ref PuffVpc']);
+  L.push(['same','      CidrBlock: 10.0.1.0/24']);
+  if(s.subnet||base.subnet){const c=st(s.subnet,base.subnet);
+    ['  PublicSubnetB:','    Type: AWS::EC2::Subnet','    Properties:','      VpcId: !Ref PuffVpc','      CidrBlock: 10.0.2.0/24'].forEach(x=>L.push([c,x]))}
+  if(s.db||base.db){const c=st(s.db,base.db);
+    ['  DbSecurityGroup:','    Type: AWS::EC2::SecurityGroup','    Properties:','      GroupDescription: Puff database'].forEach(x=>L.push([c,x]))}
+  return L;
+}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function drawTpl(){
+  $('#tpl').innerHTML=lines(draft,deployed).map(([c,t])=>'<span class="'+c+'">'+esc(t)+'</span>').join('');
+}
+function changes(){
+  const rows=[];
+  if(draft.subnet&&!deployed.subnet)rows.push(['Add','PublicSubnetB','']);
+  if(draft.cidr!==deployed.cidr)rows.push(['Modify','PuffVpc','True']);
+  else if(draft.tag!==deployed.tag)rows.push(['Modify','PuffVpc','False']);
+  if(!draft.db&&deployed.db)rows.push(['Remove','DbSecurityGroup','']);
+  return rows;
+}
+function drawCs(show){
+  if(!show){$('#cs').innerHTML='<div class="empty">Hidden until you predict.</div>';return}
+  const rows=changes();
+  $('#cs').innerHTML=rows.length?'<table><tr><th>Action</th><th>Resource</th><th>Replacement</th></tr>'+rows.map(x=>'<tr><td><b>'+x[0]+'</b></td><td>'+x[1]+'</td><td>'+(x[2]||'-')+'</td></tr>').join('')+'</table>':'<div class="empty">No changes to deploy.</div>';
+}
+function drawToggles(){
+  $('#toggles').innerHTML=TOGGLES.map(t=>{
+    const on=t.k==='db'?!draft.db:draft[t.k];
+    const used=t.k==='db'?!deployed.db:deployed[t.k];
+    const dis=phase!=='toggle'||used;
+    return '<button class="tg" data-k="'+t.k+'" aria-pressed="'+on+'"'+(dis?' disabled':'')+'>'+t.l+'</button>';
+  }).join('');
+}
+function start(){
+  r=0;score=0;deployed={subnet:false,tag:false,cidr:false,db:true};
+  $('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  $('#status').textContent='puff-network: CREATE_COMPLETE';
+  round();
+}
+function round(){
+  const R=ROUNDS[r];draft={...deployed};
+  $('#round').textContent='Change '+(r+1)+' of '+ROUNDS.length;
+  $('#mission').textContent=R.m;
+  $('#acts').innerHTML='';
+  drawCs(false);
+  if(R.k){phase='toggle';$('#predBox').classList.add('hide');say('Tap the toggle that does this.')}
+  else{phase='predict';showPreds();say('No toggle this time. Predict the change set.')}
+  drawToggles();drawTpl();
+}
+function showPreds(){
+  $('#predBox').classList.remove('hide');
+  $('#preds').innerHTML=PREDS.map(p=>'<button class="pred" data-a="'+p[0]+'">'+p[1]+'</button>').join('');
+}
+$('#toggles').addEventListener('click',e=>{
+  const b=e.target.closest('.tg');if(!b||b.disabled||phase!=='toggle')return;
+  const k=b.dataset.k,R=ROUNDS[r];
+  if(k!==R.k){
+    const what={subnet:'adds a subnet',tag:'adds a tag',cidr:'changes the VPC address range',db:'removes a security group'}[k];
+    say('✗ That toggle '+what+'. Mission: '+R.m,'bad');return;
+  }
+  if(k==='db')draft.db=false;else draft[k]=true;
+  phase='predict';drawToggles();drawTpl();showPreds();
+  say('Template edited. Now predict the change set.');
+  $('#preds .pred').focus({preventScroll:true});
+});
+$('#preds').addEventListener('click',e=>{
+  const b=e.target.closest('.pred');if(!b||phase!=='predict')return;
+  const R=ROUNDS[r],ok=b.dataset.a===R.a;phase='read';
+  if(ok)score++;
+  $('#preds').querySelectorAll('.pred').forEach(x=>{x.disabled=true;
+    if(x.dataset.a===R.a){x.classList.add('right');x.textContent='✓ '+x.textContent}
+    else if(x===b){x.classList.add('wrong');x.textContent='✗ '+x.textContent}});
+  drawCs(true);
+  say((ok?'✓ Yes! ':'✗ Not quite. ')+R.why,ok?'ok':'bad');
+  if(!R.k){$('#acts').innerHTML='<button class="btn" id="exec">Deploy</button>'}
+  else if(R.a==='Replace'){$('#acts').innerHTML='<button class="btn ghost" id="exec">Execute</button><button class="btn" id="cancel">Cancel it</button>'}
+  else $('#acts').innerHTML='<button class="btn" id="exec">Execute change set</button>';
+  $('#exec').onclick=()=>finishRound('exec');
+  if($('#cancel'))$('#cancel').onclick=()=>finishRound('cancel');
+});
+function finishRound(how){
+  const R=ROUNDS[r];
+  if(!R.k){$('#status').textContent='No changes to deploy';say('✓ Nothing happened, and that is the point.','ok')}
+  else if(how==='cancel'){draft={...deployed};$('#status').textContent='Change set deleted, nothing touched';say('✓ Good call. You read Replacement True before executing, so no VPC got rebuilt.','ok')}
+  else{deployed={...draft};$('#status').textContent='puff-network: UPDATE_COMPLETE';
+    say(R.a==='Replace'?'✓ Done, but that was a brand-new VPC. On a database, it would be a new, empty one.':'✓ Deployed.',R.a==='Replace'?'bad':'ok')}
+  phase='done';$('#acts').innerHTML='<button class="btn" id="next">'+(r<ROUNDS.length-1?'Next change':'See my score')+'</button>';
+  drawToggles();drawTpl();
+  $('#next').focus({preventScroll:true});
+  $('#next').onclick=()=>{r++;r<ROUNDS.length?round():end()};
+}
+function end(){
+  $('#fb').classList.add('hide');
+  const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em(score>=4?'Party popper':'Thinking face',score>=4?'🎉':'🤔')+'<h2>Stack updated!</h2><div class="score">Score: '+score+' / '+ROUNDS.length+' predictions right</div><p class="take">Read the Replacement column before you execute, every time.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus();
+  e.scrollIntoView({block:'nearest'});
+}
+start();
+</script>
+</body>
+</html>
