@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pick for Puff: VM, container or serverless</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.job{margin-top:10px;display:flex;gap:12px;align-items:center}
+.job .em{width:56px;height:56px}
+.job .tag{font-size:12px;font-weight:800;color:#C4583B;text-transform:uppercase;letter-spacing:.04em}
+.job p{margin:2px 0 0;font-size:18px;font-weight:800;line-height:1.25}
+.picks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.pick{border:0;background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1),inset 0 0 0 2px #F6DCCF;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:110px}
+.pick .em{width:44px;height:44px}
+.pick b{font-size:16px}
+.pick small{font-size:12px;opacity:.8;line-height:1.2;text-align:center}
+.pick:hover:not(:disabled){box-shadow:0 6px 16px rgba(242,126,94,.35),inset 0 0 0 3px #F27E5E}
+.pick:disabled{cursor:default}
+.pick.right{box-shadow:inset 0 0 0 3px #3BAA6E;background:#E6F6EC}
+.pick.wrong{box-shadow:inset 0 0 0 3px #E5534B;background:#FDECEA}
+.pick .mk{font-weight:900;font-size:18px;min-height:22px}
+.pick.right .mk{color:#237A4B}.pick.wrong .mk{color:#C23B33}
+.dots{display:flex;gap:7px;justify-content:center;margin-top:10px}
+.dot{width:12px;height:12px;border-radius:50%;background:#F2DDD3}
+.dot.on{background:#F27E5E;transform:scale(1.2)}.dot.ok{background:#3BAA6E}.dot.no{background:#E5534B}
+.nx{text-align:center;margin-top:8px}
+.sum{text-align:left;display:grid;gap:4px;margin:6px auto 10px;max-width:480px;font-size:14px}
+.sum div{padding:5px 10px;border-radius:10px;background:#FFF7F2;font-weight:600}
+@media (max-width:420px){.pick small{display:none}.pick{min-height:84px}.job p{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Pick for Puff</h1><p>5 workloads. Pick VM, container or serverless for each one.</p></div></div>
+  <div class="card" id="game" style="margin-top:10px">
+    <div class="job"><span id="jEm"></span><div><div class="tag" id="jTag"></div><p id="jTxt"></p></div></div>
+    <div class="picks" id="picks"></div>
+  </div>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Read the workload, then pick.</div>
+  <div class="nx"><button class="btn hide" id="next">Next</button></div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+$('#heroEm').innerHTML=em('Toolbox','🧰');
+
+const OPTS=[
+ {k:'vm',t:'VM',s:'EC2 + Auto Scaling',e:['Desktop computer','🖥️']},
+ {k:'ct',t:'Container',s:'ECS, Fargate, EKS',e:['Package','📦']},
+ {k:'sl',t:'Serverless',s:'Lambda',e:['High voltage','⚡']}
+];
+const JOBS=[
+ {e:['Graduation cap','🎓'],t:'The board app’s API during the course: steady traffic from 52 students for 4 hours.',ok:['vm','ct'],
+  y:'Busy all day is where VMs are cheapest, and containers come close. It’s what Puff runs today.',
+  n:'Busy all day often makes Lambda the most expensive, and 52 students at once means many database connections on a db.t3.micro.'},
+ {e:['Snail','🐌'],t:'The same API, used once a month by 3 people.',ok:['sl'],
+  y:'Idle 29 days a month: with Lambda that costs zero, servers would bill you every hour.',
+  n:'A VM or container runs (and bills) all month for 3 visits. Serverless costs zero when nobody uses it.'},
+ {e:['Framed picture','🖼️'],t:'A job that resizes each uploaded image.',ok:['sl'],
+  y:'An S3 upload triggers a function, exactly like your puff-upload-notifier. Nothing runs between uploads.',
+  n:'Rare work started by an event is Lambda’s sweet spot: an S3 upload triggers it, like puff-upload-notifier.'},
+ {e:['Crescent moon','🌙'],t:'A nightly export of all messages to S3 that takes 2 minutes.',ok:['sl'],
+  y:'2 minutes a night fits well under Lambda’s 15 minute limit, and you pay for 2 minutes, not 24 hours.',
+  n:'A server for 2 minutes of work a night sits idle the rest of the day. 2 minutes fits under Lambda’s 15 minute max.'},
+ {e:['Satellite antenna','📡'],t:'A WebSocket server pushing new messages live to every open browser.',ok:['vm','ct'],
+  y:'Open connections all day need something that stays up: a VM or a container.',
+  n:'Lambda runs 15 minutes at most and doesn’t keep connections open. Open connections need a VM or a container.'}
+];
+let i,score,res,locked;
+function start(){i=0;score=0;res=[];$('#end').classList.add('hide');$('#game').classList.remove('hide');$('#fb').classList.remove('hide');$('#dots').classList.remove('hide');show()}
+function dots(){$('#dots').innerHTML=JOBS.map((_,k)=>'<span class="dot '+(res[k]===undefined?(k===i?'on':''):(res[k]?'ok':'no'))+'"></span>').join('')}
+function show(){
+  locked=false;dots();const j=JOBS[i];
+  $('#jEm').innerHTML=em(j.e[0],j.e[1]);$('#jTag').textContent='Workload '+(i+1)+' of '+JOBS.length;$('#jTxt').textContent=j.t;
+  $('#picks').innerHTML=OPTS.map(o=>'<button class="pick" data-k="'+o.k+'">'+em(o.e[0],o.e[1])+'<b>'+o.t+'</b><small>'+o.s+'</small><span class="mk"></span></button>').join('');
+  $('#picks').querySelectorAll('.pick').forEach(b=>b.onclick=()=>pick(b.dataset.k));
+  say($('#fb'),'Read the workload, then pick.');$('#next').classList.add('hide');
+}
+function pick(k){
+  if(locked)return;locked=true;
+  const j=JOBS[i],ok=j.ok.includes(k);if(ok)score++;res[i]=ok;dots();
+  $('#picks').querySelectorAll('.pick').forEach(b=>{
+    b.disabled=true;
+    if(j.ok.includes(b.dataset.k)){b.classList.add('right');b.querySelector('.mk').textContent='✓'}
+    else if(b.dataset.k===k){b.classList.add('wrong');b.querySelector('.mk').textContent='✗'}
+  });
+  say($('#fb'),ok?'✓ Yes! '+j.y:'✗ Not this one. '+j.n,ok?'ok':'bad');
+  const n=$('#next');n.textContent=i<JOBS.length-1?'Next':'See my score';n.classList.remove('hide');n.focus({preventScroll:true});
+}
+$('#next').onclick=()=>{i++;i<JOBS.length?show():finish()};
+function finish(){
+  $('#game').classList.add('hide');$('#fb').classList.add('hide');$('#next').classList.add('hide');$('#dots').classList.add('hide');
+  const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em(score===5?'Trophy':'Party popper',score===5?'🏆':'🎉')+'<h2>Workloads placed!</h2><div class="score">Score: '+score+' / 5</div>'
+   +'<div class="sum"><div>🖥️ 📦 Steady, always on, open connections: VM or container</div><div>⚡ Rare, spiky or started by an event, under 15 minutes: serverless</div></div>'
+   +'<p class="take">Spiky or rare work leans serverless, steady work leans VMs or containers.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=start;$('#again').focus({preventScroll:true});
+}
+start();
+</script>
+</body>
+</html>

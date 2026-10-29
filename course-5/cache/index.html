@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Corner shop cache: CloudFront in front of S3</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 14px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.ttl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ttl b{font-size:14px;margin-right:2px}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg button{border:0;border-radius:12px;background:#fff;padding:0 12px;font-weight:700;box-shadow:inset 0 0 0 2px #F0CDBE}
+.seg button[aria-pressed=true]{background:#3A2A24;color:#fff;box-shadow:none}
+.flow{display:grid;grid-template-columns:1fr auto 1.3fr auto 1fr;gap:6px;align-items:stretch;margin-top:8px}
+.box{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.box .em{width:38px;height:38px}
+.box b{font-size:14px}
+.box small{font-size:12px;line-height:1.25}
+.arrow{align-self:center;font-weight:900;font-size:20px;color:#DF5F3F}
+.ver{display:inline-block;border-radius:8px;padding:1px 8px;font-weight:800;font-size:13px;margin-top:2px}
+.v1{background:#FFE3D6}.v2{background:#DDF3E6}.vn{background:#EEE}
+.flash{animation:fl .4s}
+@keyframes fl{50%{transform:scale(1.06)}}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.acts .btn{font-size:14px;line-height:1.15;padding:4px 8px}
+.bottom{display:grid;grid-template-columns:1.3fr 1fr;gap:8px;margin-top:8px}
+.bottom>*{min-width:0}
+.log{font:12px/1.5 ui-monospace,Menlo,monospace;min-height:96px;padding:8px 10px}
+.log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log .h{color:#237A4B}.log .m{color:#8A5A10}.log .s{color:#C23B33;font-weight:700}
+.mis{list-style:none;margin:0;padding:8px 10px;font-size:13px;display:grid;gap:3px}
+.mis li{font-weight:600}
+.mis li.done{color:#237A4B}
+.cnt{font-size:13px;margin-top:4px;text-align:center;font-weight:700}
+@media (max-width:560px){.flow{grid-template-columns:1fr;gap:4px}.arrow{transform:rotate(90deg);justify-self:center}.box{flex-direction:row;text-align:left;gap:8px;padding:6px 10px}.box .em{width:32px;height:32px}.acts{grid-template-columns:1fr 1fr}.bottom{grid-template-columns:1fr}.log{font-size:11px;padding:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>Corner shop cache</h1><p>CloudFront sits in front of your S3 bucket. Send traffic, deploy a fix, catch the stale page, then invalidate.</p></div></div>
+
+  <div class="ttl"><b id="ttlL">TTL:</b><div class="seg" role="group" aria-labelledby="ttlL" id="ttlSeg"></div></div>
+
+  <div class="flow" aria-hidden="false">
+    <div class="box"><span id="eU"></span><div><b>Visitors</b><br><small>open the CloudFront URL</small></div></div>
+    <div class="arrow">→</div>
+    <div class="box" id="edge"><span id="eE"></span><div><b>CloudFront edge</b><br><small id="edgeTxt"></small></div></div>
+    <div class="arrow">→</div>
+    <div class="box" id="origin"><span id="eO"></span><div><b>S3 bucket (origin)</b><br><small id="orTxt"></small></div></div>
+  </div>
+
+  <div class="acts">
+    <button class="btn" id="send">Send 10 requests</button>
+    <button class="btn ghost" id="deploy">Upload a fixed index.html</button>
+    <button class="btn ghost" id="inval">Invalidate /index.html</button>
+    <button class="btn ghost" id="wait">⏩ Wait 1 hour</button>
+  </div>
+
+  <div class="bottom">
+    <div class="card log" id="log" aria-label="Response headers"></div>
+    <div class="card" style="padding:0"><ul class="mis" id="mis" aria-label="Missions"></ul><div class="cnt" id="cnt"></div></div>
+  </div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Pick a TTL (24 hours is CloudFront's default), then send requests.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+$('#heroEm').innerHTML=em('Convenience store','🏪');
+$('#eU').innerHTML=em('Busts in silhouette','👥');$('#eE').innerHTML=em('Globe with meridians','🌐');$('#eO').innerHTML=em('Bucket','🪣');
+
+const TTLS=[[0,'Off'],[60,'1 minute'],[3600,'1 hour'],[86400,'24 hours']];
+const MIS=[['hit','Get a cache Hit'],['deploy','Upload a fixed index.html (v2)'],['stale','Catch CloudFront serving the old page'],['fix','Invalidate, then see the fix through CloudFront']];
+let S,busy=false;
+function init(){
+  S={ttl:86400,t:10*3600,origin:1,edge:null,hits:0,miss:0,stale:0,log:[],done:{},inv:false};
+  busy=false;$('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  say($('#fb'),'Pick a TTL (24 hours is CloudFront’s default), then send requests.');
+  render();
+}
+function clock(t){const h=Math.floor(t/3600)%24,m=Math.floor(t%3600/60),s=t%60;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
+function vtag(v){return '<span class="ver '+(v?(v===1?'v1':'v2'):'vn')+'">'+(v?'v'+v:'empty')+'</span>'}
+function fresh(){return S.edge&&S.ttl>0&&S.t-S.edge.at<S.ttl}
+function age(){const a=S.t-S.edge.at;return a<120?a+' s':a<7200?Math.round(a/60)+' min':Math.round(a/3600)+' h'}
+function render(){
+  $('#ttlSeg').innerHTML=TTLS.map(x=>'<button aria-pressed="'+(S.ttl===x[0])+'" data-t="'+x[0]+'">'+x[1]+'</button>').join('');
+  $('#ttlSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.ttl=+b.dataset.t;render();say($('#fb'),S.ttl?'TTL set to '+b.textContent+': each edge copy counts as fresh that long.':'TTL off: nothing is cached, every request goes to S3.')});
+  $('#edgeTxt').innerHTML=S.edge?'Copy '+vtag(S.edge.v)+' age '+age()+(fresh()?' · fresh':' · expired'):'Copy '+vtag(0);
+  $('#orTxt').innerHTML='Latest '+vtag(S.origin)+'<br>The S3 website URL always shows this';
+  $('#log').innerHTML='<div><b>'+clock(S.t)+'</b> response headers</div>'+(S.log.length?S.log.slice(-5).map(l=>'<div class="'+l.c+'">'+l.t+'</div>').join(''):'<div>No requests yet.</div>');
+  $('#mis').innerHTML=MIS.map(m=>'<li class="'+(S.done[m[0]]?'done':'')+'">'+(S.done[m[0]]?'✓ ':'☐ ')+m[1]+'</li>').join('');
+  const tot=S.hits+S.miss;
+  $('#cnt').textContent='Hits '+S.hits+' · Misses '+S.miss+(tot?' · Hit ratio '+Math.round(S.hits*100/tot)+'%':'')+' · Stale '+S.stale;
+  ['send','deploy','inval','wait'].forEach(id=>$('#'+id).disabled=busy);
+}
+function request(){
+  let v,c,t;
+  if(fresh()){v=S.edge.v;S.hits++;c='h';t='X-Cache: Hit from cloudfront';S.done.hit=1}
+  else{v=S.origin;S.miss++;c='m';t='X-Cache: Miss from cloudfront';if(S.ttl>0)S.edge={v,at:S.t};else S.edge=null;flash('#origin')}
+  flash('#edge');
+  let st=v<S.origin;
+  if(st){S.stale++;c='s';t+=' · v'+v+' ✗ old page';S.done.stale=1}
+  else t+=' · v'+v;
+  if(S.inv&&v===S.origin&&S.origin>1)S.done.fix=1;
+  S.log.push({c,t:clock(S.t).slice(0,8)+' '+t});
+  return {c,v,st};
+}
+function flash(id){const e=$(id);e.classList.remove('flash');void e.offsetWidth;e.classList.add('flash')}
+$('#send').onclick=()=>{
+  if(busy)return;busy=true;let k=0,st=0;render();
+  const go=()=>{
+    const r=request();if(r.st)st++;
+    S.t+=30;k++;render();
+    if(k<10)setTimeout(go,140);
+    else{busy=false;render();
+      if(st)say($('#fb'),'✗ '+st+' visitors got the old page: the edge copy is still fresh for CloudFront, it never asks S3.','bad');
+      else if(S.done.deploy&&!S.done.stale)say($('#fb'),'No old page this time: the copy had expired or TTL is short. Set TTL to 24 hours, send, upload again, send.','');
+      else if(!S.ttl)say($('#fb'),'Every request was a Miss: with TTL off, S3 answers everything and pages are slower.','');
+      else say($('#fb'),'✓ First request is a Miss, then the edge answers from its copy in milliseconds.','ok');
+      check();}
+  };go();
+};
+$('#deploy').onclick=()=>{
+  if(S.origin>=2){S.origin++;}else S.origin=2;
+  S.done.deploy=1;S.inv=false;S.log.push({c:'',t:clock(S.t).slice(0,8)+' aws s3 cp index.html → v'+S.origin});
+  render();flash('#origin');
+  say($('#fb'),S.edge&&fresh()?'S3 has v'+S.origin+' now. The edge still holds v'+S.edge.v+'. Send requests and look at the version.':'S3 has v'+S.origin+' now. Send requests and look at the version.');
+  check();
+};
+$('#inval').onclick=()=>{
+  S.log.push({c:'',t:clock(S.t).slice(0,8)+' create-invalidation /index.html'});
+  const had=!!S.edge;S.edge=null;if(S.done.deploy)S.inv=true;render();flash('#edge');
+  say($('#fb'),had?'Edge copy thrown away. The next request is a Miss and fetches the latest from S3.':'Nothing to throw away: the edge has no copy.');
+};
+$('#wait').onclick=()=>{
+  S.t+=3600;render();
+  say($('#fb'),S.edge?(fresh()?'One hour later: the copy is still fresh, TTL is '+TTLS.find(x=>x[0]===S.ttl)[1]+'.':'One hour later: the copy has expired, the next request goes back to S3.'):'One hour later.');
+};
+function check(){
+  if(MIS.every(m=>S.done[m[0]])&&!busy){
+    setTimeout(()=>{
+      const tot=S.hits+S.miss;
+      $('#fb').classList.add('hide');const e=$('#end');e.classList.remove('hide');
+      e.innerHTML=em('Party popper','🎉')+'<h2>Cache mastered!</h2><div class="score">Score: 4 / 4 missions · hit ratio '+Math.round(S.hits*100/tot)+'% · '+S.stale+' old pages served</div><p class="take">A long TTL spares S3 and speeds pages up, but after a deploy you invalidate (or use versioned file names).</p><button class="btn" id="again">Play again</button>';
+      $('#again').onclick=init;$('#again').focus({preventScroll:true});e.scrollIntoView({block:'nearest'});
+    },300);
+  }
+}
+init();
+</script>
+</body>
+</html>

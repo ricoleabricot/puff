@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The burst: with and without a queue</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.seg{display:flex;gap:4px}
+.seg button{border:0;border-radius:12px;background:#fff;padding:0 12px;font-weight:700;box-shadow:inset 0 0 0 2px #F0CDBE}
+.seg button[aria-pressed=true]{background:#3A2A24;color:#fff;box-shadow:none}
+.seg button:disabled{opacity:.5;cursor:default}
+.ctl .btn{margin-left:auto}
+.flow{display:grid;grid-template-columns:1fr auto 1.6fr auto 1fr;gap:6px;align-items:center;margin-top:8px;padding:10px}
+.node{text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.node .em{width:40px;height:40px}
+.node b{font-size:14px}.node small{font-size:12px;line-height:1.2}
+.arrow{font-weight:900;font-size:20px;color:#DF5F3F}
+.bar{height:30px;border-radius:10px;background:#FFF0E8;box-shadow:inset 0 0 0 2px #F0CDBE;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FFC9B5,#F27E5E);transition:width .12s}
+.bar.direct i{background:linear-gradient(90deg,#F7B1AB,#E5534B)}
+.bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.mid{display:flex;flex-direction:column;gap:3px;text-align:center}
+.mid small{font-size:12px;font-weight:700}
+.down{filter:grayscale(1);opacity:.5}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.stat{background:#fff;border-radius:12px;padding:6px 8px;text-align:center;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.stat small{display:block;font-size:12px;opacity:.8}
+.stat b{font-size:18px}
+.stat.good b{color:#237A4B}.stat.badS b{color:#C23B33}
+.runs{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:13px}
+.runs li{background:#fff;border-radius:10px;padding:4px 8px;font-weight:600}
+.runs li.done{background:#E6F6EC;color:#237A4B}
+table{border-collapse:collapse;margin:6px auto 10px;font-size:14px}
+td,th{padding:4px 8px;border-bottom:1px solid #F6DCCF;text-align:left}
+@media (max-width:540px){.flow{grid-template-columns:1fr auto 1.4fr auto 1fr;padding:8px 6px}.node small{display:none}.stats{grid-template-columns:1fr 1fr}.runs{grid-template-columns:1fr}.ctl .btn{margin-left:0;flex:1 1 100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>The burst</h1><p>1,000 posts hit the API in 10 seconds. The moderation worker handles 20 per second. Try all 4 runs.</p></div></div>
+  <div class="ctl">
+    <div class="seg" role="group" aria-label="Design"><button data-m="direct" aria-pressed="true">Direct call</button><button data-m="queue" aria-pressed="false">SQS queue</button></div>
+    <div class="seg" role="group" aria-label="Worker"><button data-w="up" aria-pressed="true">Worker up</button><button data-w="down" aria-pressed="false">Worker down</button></div>
+    <button class="btn" id="go">Send 1,000 posts</button>
+  </div>
+  <div class="card flow">
+    <div class="node"><span id="eApi"></span><b>API</b><small id="apiTxt">answers the user</small></div>
+    <div class="arrow">→</div>
+    <div class="mid"><small id="midL">Requests waiting on the worker</small><div class="bar" id="bar"><i id="fill"></i><span id="barTxt">0</span></div><small id="clock">0:00</small></div>
+    <div class="arrow">→</div>
+    <div class="node" id="wNode"><span id="eW"></span><b>Worker</b><small>moderation, 20/s</small></div>
+  </div>
+  <div class="stats">
+    <div class="stat good"><small>✓ User got OK</small><b id="sOk">0</b></div>
+    <div class="stat badS"><small>✗ User got an error</small><b id="sErr">0</b></div>
+    <div class="stat"><small>⏳ Waiting</small><b id="sWait">0</b></div>
+    <div class="stat good"><small>🛡️ Moderated</small><b id="sMod">0</b></div>
+  </div>
+  <ul class="runs" id="runs" aria-label="Runs to try"></ul>
+  <div id="fb" class="fb" role="status" aria-live="polite">Pick a design and a worker state, then send the burst.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+$('#heroEm').innerHTML=em('Incoming envelope','📨');$('#eApi').innerHTML=em('Door','🚪');$('#eW').innerHTML=em('Turtle','🐢');
+
+// Game numbers: 100 posts/s for 10 s, worker does 20/s, the API holds 200 open requests, a user gives up after 5 s.
+const RATE=100,BURST=10,WORK=20,SLOTS=200,TIMEOUT=5,RESTART=25;
+const RUNS=[['direct','up','Direct call, worker up'],['direct','down','Direct call, worker down'],['queue','up','SQS queue, worker up'],['queue','down','SQS queue, worker down']];
+let mode='direct',worker='up',busy=false,done={},results={};
+function segs(){
+  document.querySelectorAll('[data-m]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.m===mode);b.disabled=busy});
+  document.querySelectorAll('[data-w]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.w===worker);b.disabled=busy});
+  $('#go').disabled=busy;
+  $('#midL').textContent=mode==='queue'?'SQS queue (messages wait here)':'Requests waiting on the worker';
+  $('#bar').classList.toggle('direct',mode==='direct');
+  $('#apiTxt').textContent=mode==='queue'?'drops the post in the queue, answers at once':'calls the worker, waits for it';
+  $('#wNode').classList.toggle('down',worker==='down');
+  $('#runs').innerHTML=RUNS.map(r=>{const k=r[0]+r[1];return '<li class="'+(done[k]?'done':'')+'">'+(done[k]?'✓ ':'☐ ')+r[2]+'</li>'}).join('');
+}
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;segs()});
+document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{worker=b.dataset.w;segs()});
+function draw(st){
+  const max=mode==='queue'?1000:SLOTS;
+  $('#fill').style.width=Math.min(100,st.wait*100/max)+'%';$('#barTxt').textContent=st.wait+(mode==='direct'?' / '+SLOTS:'');
+  $('#clock').textContent='0:'+String(st.t).padStart(2,'0');
+  const f=n=>n.toLocaleString('en');$('#sOk').textContent=f(st.ok);$('#sErr').textContent=f(st.err);$('#sWait').textContent=f(st.wait);$('#sMod').textContent=f(st.mod);
+  $('#wNode').classList.toggle('down',!st.up);
+}
+$('#go').onclick=()=>{
+  if(busy)return;busy=true;segs();$('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  const m=mode,w=worker;let t=0,open=[],q=0,ok=0,err=0,mod=0,maxWait=0,up=w==='up',sent=0;
+  say($('#fb'),'Sending 1,000 posts…');
+  const tick=()=>{
+    if(!up&&m==='queue'&&t===RESTART){up=true;say($('#fb'),'0:'+RESTART+' the worker is back. The queue starts to drain.','ok')}
+    const arr=t<BURST?RATE:0;sent+=arr;
+    if(m==='direct'){
+      for(let k=0;k<arr;k++){if(open.length>=SLOTS)err++;else open.push(t)}
+      if(up){const n=Math.min(WORK,open.length);for(let k=0;k<n;k++){const a=open.shift();ok++;mod++;maxWait=Math.max(maxWait,t-a)}}
+      const before=open.length;open=open.filter(a=>t-a<TIMEOUT);err+=before-open.length;
+    }else{
+      ok+=arr;q+=arr;
+      if(up){const n=Math.min(WORK,q);q-=n;mod+=n}
+      maxWait=Math.max(maxWait,q/WORK);
+    }
+    const wait=m==='direct'?open.length:q;
+    draw({t,ok,err,wait,mod,up});
+    if(t===3&&m==='direct')say($('#fb'),up?'The API is full: every open request waits on the slow worker.':'The worker is down: every post hangs, then fails.','bad');
+    if(t===3&&m==='queue'&&up)say($('#fb'),'Every user got OK in milliseconds. The queue grows, the worker keeps its pace.','ok');
+    if(t===3&&m==='queue'&&!up)say($('#fb'),'Worker down, but users still get OK: the posts wait in the queue.','ok');
+    t++;
+    const fin=t>=BURST&&wait===0;
+    if(!fin&&t<90)setTimeout(tick,m==='queue'?110:220);
+    else{
+      busy=false;const k=m+w;done[k]=1;results[k]={ok,err,mod,t:t-1};segs();
+      const msg=m==='direct'
+        ?(w==='up'?'✗ '+err+' users got an error. Only '+ok+' posts made it, each user waited for moderation.':'✗ All 1,000 posts failed. Moderation down means nobody can post.')
+        :(w==='up'?'✓ 1,000 OK, 0 errors. Moderation finished at 0:'+String(t-1).padStart(2,'0')+', later than the posts.':'✓ 1,000 OK, 0 errors. The posts waited for the worker, then drained (SQS keeps messages up to 14 days).');
+      say($('#fb'),msg,m==='queue'?'ok':'bad');
+      if(RUNS.every(r=>done[r[0]+r[1]]))setTimeout(finish,900);
+    }
+  };
+  tick();
+};
+function finish(){
+  $('#fb').classList.add('hide');const e=$('#end');e.classList.remove('hide');
+  e.innerHTML=em('Party popper','🎉')+'<h2>All 4 runs done!</h2><div class="score">Score: 4 / 4 runs explored</div>'
+   +'<table><tr><th>Run</th><th>✓ OK</th><th>✗ Errors</th><th>Done at</th></tr>'+RUNS.map(r=>{const x=results[r[0]+r[1]];return '<tr><td>'+r[2]+'</td><td>'+x.ok.toLocaleString('en')+'</td><td>'+x.err.toLocaleString('en')+'</td><td>0:'+String(x.t).padStart(2,'0')+'</td></tr>'}).join('')+'</table>'
+   +'<p class="take">The queue turns a burst into a calm backlog: nobody gets an error, the work happens later.</p><button class="btn" id="again">Play again</button>';
+  $('#again').onclick=()=>{done={};results={};e.classList.add('hide');$('#fb').classList.remove('hide');draw({t:0,ok:0,err:0,wait:0,mod:0,up:worker==='up'});segs();say($('#fb'),'Pick a design and a worker state, then send the burst.')};
+  $('#again').focus({preventScroll:true});e.scrollIntoView({block:'nearest'});
+}
+segs();draw({t:0,ok:0,err:0,wait:0,mod:0,up:true});
+</script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A day on the board app: Auto Scaling</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.hero .em{width:42px;height:42px;flex:none}
+.em{width:28px;height:28px;object-fit:contain;vertical-align:middle;flex:none}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:12px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 20px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.fb.ok{background:#E6F6EC;box-shadow:inset 0 0 0 2px #3BAA6E}
+.fb.bad{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.ok-c{color:#237A4B}.bad-c{color:#C23B33}
+.end{text-align:center;margin-top:10px}
+.end h2{margin:0 0 4px;font-size:22px}
+.end .score{font-size:18px;font-weight:800;margin:4px 0 6px}
+.end .take{font-weight:700;margin:0 0 10px}
+.end .em{width:56px;height:56px}
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.ctl{margin-top:10px;display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px 12px;align-items:end}
+.grp-t{display:block;font-size:13px;font-weight:700;margin-bottom:3px}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:44px;border:0;border-radius:12px;background:#FFF0E8;font-weight:900;font-size:20px;box-shadow:inset 0 0 0 2px #F0CDBE}
+.step button:disabled{opacity:.4;cursor:default}
+.step output{min-width:26px;text-align:center;font-size:20px;font-weight:800}
+input[type=range]{width:100%;height:44px;accent-color:#F27E5E;margin:0}
+.chk{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;min-height:44px;cursor:pointer}
+.chk input{width:22px;height:22px;accent-color:#F27E5E}
+.row2{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.warn{grid-column:1/-1;background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B;border-radius:12px;padding:6px 10px;font-weight:700;color:#8E2A24;font-size:14px}
+.scene{margin-top:8px;padding:10px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.clock{font-size:22px;font-weight:900}
+.fleet{display:flex;flex-wrap:wrap;gap:2px;min-height:30px;justify-content:flex-end}
+.fleet .em{width:26px;height:26px}
+.fleet .pend{opacity:.45}
+svg{width:100%;height:auto;display:block;margin-top:4px}
+.legend{font-size:12px;display:flex;gap:12px;flex-wrap:wrap;opacity:.85}
+.legend i{display:inline-block;width:14px;height:8px;border-radius:3px;margin-right:4px;vertical-align:middle}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.stat{background:#FFF7F2;border-radius:12px;padding:5px 8px;text-align:center}
+.stat small{display:block;font-size:12px;opacity:.75}
+.stat b{font-size:17px}
+.stat.hot{background:#FDECEA;box-shadow:inset 0 0 0 2px #E5534B}
+.res{text-align:left;display:grid;gap:4px;margin:6px auto 10px;max-width:460px}
+.res div{padding:6px 10px;border-radius:10px;font-weight:600}
+.res .y{background:#E6F6EC}.res .n{background:#FDECEA}
+@media (max-width:520px){.ctl{grid-template-columns:1fr 1fr}.ctl .sl{grid-column:1/-1}.stats{grid-template-columns:1fr 1fr}.hero p{font-size:13px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><div><h1>A day on the board app</h1><p>Set min, max and target CPU, then play the day. The rush hits at 9:00.</p></div></div>
+
+  <div class="card ctl" id="ctl">
+    <div><span class="grp-t" id="lMin">Min servers</span><div class="step" role="group" aria-labelledby="lMin"><button data-k="min" data-d="-1" aria-label="Fewer min servers">−</button><output id="vMin" aria-live="polite"></output><button data-k="min" data-d="1" aria-label="More min servers">+</button></div></div>
+    <div><span class="grp-t" id="lMax">Max servers</span><div class="step" role="group" aria-labelledby="lMax"><button data-k="max" data-d="-1" aria-label="Fewer max servers">−</button><output id="vMax" aria-live="polite"></output><button data-k="max" data-d="1" aria-label="More max servers">+</button></div></div>
+    <div class="sl"><label class="grp-t" for="tgt">Target CPU: <span id="vTgt"></span></label><input id="tgt" type="range" min="20" max="90" step="10" value="80"></div>
+    <div id="warn" class="warn hide" role="alert"></div>
+    <div class="row2">
+      <label class="chk"><input type="checkbox" id="warm"> Scheduled: run max servers from 8:45 to 10:00</label>
+      <button class="btn" id="play">▶ Play the day</button>
+    </div>
+  </div>
+
+  <div class="card scene">
+    <div class="top"><span class="clock" id="clock">8:00</span><div class="fleet" id="fleet" aria-label="Servers"></div></div>
+    <svg id="chart" viewBox="0 0 600 120" role="img" aria-label="Traffic and servers over the day"></svg>
+    <div class="legend"><span><i style="background:#FFC9B5"></i>Traffic</span><span><i style="background:#3A2A24"></i>Servers running</span><span>8:00 → 18:00</span></div>
+    <div class="stats">
+      <div class="stat" id="sCpu"><small>Avg CPU</small><b>0%</b></div>
+      <div class="stat" id="sLat"><small>Page time</small><b>0 ms</b></div>
+      <div class="stat" id="sErr"><small>Errors</small><b>0%</b></div>
+      <div class="stat"><small>Server-hours</small><b id="sCost">0</b></div>
+    </div>
+  </div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Pick your settings, then press Play.</div>
+  <div id="end" class="end card hide"></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr,cls){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em '+(cls||'')+'" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
+$('#heroEm').innerHTML=em('Chart increasing','📈');
+
+// Simulated numbers: one server handles 50 requests/s at 100% CPU. One step = 5 minutes.
+const CAP=50,STEPS=120,CAPMAX=9;
+function load(s){
+  const h=8+s/12;let v;
+  if(h<9)v=6;
+  else if(h<10)v=88;
+  else if(h<12)v=55;
+  else if(h<13.5)v=15;
+  else if(h<16)v=60;
+  else v=60-(h-16)*27;
+  return Math.max(5,v+((s*37)%9)-4);
+}
+const cfg={min:1,max:2,tgt:80};
+function hm(s){const m=480+s*5;return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')}
+
+function simulate(c,cb){
+  let desired=c.min,run=c.min,pend=0,low=0,hours=0,worst=0,errMin=0,susp=null,hist=[];
+  for(let s=0;s<STEPS;s++){
+    const L=load(s);let ev='';
+    if(pend){run+=pend;ev='New servers passed their health checks and joined the load balancer.';pend=0}
+    const mn=c.warm&&s>=9&&s<24?c.max:c.min;
+    if(c.warm&&s===9&&desired<c.max){pend=c.max-run;desired=c.max;ev='8:45 scheduled action: '+pend+' servers boot before the rush.'}
+    const u=L/(run*CAP);
+    const want=Math.min(c.max,Math.max(mn,Math.ceil(L/(CAP*c.tgt/100))));
+    if(u>c.tgt/100&&want>desired){pend+=want-desired;desired=want;low=0;ev='CPU above '+c.tgt+'%: the alarm fires, '+pend+' new server'+(pend>1?'s':'')+' booting.'}
+    else if(want<desired){low++;if(low>=3){run=want;desired=want;low=0;ev='15 quiet minutes: scale in to '+want+' server'+(want>1?'s':'')+'.'}}
+    else low=0;
+    if(run+pend>CAPMAX&&!susp)susp=s;
+    const ue=Math.min(u,.97),lat=Math.round(60/(1-ue)),err=u>1?1-1/u:0;
+    hours+=(run+pend)*5/60;worst=Math.max(worst,lat);if(err>0)errMin+=5;
+    const p={s,L,run,pend,u,lat,err,hours,ev};hist.push(p);
+    if(cb)cb(p);
+    if(susp!==null)break;
+  }
+  return {hist,hours,worst,errMin,susp};
+}
+const BASE=simulate({min:2,max:4,tgt:50,warm:false});
+
+function renderCtl(){
+  $('#vMin').textContent=cfg.min;$('#vMax').textContent=cfg.max;$('#vTgt').textContent=cfg.tgt+'%';
+  document.querySelectorAll('.step button').forEach(b=>{
+    const k=b.dataset.k,d=+b.dataset.d,v=cfg[k]+d;
+    b.disabled=running||(k==='min'?(v<1||v>cfg.max):(v<cfg.min||v>12));
+  });
+  const w=$('#warn');
+  if(cfg.max>CAPMAX){w.classList.remove('hide');w.textContent='⚠️ Max '+cfg.max+' is above 9. The sandbox suspends your account past 9 running instances. Keep puff-asg at max 4.'}
+  else w.classList.add('hide');
+}
+let running=false,timer=null;
+document.querySelectorAll('.step button').forEach(b=>b.onclick=()=>{cfg[b.dataset.k]+=+b.dataset.d;renderCtl()});
+$('#tgt').oninput=e=>{cfg.tgt=+e.target.value;renderCtl()};
+
+function chart(hist){
+  const W=600,H=120,dx=W/STEPS,y=v=>H-4-v*(H-10)/200,ys=n=>H-4-n*(H-10)/12;
+  let area='M0,'+(H-4),line='';
+  hist.forEach((p,i)=>{area+=' L'+(i*dx).toFixed(1)+','+y(p.L).toFixed(1);});
+  area+=' L'+((hist.length-1)*dx).toFixed(1)+','+(H-4)+' Z';
+  hist.forEach((p,i)=>{const n=p.run+p.pend;line+=(i?' L':'M')+(i*dx).toFixed(1)+','+ys(n).toFixed(1)+' L'+((i+1)*dx).toFixed(1)+','+ys(n).toFixed(1)});
+  const capY=ys(9);
+  $('#chart').innerHTML='<line x1="0" x2="600" y1="'+capY+'" y2="'+capY+'" stroke="#E5534B" stroke-dasharray="5 4" stroke-width="1.5"/><text x="596" y="'+(capY-3)+'" text-anchor="end" font-size="14" fill="#C23B33" font-weight="700">sandbox cap: 9</text>'
+   +'<line x1="'+(12*dx)+'" x2="'+(12*dx)+'" y1="0" y2="'+H+'" stroke="#F0CDBE" stroke-width="1"/><text x="'+(12*dx+3)+'" y="14" font-size="14" fill="#9A6B5A">9:00</text>'
+   +'<path d="'+area+'" fill="#FFC9B5"/>'+(line?'<path d="'+line+'" fill="none" stroke="#3A2A24" stroke-width="2.5"/>':'');
+}
+function stat(id,txt,hot){const el=$(id);el.querySelector('b').textContent=txt;el.classList.toggle('hot',!!hot)}
+function show(p){
+  $('#clock').textContent=hm(p.s);
+  let f='';for(let i=0;i<p.run;i++)f+=em('Desktop computer','🖥️');for(let i=0;i<p.pend;i++)f+=em('Hourglass not done','⏳','pend');
+  $('#fleet').innerHTML=f;$('#fleet').setAttribute('aria-label',p.run+' servers running, '+p.pend+' booting');
+  stat('#sCpu',Math.round(Math.min(p.u,1.5)*100)+'%',p.u>.9);
+  stat('#sLat',(p.lat>=1000?(p.lat/1000).toFixed(1)+' s':p.lat+' ms'),p.lat>=500);
+  stat('#sErr',Math.round(p.err*100)+'%',p.err>0);
+  $('#sCost').textContent=p.hours.toFixed(1);
+}
+function reset(){
+  $('#end').classList.add('hide');$('#fb').classList.remove('hide');
+  chart([]);show({s:0,run:cfg.min,pend:0,u:0,lat:60,err:0,hours:0});
+}
+$('#play').onclick=()=>{
+  if(running)return;
+  running=true;$('#play').disabled=true;$('#tgt').disabled=true;$('#warm').disabled=true;renderCtl();reset();
+  const c={...cfg,warm:$('#warm').checked},R=simulate(c);
+  let i=0;say($('#fb'),'8:00, the building is quiet.');
+  const tick=()=>{
+    const p=R.hist[i];show(p);chart(R.hist.slice(0,i+1));
+    if(R.susp===p.s)say($('#fb'),'🔥 '+hm(p.s)+': '+(p.run+p.pend)+' instances. Above 9 the sandbox suspends your account.','bad');
+    else if(p.ev)say($('#fb'),hm(p.s)+' '+p.ev,p.err>0?'bad':'');
+    else if(p.err>0)say($('#fb'),'✗ '+hm(p.s)+' Servers at 100% CPU: '+Math.round(p.err*100)+'% of requests fail.','bad');
+    i++;
+    if(i<R.hist.length)timer=setTimeout(tick,p.ev||p.s===12?260:70);
+    else setTimeout(()=>finish(c,R),500);
+  };
+  tick();
+};
+function finish(c,R){
+  running=false;$('#play').disabled=false;$('#tgt').disabled=false;$('#warm').disabled=false;renderCtl();
+  const end=$('#end');
+  if(R.susp!==null){
+    end.innerHTML=em('Fire','🔥')+'<h2>Account suspended at '+hm(R.susp)+'</h2><div class="score">Score: 0 / 4</div><p class="take">Max above 9 lets the group launch past the sandbox cap. Keep puff-asg at max 4.</p><button class="btn" id="again">Try other settings</button>';
+  }else{
+    const checks=[
+      [R.errMin===0,R.errMin===0?'✓ No errors all day':'✗ '+R.errMin+' minutes with failing requests (servers at 100%)'],
+      [R.worst<500,R.worst<500?'✓ Pages stayed fast (worst '+R.worst+' ms)':'✗ Slow pages: worst '+(R.worst>=1000?(R.worst/1000).toFixed(1)+' s':R.worst+' ms')],
+      [c.min>=2,c.min>=2?'✓ Min '+c.min+': a crash or a dead AZ leaves a server answering':'✗ Min 1: one crash and the board app is down until a new server boots'],
+      [R.hours<=BASE.hours*1.1,R.hours<=BASE.hours*1.1?'✓ Not wasteful: '+R.hours.toFixed(1)+' server-hours':'✗ '+R.hours.toFixed(1)+' server-hours: you pay for idle servers']
+    ];
+    const n=checks.filter(x=>x[0]).length;
+    end.innerHTML=em(n===4?'Trophy':'Thinking face',n===4?'🏆':'🤔')+'<h2>'+(n===4?'Smooth day!':'Day over')+'</h2><div class="score">Score: '+n+' / 4</div><div class="res">'+checks.map(x=>'<div class="'+(x[0]?'y':'n')+'">'+x[1]+'</div>').join('')+'</div><p class="take">Puff uses min 2, max 4, target 50%. New servers take minutes to boot, so for a rush you know about, warm up before it.</p><button class="btn" id="again">Play again</button>';
+  }
+  $('#fb').classList.add('hide');end.classList.remove('hide');
+  $('#again').onclick=()=>{reset();say($('#fb'),'Change a setting, then press Play.');$('#ctl').scrollIntoView({block:'nearest'})};
+  $('#again').focus({preventScroll:true});
+  end.scrollIntoView({block:'nearest'});
+}
+renderCtl();reset();
+</script>
+</body>
+</html>
