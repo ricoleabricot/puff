@@ -62,7 +62,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offse
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Corner shop cache</h1><p>CloudFront sits in front of your S3 bucket. Send traffic, deploy a fix, catch the stale page, then invalidate.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Corner shop cache</h1><p>Send traffic, upload a fix, catch the old page, then invalidate.</p></div></div>
 
   <div class="ttl"><b id="ttlL">TTL:</b><div class="seg" role="group" aria-labelledby="ttlL" id="ttlSeg"></div></div>
 
@@ -114,7 +114,7 @@ function fresh(){return S.edge&&S.ttl>0&&S.t-S.edge.at<S.ttl}
 function age(){const a=S.t-S.edge.at;return a<120?a+' s':a<7200?Math.round(a/60)+' min':Math.round(a/3600)+' h'}
 function render(){
   $('#ttlSeg').innerHTML=TTLS.map(x=>'<button aria-pressed="'+(S.ttl===x[0])+'" data-t="'+x[0]+'">'+x[1]+'</button>').join('');
-  $('#ttlSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.ttl=+b.dataset.t;render();say($('#fb'),S.ttl?'TTL set to '+b.textContent+': each edge copy counts as fresh that long.':'TTL off: nothing is cached, every request goes to S3.')});
+  $('#ttlSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.ttl=+b.dataset.t;render();say($('#fb'),S.ttl?'TTL set to '+b.textContent+', each edge copy counts as fresh that long.':'TTL off, nothing is cached and every request goes to S3.')});
   $('#edgeTxt').innerHTML=S.edge?'Copy '+vtag(S.edge.v)+' age '+age()+(fresh()?' · fresh':' · expired'):'Copy '+vtag(0);
   $('#orTxt').innerHTML='Latest '+vtag(S.origin)+'<br>The S3 website URL always shows this';
   $('#log').innerHTML='<div><b>'+clock(S.t)+'</b> response headers</div>'+(S.log.length?S.log.slice(-5).map(l=>'<div class="'+l.c+'">'+l.t+'</div>').join(''):'<div>No requests yet.</div>');
@@ -143,10 +143,10 @@ $('#send').onclick=()=>{
     S.t+=30;k++;render();
     if(k<10)setTimeout(go,140);
     else{busy=false;render();
-      if(st)say($('#fb'),'✗ '+st+' visitors got the old page: the edge copy is still fresh for CloudFront, it never asks S3.','bad');
-      else if(S.done.deploy&&!S.done.stale)say($('#fb'),'No old page this time: the copy had expired or TTL is short. Set TTL to 24 hours, send, upload again, send.','');
-      else if(!S.ttl)say($('#fb'),'Every request was a Miss: with TTL off, S3 answers everything and pages are slower.','');
-      else say($('#fb'),'✓ First request is a Miss, then the edge answers from its copy in milliseconds.','ok');
+      if(st)say($('#fb'),'✗ '+st+' visitors got the old page, the edge copy still counts as fresh so CloudFront doesn\'t ask S3.','bad');
+      else if(S.done.deploy&&!S.done.stale)say($('#fb'),'No old page this time, the copy expired or the TTL is short. Set TTL to 24 hours, send, upload again, send.','');
+      else if(!S.ttl)say($('#fb'),'Every request was a Miss, with TTL off S3 answers everything and pages are slower.','');
+      else say($('#fb'),'✓ The first request is a Miss, then the edge answers from its copy in milliseconds.','ok');
       check();}
   };go();
 };
@@ -160,18 +160,18 @@ $('#deploy').onclick=()=>{
 $('#inval').onclick=()=>{
   S.log.push({c:'',t:clock(S.t).slice(0,8)+' create-invalidation /index.html'});
   const had=!!S.edge;S.edge=null;if(S.done.deploy)S.inv=true;render();flash('#edge');
-  say($('#fb'),had?'Edge copy thrown away. The next request is a Miss and fetches the latest from S3.':'Nothing to throw away: the edge has no copy.');
+  say($('#fb'),had?'Edge copy thrown away. The next request is a Miss and fetches the latest from S3.':'Nothing to throw away, the edge has no copy.');
 };
 $('#wait').onclick=()=>{
   S.t+=3600;render();
-  say($('#fb'),S.edge?(fresh()?'One hour later: the copy is still fresh, TTL is '+TTLS.find(x=>x[0]===S.ttl)[1]+'.':'One hour later: the copy has expired, the next request goes back to S3.'):'One hour later.');
+  say($('#fb'),S.edge?(fresh()?'One hour later, the copy is still fresh, TTL is '+TTLS.find(x=>x[0]===S.ttl)[1]+'.':'One hour later, the copy has expired, so the next request goes back to S3.'):'One hour later.');
 };
 function check(){
   if(MIS.every(m=>S.done[m[0]])&&!busy){
     setTimeout(()=>{
       const tot=S.hits+S.miss;
       $('#fb').classList.add('hide');const e=$('#end');e.classList.remove('hide');
-      e.innerHTML=em('Party popper','🎉')+'<h2>Cache mastered!</h2><div class="score">Score: 4 / 4 missions · hit ratio '+Math.round(S.hits*100/tot)+'% · '+S.stale+' old pages served</div><p class="take">A long TTL spares S3 and speeds pages up, but after a deploy you invalidate (or use versioned file names).</p><button class="btn" id="again">Play again</button>';
+      e.innerHTML=em('Party popper','🎉')+'<h2>All 4 missions done!</h2><div class="score">Score: 4 / 4 missions · hit ratio '+Math.round(S.hits*100/tot)+'% · '+S.stale+' old pages served</div><p class="take">A long TTL speeds pages up and spares S3, but after a deploy you invalidate or use versioned file names.</p><button class="btn" id="again">Play again</button>';
       $('#again').onclick=init;$('#again').focus({preventScroll:true});e.scrollIntoView({block:'nearest'});
     },300);
   }

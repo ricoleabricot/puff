@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The standard Puff package</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#FFF4EE;--ink:#3A2A24;--ok:#3BAA6E;--bad:#E5534B;--line:#D9B8A8;--soft:0 4px 16px rgba(120,60,40,.10)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.35;padding:10px}
+.wrap{max-width:760px;margin:0 auto}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:9px 16px;box-shadow:var(--soft)}
+.hero h1{margin:0;font-size:18px;font-weight:800}
+.hero p{margin:1px 0 0;font-weight:600;font-size:14px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.play,.chip{min-height:44px;border-radius:14px;padding:0 12px;font-weight:800;font-size:14px}
+.play{border:0;background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;box-shadow:var(--soft)}
+.chip{border:2px solid #F2DDD3;background:#fff}
+.chip[aria-pressed=true]{background:#3A2A24;border-color:#3A2A24;color:#fff}
+.bar .gap{flex:0 0 100%;height:0}
+@media(max-width:559px){.chip{padding:0 8px;font-size:13px}.play{padding:0 10px}}
+.card{background:#fff;border-radius:16px;box-shadow:var(--soft);padding:6px;margin-top:8px}
+svg{display:block;width:100%;height:auto}
+.frame{fill:#FFF9F5;stroke:#F2C9B6;stroke-width:2;stroke-dasharray:7 5}
+.band{fill:#FFEFE6;stroke:none}
+.flabel{font-size:12px;font-weight:700;fill:#A5654E}
+.node rect{fill:#fff;stroke:#F2A88E;stroke-width:2}
+.node .t{font-size:13.5px;font-weight:800;fill:var(--ink);text-anchor:middle}
+.node .s{font-size:11px;fill:#7A5F54;text-anchor:middle}
+.node.on rect{fill:#FFE3D6;stroke:#F27E5E}
+.node.dead rect{fill:#EFE7E3;stroke:var(--bad)}
+.node.dead .t{fill:var(--bad)}
+.node.warn rect{fill:#FDECEA;stroke:var(--bad)}
+.node.new rect{fill:#E8F6EE;stroke:var(--ok)}
+.edge{stroke:var(--line);stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+.edge.watch{stroke-dasharray:5 5}
+.edge.on{stroke:#F27E5E;stroke-width:3.5}
+.dim{opacity:.18}
+.node,.edge,.frame,.band,.flabel{transition:opacity .2s}
+#token{fill:#F27E5E;stroke:#fff;stroke-width:3}
+.cap{margin:8px 2px 0;font-weight:700;min-height:2.7em}
+@media(min-width:640px){.cap{min-height:1.4em}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><h1>The standard Puff package</h1><p>Press a button and follow the request.</p></div>
+  <div class="bar" id="bar"></div>
+  <div class="card"><svg id="map" role="img" aria-label="Diagram of Puff: browser, CloudFront, website files, load balancer, servers in two data centers, database, alarm and alert topic"></svg></div>
+  <p class="cap" id="cap" aria-live="polite">Pick a play button.</p>
+</div>
+<script>
+const NODES={
+  browser:{t:'Browser',s:'your customer',g:['web','app']},
+  cdn:{t:'CloudFront',s:'copies near users',g:['web']},
+  files:{t:'Website files',s:'storage bucket',g:['web']},
+  lb:{t:'Load balancer',s:'one public door',g:['app','alarm']},
+  a:{t:'Server',s:'Auto Scaling',g:['app']},
+  b:{t:'Server',s:'Auto Scaling',g:['app']},
+  db:{t:'Database',s:'no public address',g:['app']},
+  alarm:{t:'Alarm',s:'CloudWatch',g:['alarm']},
+  topic:{t:'Alert topic',s:'puff-alerts',g:['alarm']}
+};
+const EDGES={
+  bc:['browser','cdn',['web']], cf:['cdn','files',['web']],
+  bl:['browser','lb',['app']], la:['lb','a',['app']], lb2:['lb','b',['app']],
+  ad:['a','db',['app']], bd:['b','db',['app']],
+  lw:['lb','alarm',['alarm'],1], at:['alarm','topic',['alarm']]
+};
+const LAYOUTS={
+  wide:{w:700,h:320,bw:112,bh:46,
+    pos:{browser:[66,110],cdn:[235,44],files:[420,44],lb:[235,215],a:[420,168],b:[420,266],db:[610,168],alarm:[66,215],topic:[66,285]},
+    frame:[150,92,542,222],bands:[[320,120,364,88,'Data center A (private)'],[320,218,364,88,'Data center B (private)']],flabel:[162,112]},
+  tall:{w:340,h:372,bw:102,bh:44,
+    pos:{files:[55,26],cdn:[170,26],browser:[285,26],topic:[55,100],alarm:[170,100],lb:[285,178],a:[92,258],b:[250,258],db:[92,334]},
+    frame:[3,142,334,226],bands:[[9,212,162,152,'Data center A (private)'],[175,212,156,152,'Data center B (private)']],flabel:[12,160]}
+};
+const FOCUS=[['all','Everything'],['web','Website'],['app','Board app'],['alarm','Alarm']];
+const PLAYS=[
+ {id:'web',label:'▶ Load the page',steps:[
+  {go:['bc'],on:['browser','cdn'],text:'Your browser asks CloudFront for the page.'},
+  {go:['cf'],on:['cdn','files'],text:'No copy yet? CloudFront gets it from the bucket.'},
+  {go:['cf','bc'],back:1,on:['cdn','browser'],text:'The page comes back, no server involved.'}]},
+ {id:'app',label:'▶ Post a message',steps:[
+  {go:['bl'],on:['browser','lb'],text:'The request enters by the one public door.'},
+  {go:['la'],on:['lb','a'],text:'The load balancer picks a healthy server.'},
+  {go:['ad'],on:['a','db'],text:'Only the server can reach the database.'},
+  {go:['ad','la','bl'],back:1,on:['browser'],text:'The answer goes back the same way.'}]},
+ {id:'app',label:'▶ A server dies',steps:[
+  {kill:'b',on:[],text:'A server dies.'},
+  {go:['la'],on:['lb','a'],text:'The load balancer only uses the healthy one.'},
+  {revive:'b',on:['b'],text:'Auto Scaling starts a new server by itself.'},
+  {go:['lb2'],on:['lb','b'],text:'Both data centers serve again.'}]},
+ {id:'alarm',label:'▶ Alarm fires',steps:[
+  {warn:'lb',on:[],text:'Errors climb on the load balancer.'},
+  {go:['lw'],on:['alarm'],text:'The alarm counts them and trips.'},
+  {go:['at'],on:['alarm','topic'],text:'It tells the puff-alerts topic.'},
+  {on:['topic'],text:'You get the email before the customer calls.'}]}
+];
+const NS='http://www.w3.org/2000/svg',svg=document.getElementById('map'),cap=document.getElementById('cap');
+const mk=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e};
+const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let L,els={},token,run=0,focus='all',state={dead:null,warn:null,fresh:null},lit=[],litE=[];
+function clip(c,o){ // point where the line from c to o leaves c's box
+  const dx=o[0]-c[0],dy=o[1]-c[1],hw=L.bw/2+3,hh=L.bh/2+3;
+  const k=Math.min(dx?hw/Math.abs(dx):9e9,dy?hh/Math.abs(dy):9e9);
+  return [c[0]+dx*k,c[1]+dy*k];
+}
+function render(){
+  L=innerWidth<560?LAYOUTS.tall:LAYOUTS.wide;
+  svg.textContent='';els={n:{},e:{},bg:[]};
+  svg.setAttribute('viewBox',`0 0 ${L.w} ${L.h}`);
+  const d=mk('defs',{}),m=mk('marker',{id:'arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse',markerUnits:'userSpaceOnUse'},d);
+  m.setAttribute('markerWidth',10);m.setAttribute('markerHeight',10);
+  mk('path',{d:'M0 0L10 5L0 10z',fill:'#C99A85'},m);
+  const f=L.frame;els.bg.push(mk('rect',{class:'frame',x:f[0],y:f[1],width:f[2],height:f[3],rx:14}));
+  const fl=mk('text',{class:'flabel',x:L.flabel[0],y:L.flabel[1]});fl.textContent='Private network';els.bg.push(fl);
+  L.bands.forEach(b=>{els.bg.push(mk('rect',{class:'band',x:b[0],y:b[1],width:b[2],height:b[3],rx:10}));
+    const t=mk('text',{class:'flabel',x:b[0]+8,y:b[1]+15});t.textContent=b[4];els.bg.push(t)});
+  for(const id in EDGES){const[a,b,,w]=EDGES[id],p=L.pos[a],q=L.pos[b],s=clip(p,q),e=clip(q,p);
+    const dx=e[0]-s[0],dy=e[1]-s[1];
+    els.e[id]={el:mk('line',{class:'edge'+(w?' watch':''),x1:s[0],y1:s[1],x2:e[0],y2:e[1]}),s,e,len:Math.hypot(dx,dy)}}
+  for(const id in NODES){const n=NODES[id],[x,y]=L.pos[id],g=mk('g',{class:'node'});
+    mk('rect',{x:x-L.bw/2,y:y-L.bh/2,width:L.bw,height:L.bh,rx:11},g);
+    const t=mk('text',{class:'t',x,y:y-2},g),s=mk('text',{class:'s',x,y:y+14},g);
+    t.textContent=n.t;s.textContent=n.s;els.n[id]={g,t,s}}
+  token=mk('circle',{id:'token',r:8,cx:-20,cy:-20});
+  paint();
+}
+function paint(){
+  for(const id in NODES){const{g,t,s}=els.n[id],n=NODES[id];
+    let c='node';if(focus!=='all'&&!n.g.includes(focus))c+=' dim';
+    if(lit.includes(id))c+=' on';
+    if(state.dead===id)c+=' dead';if(state.warn===id)c+=' warn';if(state.fresh===id)c+=' new';
+    g.setAttribute('class',c);
+    t.textContent=n.t;
+    s.textContent=state.dead===id?'✗ down':state.warn===id?'⚠ errors':state.fresh===id?'✓ new server':n.s}
+  for(const id in EDGES){const e=EDGES[id];let c='edge'+(e[3]?' watch':'');
+    if(focus!=='all'&&!e[2].includes(focus))c+=' dim';
+    if(litE.includes(id))c+=' on';
+    if(state.dead&&(e[0]===state.dead||e[1]===state.dead))c+=' dim';
+    els.e[id].el.setAttribute('class',c)}
+  els.bg.forEach(b=>b.classList.toggle('dim',focus==='web'));
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function move(id,back,me){return new Promise(res=>{
+  const E=els.e[id],from=back?E.e:E.s,to=back?E.s:E.e,ms=calm?0:Math.max(450,E.len*5.5),t0=performance.now();
+  (function tick(t){if(me!==run)return res();
+    const k=ms?Math.min(1,(t-t0)/ms):1,x=from[0]+(to[0]-from[0])*k,y=from[1]+(to[1]-from[1])*k;
+    token.setAttribute('cx',x);token.setAttribute('cy',y);
+    k<1?requestAnimationFrame(tick):res()})(t0)})}
+async function play(p){
+  const me=++run;setFocus(p.id);state={dead:null,warn:null,fresh:null};lit=[];litE=[];paint();
+  for(const st of p.steps){if(me!==run)return;
+    cap.textContent=st.text;
+    if(st.kill)state.dead=st.kill;if(st.warn)state.warn=st.warn;
+    if(st.revive){state.dead=null;state.fresh=st.revive}
+    lit=st.on;litE=st.go||[];paint();
+    for(const id of st.go||[]){await move(id,st.back,me);if(me!==run)return}
+    await wait(calm?1800:1000);
+  }
+  if(me===run){token.setAttribute('cx',-20);token.setAttribute('cy',-20);lit=[];litE=[];state.warn=null;paint()}
+}
+function setFocus(f){focus=f;document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f===f));paint()}
+const bar=document.getElementById('bar');
+PLAYS.forEach(p=>{const b=document.createElement('button');b.className='play';b.textContent=p.label;b.onclick=()=>play(p);bar.appendChild(b)});
+const barGap=document.createElement('span');barGap.className='gap';bar.appendChild(barGap);
+FOCUS.forEach(([f,l])=>{const b=document.createElement('button');b.className='chip';b.dataset.f=f;b.textContent=l;b.setAttribute('aria-pressed',f==='all');
+  b.onclick=()=>{run++;token.setAttribute('cx',-20);token.setAttribute('cy',-20);state={dead:null,warn:null,fresh:null};lit=[];litE=[];cap.textContent='Pick a play button.';setFocus(f)};bar.appendChild(b)});
+let wasTall=innerWidth<560;render();
+addEventListener('resize',()=>{const t=innerWidth<560;if(t!==wasTall){wasTall=t;run++;state={dead:null,warn:null,fresh:null};lit=[];litE=[];render()}});
+</script>
+</body>
+</html>

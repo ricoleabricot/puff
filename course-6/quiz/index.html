@@ -54,7 +54,7 @@ const Q=[
   why:"Replacement deletes the resource and builds a new one. Read that column before you execute."},
  {img:IMG("Pencil","pencil"),t:"A teammate opens port 22 on puff-api-sg from the console. What does CloudFormation call this?",
   o:["Rollback","A change set","Drift"],a:2,
-  why:"Reality no longer matches the template: drift. The next update may undo the fix or fail on it."},
+  why:"Reality no longer matches the template, that's drift. The next update may undo the fix or fail on it."},
  {img:IMG("Package","package"),t:"Your pipeline tested image abc123 on staging. What goes to production?",
   o:["The same image abc123","A fresh build of the same commit","The latest image on your laptop"],a:0,
   why:"Build once, promote the same image everywhere. A rebuild means production runs something you never tested."},
@@ -64,7 +64,7 @@ const Q=[
  {img:IMG("Sleeping%20face","sleeping_face"),t:"A test stack with a NAT gateway sits there all weekend with zero visitors. What do you pay?",
   o:["Nothing, there's no traffic","Only for the data that went through it","The hourly price, all weekend"],a:2,
   why:"A NAT gateway, a load balancer or a database costs the same with zero visitors. Delete idle stacks."},
- {img:IMG("Ring%20buoy","ring_buoy"),t:"RPO is…",
+ {img:IMG("Ring%20buoy","ring_buoy"),t:"What is RPO?",
   o:["How much data you accept losing, counted in time","How long you accept being down","How much the backup region costs"],a:0,
   why:"RPO is data you can lose, RTO is time you can be down. Smaller numbers always cost more."}
 ];
@@ -101,8 +101,8 @@ function end(){
   dots.classList.add("hide");goal.textContent="All done!";
   const band=score===8?["Trophy","trophy","Perfect! Your Puff is ready for its customer."]
    :score>=6?["Party%20popper","party_popper","Great job! Just a couple of ideas to re-read."]
-   :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
-   :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
+   :score>=4?["Thinking%20face","thinking_face","Not bad, read the page again and replay."]
+   :["Seedling","seedling","Good start, read the page again and try one more time."];
   card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">
    <p class="big">${score}/8</p><p class="fb ${score>=6?"ok":""}">${band[2]}</p>
    <button class="btn" id="again">Play again</button></div>`;

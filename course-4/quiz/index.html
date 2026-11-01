@@ -37,7 +37,7 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
 </style>
 </head>
 <body>
-<div class="hero"><h1>Security and monitoring quiz</h1><p id="goal">8 questions. Pick the best answer.</p></div>
+<div class="hero"><h1>Today's quiz</h1><p id="goal">8 questions on today, pick the best answer.</p></div>
 <div class="card" id="card" aria-live="polite"></div>
 <div class="dots" id="dots" aria-hidden="true"></div>
 <script>
@@ -45,34 +45,34 @@ const IMG=(n,f)=>`https://raw.githubusercontent.com/microsoft/fluentui-emoji/mai
 const Q=[
  {img:IMG("Identification%20card","identification_card"),t:"Why is an IAM role safer than an IAM user's access key?",
   o:["Roles have longer passwords","Its credentials are temporary and expire on their own","Roles can only read, never write"],a:1,
-  why:"A role hands out short-lived credentials from STS. A user's access key works until someone deletes it."},
+  why:"A role hands out short-lived credentials from STS, a user's access key works until someone deletes it."},
  {img:IMG("Stop%20sign","stop_sign"),t:"One policy allows an action, another explicitly denies it. What happens?",
   o:["Refused: an explicit deny always wins","Allowed: allow beats deny","The most recent policy wins"],a:0,
-  why:"Like the nightclub: on the banned list, no guest list helps you."},
+  why:"Like the nightclub, if you're on the banned list no guest list helps you."},
  {img:IMG("Key","key"),t:"Which policy gives the Puff API least privilege?",
-  o:["ssm:* and kms:* on *","ssm:GetParameter on parameter/puff/db/* plus kms:Decrypt through Parameter Store","AdministratorAccess, we'll tighten later"],a:1,
-  why:"One read action, one path. A hacked API reads its own password and nothing else."},
+  o:["ssm:* and kms:* on *","ssm:GetParameter on parameter/puff/db/* plus kms:Decrypt through Parameter Store","AdministratorAccess, and tighten it later"],a:1,
+  why:"One read action, one path, so a hacked API reads its own password and nothing else."},
  {img:IMG("Locked","locked"),t:"Where does the board app's database password live after today?",
   o:["In user data, as an environment variable","In the Docker image","In Parameter Store as a SecureString, read at boot"],a:2,
-  why:"Anyone with EC2 read access can read user data. The SecureString is encrypted with KMS and read through the instance role."},
+  why:"Anyone with EC2 read access can read user data, the SecureString is encrypted with KMS and read through the instance role."},
  {img:IMG("Package","package"),t:"In envelope encryption, what is stored next to your encrypted data?",
   o:["The data key, encrypted under your KMS key","The KMS key itself","The plaintext data key"],a:0,
-  why:"The plaintext data key is thrown away. To read, you ask KMS to decrypt the stored copy."},
+  why:"The plaintext data key is thrown away, to read the data you ask KMS to decrypt the stored copy."},
  {img:IMG("Classical%20building","classical_building"),t:"What does an SCP (Service Control Policy) do?",
   o:["It grants admin access to an OU","It sets the maximum anyone in those accounts can do, root user included","It encrypts every account"],a:1,
-  why:"An SCP never grants anything. It is a house rule nobody inside the account can break."},
+  why:"An SCP never grants anything, it's a rule nobody inside the account can break."},
  {img:IMG("Video%20camera","video_camera"),t:"Someone changed a security group yesterday. Where do you look first?",
   o:["CloudWatch metrics","The ALB access logs","CloudTrail Event history"],a:2,
-  why:"Event history keeps 90 days of management events: who, what, when, from which IP. Free, nothing to set up."},
+  why:"Event history keeps 90 days of management events for free, with who, what, when and from which IP."},
  {img:IMG("Bell","bell"),t:"You stop the container behind the ALB. Which metric shows the errors?",
   o:["HTTPCode_ELB_5XX_Count","HTTPCode_Target_5XX_Count","CPUUtilization"],a:0,
-  why:"Nothing answers, so the ALB itself produces the 5xx. Target 5xx means your code answered with an error."}
+  why:"Nothing answers, so the ALB itself produces the 5xx, target 5xx means your code answered with an error."}
 ];
 const $=s=>document.querySelector(s);
 const card=$("#card"),dots=$("#dots"),goal=$("#goal");
 let i,score,res,locked;
 function drawDots(){dots.innerHTML=Q.map((_,k)=>`<span class="dot ${res[k]===undefined?(k===i?"on":""):(res[k]?"ok":"no")}"></span>`).join("")}
-function start(){i=0;score=0;res=[];goal.textContent="8 questions. Pick the best answer.";dots.classList.remove("hide");show()}
+function start(){i=0;score=0;res=[];goal.textContent="8 questions on today, pick the best answer.";dots.classList.remove("hide");show()}
 function show(){
   locked=false;drawDots();
   const c=Q[i];
@@ -92,17 +92,17 @@ function pick(k){
     else if(n===k){b.classList.add("wrong");b.querySelector(".mk").textContent="✗"}
   });
   const fb=$("#fb");fb.className="fb "+(ok?"ok":"no");
-  fb.textContent=`${ok?"✓ Yes!":"✗ Not quite."} ${c.why}`;
+  fb.textContent=`${ok?"✓":"✗"} ${c.why}`;
   $("#nx").innerHTML=`<button class="btn" id="n">${i<Q.length-1?"Next":"See my score"}</button>`;
   $("#n").focus({preventScroll:true});
   $("#n").onclick=()=>{i++;i<Q.length?show():end()};
 }
 function end(){
-  dots.classList.add("hide");goal.textContent="All done!";
-  const band=score===8?["Trophy","trophy","Perfect! Puff is secure and watched."]
-   :score>=6?["Party%20popper","party_popper","Great job! Just a couple of ideas to re-read."]
-   :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
-   :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
+  dots.classList.add("hide");goal.textContent="Done";
+  const band=score===8?["Trophy","trophy","8 out of 8, Puff is in good hands."]
+   :score>=6?["Party%20popper","party_popper","Good, re-read the ones you missed."]
+   :score>=4?["Thinking%20face","thinking_face","Read today's page again, then play again."]
+   :["Seedling","seedling","Read today's page again, then play again."];
   card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">
    <p class="big">${score}/8</p><p class="fb ${score>=6?"ok":""}">${band[2]}</p>
    <button class="btn" id="again">Play again</button></div>`;

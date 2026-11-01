@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>One organization, many accounts</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:10px 14px;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:8px;margin-top:8px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.in{margin:0}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 16px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.chip{background:#FFFAF7;border:2px solid #F2DDD3;border-radius:12px;padding:0 10px;font-weight:700;font-size:14px}
+.chip[aria-pressed="true"]{background:#FFE3D6;border-color:#F27E5E}
+.chip[aria-pressed="true"]::before{content:"\2713 "}
+.fb{min-height:44px;margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+svg{width:100%;height:auto;display:block}
+.n{transition:opacity .2s}
+.n rect{fill:#FFFAF7;stroke:#F2DDD3;stroke-width:2}
+.n.on rect{fill:#FFE3D6;stroke:#F27E5E}
+.n .l{font-size:12.5px;font-weight:800;fill:#3A2A24}
+.n .s{font-size:10.5px;fill:#3A2A24;opacity:.75}
+.e{fill:none;stroke:#E8CFC3;stroke-width:2;transition:opacity .2s}
+.e.tree{stroke:#EBD8CE}
+.e.flow{stroke:none}
+.e.on{stroke:#F27E5E;stroke-width:3;marker-end:url(#arr)}
+.dim{opacity:.25}
+.z{fill:#FFF4EE;stroke:#F2DDD3;stroke-width:1.5;stroke-dasharray:5 4}
+.zl{font-size:11px;font-weight:700;fill:#C4583B}
+.dot{fill:#DF5F3F}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><h1>One organization, many accounts</h1><p>Play each flow and see where it lands.</p></div>
+  <div class="row"><span class="row in" id="plays"></span><span class="row in" id="chips" role="group" aria-label="Focus"></span></div>
+  <div class="card"><svg id="map" role="img" aria-label="Tree of AWS accounts under one management account, with logs going to a log archive account and backups to a backup account."></svg></div>
+  <div class="fb" id="cap" role="status" aria-live="polite">Press a play button.</div>
+</div>
+<script>
+const M={"hint":"Press a play button.","nodes":{"mgmt":{"l":"Management","s":"Bills and logins","e":"Crown"},"sec":{"l":"Security","s":"Folder","e":"Shield"},"infra":{"l":"Infrastructure","s":"Folder","e":"Gear"},"work":{"l":"Workloads","s":"Folder","e":"Office building"},"sand":{"l":"Sandbox","s":"Folder","e":"Test tube"},"logs":{"l":"Log archive","s":"Keeps all logs","e":"Scroll"},"backup":{"l":"Backup","s":"Separate copies","e":"Package"},"prod":{"l":"Prod","s":"Real customers","e":"Desktop computer"},"nonprod":{"l":"Non-prod","s":"Staging, dev","e":"Construction"},"team":{"l":"Team sandbox","s":"Experiments","e":"Robot"}},"edges":[{"k":"mgmt>sec","tree":true},{"k":"mgmt>infra","tree":true},{"k":"mgmt>work","tree":true},{"k":"mgmt>sand","tree":true},{"k":"sec>logs","tree":true},{"k":"infra>backup","tree":true},{"k":"work>prod","tree":true},{"k":"work>nonprod","tree":true},{"k":"sand>team","tree":true},{"k":"prod>logs"},{"k":"nonprod>logs"},{"k":"team>logs"},{"k":"backup>logs"},{"k":"prod>backup"}],"plays":[{"t":"Logs","done":"Workload accounts can't touch those logs.","steps":[{"c":"Every account records its actions in CloudTrail.","on":["prod","nonprod","team","backup"]},{"c":"All of it lands in the log archive.","go":["prod>logs","nonprod>logs","team>logs","backup>logs"],"on":["logs"]}]},{"t":"Backups","done":"Full control of prod still can't delete the copies.","steps":[{"c":"Prod makes its backups.","on":["prod"]},{"c":"The copies land in a separate account.","go":["prod>backup"],"on":["backup"]}]},{"t":"Rules","done":"Nobody inside an account can break those rules.","steps":[{"c":"Rules start at the top.","on":["mgmt"]},{"c":"They apply to each folder.","go":["mgmt>sec","mgmt>infra","mgmt>work","mgmt>sand"],"on":["sec","infra","work","sand"]},{"c":"Then to every account inside.","go":["sec>logs","infra>backup","work>prod","work>nonprod","sand>team"],"on":["logs","backup","prod","nonprod","team"]}]}],"focus":[{"k":"sec","t":"Security","n":["sec","logs"],"c":"Security holds the log archive."},{"k":"infra","t":"Infrastructure","n":["infra","backup"],"c":"Infrastructure holds the backups."},{"k":"work","t":"Workloads","n":["work","prod","nonprod"],"c":"Workloads splits prod from non-prod."},{"k":"sand","t":"Sandbox","n":["sand","team"],"c":"Sandbox is for experiments."}],"wide":{"W":680,"H":300,"w":126,"h":54,"nodes":{"mgmt":[340,40],"sec":[68,135],"infra":[201,135],"work":[401,135],"sand":[612,135],"logs":[68,230],"backup":[201,230],"prod":[334,230],"nonprod":[467,230],"team":[612,230]},"zones":[],"curves":{"prod>logs":"M334 259C334 298 68 298 68 262","nonprod>logs":"M467 259C467 298 68 298 68 262","team>logs":"M612 259C612 298 68 298 68 262","backup>logs":"M201 259C201 285 68 285 68 262","prod>backup":"M300 259C300 282 240 282 235 262"}},"narrow":{"W":350,"H":430,"w":132,"h":54,"nodes":{"mgmt":[90,36],"sec":[90,115],"infra":[90,185],"work":[90,290],"sand":[90,395],"logs":[255,115],"backup":[255,185],"prod":[255,255],"nonprod":[255,325],"team":[255,395]},"zones":[],"curves":{"mgmt>infra":"M24 36C6 36 6 185 21 185","mgmt>work":"M24 36C4 36 4 290 21 290","mgmt>sand":"M24 36C2 36 2 395 21 395","prod>logs":"M321 255C344 255 344 115 324 115","nonprod>logs":"M321 325C347 325 347 115 324 115","team>logs":"M321 395C349 395 349 115 324 115","backup>logs":"M321 185C338 185 338 115 324 115","prod>backup":"M321 255C334 255 334 185 324 185"}}};
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+const $=s=>document.querySelector(s),svg=$('#map'),NS='http://www.w3.org/2000/svg';
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let L,focus='all',run=0;
+function esc(s){return s.replace(/&/g,'&amp;')}
+function edgeD(k){
+  const c=L.curves&&L.curves[k];if(c)return c;
+  const [a,b]=k.split('>').map(i=>L.nodes[i]);
+  const clip=(p,q)=>{const dx=q[0]-p[0],dy=q[1]-p[1],hw=L.w/2+3,hh=L.h/2+3,t=Math.min(dx?hw/Math.abs(dx):9,dy?hh/Math.abs(dy):9);return [p[0]+dx*t,p[1]+dy*t]};
+  const s=clip(a,b),e=clip(b,a);return 'M'+s[0]+' '+s[1]+'L'+e[0]+' '+e[1];
+}
+function draw(){
+  L=innerWidth<520?M.narrow:M.wide;
+  svg.setAttribute('viewBox','0 0 '+L.W+' '+L.H);
+  let s='<defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#F27E5E"/></marker></defs>';
+  (L.zones||[]).forEach(z=>{s+='<rect class="z" x="'+z.x+'" y="'+z.y+'" width="'+z.w+'" height="'+z.h+'" rx="12"/><text class="zl" x="'+(z.x+10)+'" y="'+(z.y+14)+'">'+z.t+'</text>'});
+  M.edges.forEach(e=>{s+='<path class="e '+(e.tree?'tree':'flow')+'" data-k="'+e.k+'" d="'+edgeD(e.k)+'"/>'});
+  Object.keys(M.nodes).forEach(id=>{const n=M.nodes[id],p=L.nodes[id],w=L.w,h=L.h,x=p[0]-w/2,y=p[1]-h/2;
+    s+='<g class="n" data-id="'+id+'"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="12"/>'+
+     '<image href="'+EB+encodeURIComponent(n.e)+'/3D/'+n.e.toLowerCase().replace(/ /g,'_')+'_3d.png" x="'+(x+6)+'" y="'+(p[1]-10)+'" width="20" height="20"/>'+
+     '<text class="l" x="'+(x+29)+'" y="'+(p[1]-2)+'">'+esc(n.l)+'</text><text class="s" x="'+(x+29)+'" y="'+(p[1]+12)+'">'+esc(n.s)+'</text></g>'});
+  s+='<g id="dots"></g>';
+  svg.innerHTML=s;applyFocus();
+}
+function applyFocus(){
+  const set=focus==='all'?null:new Set(M.focus.find(f=>f.k===focus).n);
+  svg.querySelectorAll('.n').forEach(g=>g.classList.toggle('dim',!!set&&!set.has(g.dataset.id)));
+  svg.querySelectorAll('.e').forEach(p=>{const [a,b]=p.dataset.k.split('>');p.classList.toggle('dim',!!set&&!(set.has(a)&&set.has(b)))});
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.k===focus));
+}
+function clear(){svg.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));$('#dots').innerHTML=''}
+function wait(ms,id){return new Promise(r=>setTimeout(()=>r(id===run),ms))}
+function fly(path,id){return new Promise(res=>{
+  const len=path.getTotalLength(),d=document.createElementNS(NS,'circle');d.setAttribute('r',6);d.setAttribute('class','dot');$('#dots').appendChild(d);
+  const set=t=>{const p=path.getPointAtLength(len*t);d.setAttribute('cx',p.x);d.setAttribute('cy',p.y)};
+  if(reduced){set(1);return res()}
+  const t0=performance.now(),dur=850;
+  (function f(now){if(id!==run)return res();const t=Math.min(1,(now-t0)/dur);set(t);t<1?requestAnimationFrame(f):res()})(t0);
+})}
+async function play(p){
+  const id=++run;focus='all';applyFocus();
+  for(const st of p.steps){
+    clear();$('#cap').textContent=st.c;
+    (st.on||[]).forEach(i=>svg.querySelector('.n[data-id="'+i+'"]').classList.add('on'));
+    const ps=(st.go||[]).map(k=>svg.querySelector('.e[data-k="'+k+'"]'));
+    ps.forEach(x=>x.classList.add('on'));
+    await Promise.all(ps.map(x=>fly(x,id)));
+    if(!await wait(reduced?1800:950,id))return;
+  }
+  clear();$('#cap').textContent=p.done;
+}
+$('#plays').innerHTML=M.plays.map((p,i)=>'<button class="btn" data-i="'+i+'">▶ '+p.t+'</button>').join('');
+$('#chips').innerHTML='<button class="chip" data-k="all">All</button>'+M.focus.map(f=>'<button class="chip" data-k="'+f.k+'">'+f.t+'</button>').join('');
+$('#plays').addEventListener('click',e=>{const b=e.target.closest('.btn');if(b)play(M.plays[+b.dataset.i])});
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;run++;clear();focus=b.dataset.k;applyFocus();const f=M.focus.find(x=>x.k===focus);$('#cap').textContent=f?f.c:M.hint});
+let rw=innerWidth;addEventListener('resize',()=>{if((rw<520)!==(innerWidth<520)){run++;draw()}rw=innerWidth});
+draw();
+</script>
+</body>
+</html>

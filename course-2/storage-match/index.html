@@ -50,7 +50,7 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Storage match</h1><p>Drag a storage onto each need. Or tap a storage, then tap a need. One storage can fit twice.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Storage match</h1><p>Drag a storage onto each need, or tap a storage then a need. One storage can fit twice.</p></div></div>
   <div class="tray" id="tray" aria-label="Storage options"></div>
   <div class="needs" id="needs"></div>
   <div class="count" id="count"></div>
@@ -73,11 +73,11 @@ const ITEMS=[
  {id:'S3',s:'Files over HTTP',e:['Bucket','🪣']}
 ];
 const NEEDS=[
- {id:'boot',t:'Your server\'s main disk',k:'EBS',e:['Desktop computer','🖥️'],l:'EBS is the main disk: a network disk plugged into one instance, and it survives a stop.'},
+ {id:'boot',t:'Your server\'s main disk',k:'EBS',e:['Desktop computer','🖥️'],l:'EBS is the main disk, a network disk plugged into one instance, and it survives a stop.'},
  {id:'shared',t:'Files shared by several servers',k:'EFS',e:['Link','🔗'],l:'EFS is a shared folder that many instances in many AZs open at once.'},
  {id:'images',t:'Website images',k:'S3',e:['Framed picture','🖼️'],l:'S3 serves static sites and uploads over HTTP, and it\'s the cheapest per GB.'},
- {id:'scratch',t:'Scratch data, lost on stop is fine',k:'Instance store',e:['Wastebasket','🗑️'],l:'Instance store is scratch paper on the desk: wiped on stop, included in the instance price.'},
- {id:'backup',t:'Backups',k:'S3',e:['Package','📦'],l:'S3 for backups: it survives anything that happens to your instances, cheapest per GB.'}
+ {id:'scratch',t:'Scratch data, lost on stop is fine',k:'Instance store',e:['Wastebasket','🗑️'],l:'Instance store is a disk in the host, wiped on stop and included in the instance price.'},
+ {id:'backup',t:'Backups',k:'S3',e:['Package','📦'],l:'Use S3 for backups, it survives anything that happens to your instances and it\'s the cheapest per GB.'}
 ];
 let sel,missed,placed,drag,suppress;
 const needsEl=$('#needs'),tray=$('#tray'),fb=$('#fb'),endEl=$('#end');
@@ -110,7 +110,7 @@ function place(id,nid){
     say(fb,'✗ Not '+id+'. Hint: '+hint(n),'bad');
   }
 }
-function hint(n){return {boot:'it must survive a stop and plug into one server.',shared:'several servers open it at the same time.',images:'browsers fetch them over HTTP.',scratch:'it can vanish, so it may as well be free and fast.',backup:'cheapest per GB, and it survives whatever happens to your servers.'}[n.id]}
+function hint(n){return {boot:'it must survive a stop and plug into one server.',shared:'several servers open it at the same time.',images:'browsers fetch them over HTTP.',scratch:'it can vanish, and it comes with the instance.',backup:'cheapest per GB, and it survives whatever happens to your servers.'}[n.id]}
 function finish(){
   const n=NEEDS.length-Object.keys(missed).length;
   fb.classList.add('hide');endEl.classList.remove('hide');

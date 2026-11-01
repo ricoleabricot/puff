@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Session 2 quiz</title>
+<title>Course 2 quiz</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#FFF4EE;--ink:#3A2A24;--ok:#3BAA6E;--bad:#E5534B;--soft:0 4px 16px rgba(120,60,40,.10)}
@@ -45,13 +45,13 @@ const IMG=(n,f)=>`https://raw.githubusercontent.com/microsoft/fluentui-emoji/mai
 const Q=[
  {img:IMG("Hotel","hotel"),t:"What is an EC2 instance?",
   o:["A virtual machine you rent by the second, living in one AZ","A database AWS runs for you","A shared folder for many servers"],a:0,
-  why:"Like a hotel room: you pick the size, check in, check out, and AWS fixes the plumbing."},
+  why:"It's like a hotel room, you pick the size, check in, check out, and AWS fixes the plumbing."},
  {img:IMG("High%20voltage","high_voltage"),t:"Your t3 sits at 100% CPU for hours. What does that tell you?",
   o:["All good, that's what T is for","You picked the wrong family","You need a bigger disk"],a:1,
   why:"T instances burst on credits. A flat line at the top means throttling or extra credits on the bill."},
  {img:IMG("Wastebasket","wastebasket"),t:"You stop an instance. Which data is wiped?",
   o:["The EBS disk","The files in S3","The instance store"],a:2,
-  why:"Instance store is scratch paper on the desk: gone on stop. EBS, EFS and S3 survive."},
+  why:"Instance store is wiped on stop, EBS, EFS and S3 survive."},
  {img:IMG("Memo","memo"),t:"Where do you look first when user data didn't start your app?",
   o:["/var/log/cloud-init-output.log","The S3 bucket policy","The RDS endpoint"],a:0,
   why:"User data runs through cloud-init, and its output lands in that file."},
@@ -102,7 +102,7 @@ function end(){
   const band=score===8?["Trophy","trophy","Perfect! Puff has compute and a database."]
    :score>=6?["Party%20popper","party_popper","Great job! Just a couple of ideas to re-read."]
    :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
-   :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
+   :["Seedling","seedling","Good start! Re-read the page and try again."];
   card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">
    <p class="big">${score}/8</p><p class="fb ${score>=6?"ok":""}">${band[2]}</p>
    <button class="btn" id="again">Play again</button></div>`;

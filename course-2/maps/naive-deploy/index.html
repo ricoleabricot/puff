@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Today's deploy</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:9px 14px;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero p{margin:2px 0 0;font-weight:700;font-size:14px;line-height:1.25}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.play{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 14px;box-shadow:0 3px 8px rgba(223,95,63,.35);flex:1 1 140px}
+.play:disabled{opacity:.55;cursor:default}
+.chip{background:#fff;border:2px solid #F2DDD3;border-radius:22px;padding:0 12px;font-weight:700;font-size:13px;flex:1 1 auto}
+.chip[aria-pressed=true]{border-color:#F27E5E;background:#FFF0E8}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:6px;margin-top:8px}
+svg{display:block;width:100%;height:auto}
+.cap{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 2px #F2DDD3;font-weight:600;min-height:40px}
+.box rect{fill:#FFFAF7;stroke:#F2DDD3;stroke-width:2}
+.box.on rect{fill:#FFF0E8;stroke:#F27E5E}
+.box text.t{font-size:15px;font-weight:800;fill:#3A2A24}
+.box text.s{font-size:12px;fill:#3A2A24;opacity:.8}
+.zone{fill:#FFF7E0;stroke:#F2C14E;stroke-width:2;stroke-dasharray:6 5}
+.zt{font-size:12px;font-weight:700;fill:#8A6410}
+.ln{fill:none;stroke:#C9AFA3;stroke-width:3;marker-end:url(#ah)}
+.ln.on{stroke:#F27E5E}
+.ll{font-size:12px;font-weight:700;fill:#C4583B}
+.dim{opacity:.28}
+#dot{fill:#3BAA6E;stroke:#fff;stroke-width:2}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><h1>Today's deploy</h1><p>Play a request and follow it through AWS.</p></div>
+  <div class="bar">
+    <button class="play" data-p="load">▶ Open the page</button>
+    <button class="play" data-p="post">▶ Post a message</button>
+  </div>
+  <div class="bar" role="group" aria-label="Focus">
+    <button class="chip" data-f="all" aria-pressed="true">Everything</button>
+    <button class="chip" data-f="open" aria-pressed="false">Open to the internet</button>
+    <button class="chip" data-f="shut" aria-pressed="false">Closed to the internet</button>
+  </div>
+  <div class="card"><svg id="map" role="img" aria-label="Browser loading a page from file storage, then calling puff-api, which talks to puff-db, both in the default network"></svg></div>
+  <p class="cap" id="cap" role="status" aria-live="polite">Press play.</p>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+const png=n=>EB+encodeURIComponent(n)+'/3D/'+n.toLowerCase().replace(/ /g,'_')+'_3d.png';
+const L={
+ wide:{w:680,h:284,
+  zone:[232,100,440,176],zt:[246,120],
+  browser:[8,130,130,84],bucket:[232,8,210,76],api:[244,130,150,84],db:[494,130,150,84],
+  page:'M73 130 V46 H228',call:'M138 172 H240',data:'M394 172 H490',
+  lp:[150,36,'middle'],lc:[189,162,'middle'],ld:[442,162,'middle']},
+ tall:{w:340,h:440,
+  zone:[10,128,320,302],zt:[200,148],
+  browser:[8,8,112,76],bucket:[158,8,174,76],api:[28,166,284,78],db:[28,330,284,78],
+  page:'M120 46 H154',call:'M64 84 V162',data:'M170 244 V326',
+  lp:[245,102,'middle'],lc:[74,112,'start'],ld:[180,290,'start']}
+};
+const NAMES={browser:['Browser','anywhere','Laptop'],bucket:['File storage','puff-frontend-<login>','Bucket'],api:['Server','puff-api','Desktop computer'],db:['Database','puff-db','File cabinet']};
+const LABELS={page:'the page',call:'port 8080',data:'port 5432'};
+const FOCUS={all:null,open:{b:['browser','bucket','api'],l:['page','call']},shut:{b:['db'],l:['data']}};
+const CAPS={all:'Press play.',open:'Anyone can reach the bucket and port 8080.',shut:'Only puff-api can reach puff-db.'};
+const PLAYS={
+ load:[['page',1,'The browser loads index.html from your bucket.','bucket'],
+       ['page',-1,'The page comes back and starts running.','browser'],
+       ['call',1,'It calls puff-api by its public address, on port 8080.','api'],
+       ['data',1,'puff-api asks puff-db on port 5432.','db'],
+       ['data',-1,'puff-db sends back the latest messages.','api'],
+       ['call',-1,'The list shows up in your browser.','browser']],
+ post:[['call',1,'Your message goes straight to puff-api, on port 8080.','api'],
+       ['data',1,'puff-api writes it into puff-db.','db'],
+       ['data',-1,'puff-db confirms.','api'],
+       ['call',-1,'It shows up in the list.','browser']]
+};
+const svg=document.getElementById('map'),cap=document.getElementById('cap');
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let lay,focus='all',busy=false;
+const esc=s=>s.replace(/</g,'&lt;');
+function draw(){
+  lay=innerWidth<520?L.tall:L.wide;
+  const a=lay;
+  svg.setAttribute('viewBox','0 0 '+a.w+' '+a.h);
+  const z=a.zone;
+  let h='<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#C9AFA3"/></marker></defs>';
+  h+='<rect class="zone" x="'+z[0]+'" y="'+z[1]+'" width="'+z[2]+'" height="'+z[3]+'" rx="14"/><text class="zt" x="'+a.zt[0]+'" y="'+a.zt[1]+'">Default network</text>';
+  for(const k of ['page','call','data'])h+='<path class="ln" id="l-'+k+'" d="'+a[k]+'"/>';
+  for(const [k,p] of [['page',a.lp],['call',a.lc],['data',a.ld]])h+='<text class="ll" id="t-'+k+'" x="'+p[0]+'" y="'+p[1]+'" text-anchor="'+(p[2]||'start')+'">'+LABELS[k]+'</text>';
+  for(const k in NAMES){
+    const b=a[k],n=NAMES[k],ty=b[1]+b[3]/2;
+    h+='<g class="box" id="b-'+k+'"><rect x="'+b[0]+'" y="'+b[1]+'" width="'+b[2]+'" height="'+b[3]+'" rx="14"/>'+
+       '<image href="'+png(n[2])+'" x="'+(b[0]+8)+'" y="'+(ty-17)+'" width="34" height="34"/>'+
+       '<text class="t" x="'+(b[0]+48)+'" y="'+(ty-2)+'">'+n[0]+'</text><text class="s" x="'+(b[0]+48)+'" y="'+(ty+15)+'">'+esc(n[1])+'</text></g>';
+  }
+  h+='<circle id="dot" r="8" visibility="hidden"/>';
+  svg.innerHTML=h;
+  svg.querySelectorAll('image').forEach(i=>i.addEventListener('error',()=>i.remove()));
+  paint();
+}
+function paint(){
+  const f=FOCUS[focus];
+  for(const k in NAMES)svg.querySelector('#b-'+k).classList.toggle('dim',!!f&&!f.b.includes(k));
+  for(const k in LABELS){const d=!!f&&!f.l.includes(k);svg.querySelector('#l-'+k).classList.toggle('dim',d);svg.querySelector('#t-'+k).classList.toggle('dim',d)}
+  svg.querySelector('.zone').classList.toggle('dim',focus==='open');
+}
+function travel(k,dir){
+  return new Promise(done=>{
+    const p=svg.querySelector('#l-'+k),dot=svg.querySelector('#dot'),n=p.getTotalLength();
+    p.classList.add('on');
+    const at=t=>{const q=p.getPointAtLength(n*(dir>0?t:1-t));dot.setAttribute('cx',q.x);dot.setAttribute('cy',q.y)};
+    dot.setAttribute('visibility','visible');
+    const hold=reduce?1500:1700,t0=performance.now();
+    const go=now=>{
+      const t=Math.min(1,(now-t0)/hold);
+      at(reduce?1:t);
+      if(t<1)requestAnimationFrame(go);else{p.classList.remove('on');done()}
+    };
+    requestAnimationFrame(go);
+  });
+}
+async function play(name){
+  if(busy)return;busy=true;
+  document.querySelectorAll('.play').forEach(b=>b.disabled=true);
+  setFocus('all');
+  for(const [k,dir,txt,box] of PLAYS[name]){
+    cap.textContent=txt;
+    await travel(k,dir);
+    const b=svg.querySelector('#b-'+box);b.classList.add('on');
+    await new Promise(r=>setTimeout(r,350));
+    b.classList.remove('on');
+  }
+  svg.querySelector('#dot').setAttribute('visibility','hidden');
+  busy=false;
+  document.querySelectorAll('.play').forEach(b=>b.disabled=false);
+}
+function setFocus(f){
+  focus=f;
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f===f));
+  paint();
+}
+document.querySelectorAll('.play').forEach(b=>b.onclick=()=>play(b.dataset.p));
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{if(!busy){setFocus(c.dataset.f);cap.textContent=CAPS[c.dataset.f]}});
+let was=innerWidth<520;
+addEventListener('resize',()=>{const now=innerWidth<520;if(now!==was&&!busy){was=now;draw()}});
+draw();
+</script>
+</body>
+</html>

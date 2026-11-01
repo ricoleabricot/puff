@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Puff's network</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:8px 10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:6px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:18px;margin:0;font-weight:800;line-height:1.15}
+.em{width:26px;height:26px;object-fit:contain;vertical-align:middle;flex:none}
+.hero .em{width:30px;height:30px}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;border:0;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.play{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border-radius:14px;padding:0 12px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.play[aria-pressed="true"]{box-shadow:inset 0 0 0 3px #3A2A24}
+.chip{background:#fff;font-weight:700;font-size:14px;border-radius:999px;padding:0 12px;box-shadow:inset 0 0 0 2px #F0CDBE}
+.chip[aria-pressed="true"]{background:#F27E5E;color:#fff;box-shadow:none}
+.stage{position:relative;margin-top:6px}
+.lines,.dotlayer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.lines{z-index:1}.dotlayer{z-index:3}
+.lines path{fill:none;stroke:#D9A48F;stroke-width:2;stroke-dasharray:5 5;transition:stroke .2s}
+.lines path.on{stroke:#DF5F3F;stroke-width:3;stroke-dasharray:none}
+.dotlayer circle{fill:#DF5F3F;stroke:#fff;stroke-width:3}
+.row{display:flex;justify-content:center;gap:12px}
+.band{background:#EEF3FB;border-radius:14px;padding:5px 8px}
+.gate{display:flex;justify-content:center;margin:12px 0 8px}
+.net{background:#FFFAF7;box-shadow:inset 0 0 0 2px #F6DCCF;border-radius:16px;padding:4px 6px 6px}
+.tag{font-size:12px;font-weight:700;opacity:.8}
+.grid{display:grid;grid-template-columns:1fr 1fr 142px;gap:5px 6px;grid-template-areas:"za zb ." "pa pb rp" "qa qb rq"}
+.sub{border-radius:12px;padding:3px 6px 6px;transition:background .2s}
+.sub.pub{background:#FFEDE4}.sub.pri{background:#ECEFF8}
+.sub .row{gap:6px}
+.net>.tag{position:relative;z-index:2;background:#FFFAF7}
+.zone{position:relative;z-index:2;background:#FFFAF7;font-size:12px;font-weight:800;text-align:center;border-radius:8px;transition:background .2s}
+.zone.hot{background:#FFD9C8}
+.node{position:relative;z-index:2;flex:1;max-width:190px;min-width:0;background:#fff;border-radius:12px;box-shadow:0 3px 10px rgba(120,60,40,.12);display:flex;align-items:center;gap:6px;padding:4px 7px;min-height:46px;transition:opacity .2s,box-shadow .2s}
+.node b{display:block;font-size:13px;line-height:1.1}
+.node small{display:block;font-size:11px;opacity:.75;line-height:1.15}
+.node.hot{box-shadow:0 0 0 3px #3BAA6E}
+.node.stop{box-shadow:0 0 0 3px #E5534B}
+.rt{position:relative;z-index:2;background:#fff;border-radius:12px;box-shadow:0 3px 10px rgba(120,60,40,.12);padding:5px 8px;font-size:12px;line-height:1.2;transition:opacity .2s,box-shadow .2s}
+.rt b{display:block;font-size:13px;margin-bottom:2px}
+.rt.hot{box-shadow:0 0 0 3px #3BAA6E}
+.dim{opacity:.3}
+.cap{min-height:44px;margin-top:6px;padding:6px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+@media (max-width:560px){
+ .grid{grid-template-columns:1fr 1fr;grid-template-areas:"za zb" "pa pb" "rp rp" "qa qb" "rq rq"}
+ .sub .row{flex-direction:column;align-items:stretch}
+ .node{max-width:none}
+ .row.top .node{max-width:150px}
+ .gate .node{max-width:170px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><h1>Puff's network</h1></div>
+  <div class="bar" id="bar">
+    <button class="play" data-p="visitor" aria-pressed="false">▶ Visitor</button>
+    <button class="play" data-p="download" aria-pressed="false">▶ Download</button>
+    <button class="play" data-p="stranger" aria-pressed="false">▶ Stranger</button>
+    <button class="chip" data-f="pub" aria-pressed="false">Public</button>
+    <button class="chip" data-f="pri" aria-pressed="false">Private</button>
+    <button class="chip" data-f="zones" aria-pressed="false">Two zones</button>
+  </div>
+  <div class="stage" id="stage">
+    <svg class="lines" id="lines" aria-hidden="true"></svg>
+    <div class="band"><div class="tag">The internet</div>
+      <div class="row top"><div class="node" id="visitor"></div><div class="node" id="hub"></div></div></div>
+    <div class="gate"><div class="node" id="igw"></div></div>
+    <div class="net"><div class="tag">Puff's private network, 10.0.0.0/16</div>
+      <div class="grid">
+        <div class="zone" style="grid-area:za">Zone us-east-1a</div>
+        <div class="zone" style="grid-area:zb">Zone us-east-1b</div>
+        <div class="sub pub" style="grid-area:pa"><div class="tag">Public subnet</div><div class="row"><div class="node" id="exit"></div><div class="node" id="lb1"></div></div></div>
+        <div class="sub pub" style="grid-area:pb"><div class="tag">Public subnet</div><div class="row"><div class="node" id="lb2"></div></div></div>
+        <div class="rt" id="rp" style="grid-area:rp"><b>Public route table</b>Leaving the network: Internet Gateway</div>
+        <div class="sub pri" style="grid-area:qa"><div class="tag">Private subnet</div><div class="row"><div class="node" id="api"></div></div></div>
+        <div class="sub pri" style="grid-area:qb"><div class="tag">Private subnet</div><div class="row"><div class="node" id="db"></div></div></div>
+        <div class="rt" id="rq" style="grid-area:rq"><b>Private route table</b>Leaving the network: one-way exit</div>
+      </div>
+    </div>
+    <svg class="dotlayer" id="dots" aria-hidden="true"></svg>
+  </div>
+  <div class="cap" id="cap" role="status" aria-live="polite">Press play, or pick a focus.</div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+function em(name,chr){
+  const u=EB+encodeURIComponent(name)+'/3D/'+name.toLowerCase().replace(/ /g,'_')+'_3d.png';
+  return '<img class="em" src="'+u+'" alt="'+chr+'" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+}
+const $=s=>document.querySelector(s);
+const N={
+ visitor:['Visitor','a browser','Laptop','💻'],
+ hub:['Docker Hub','where images live','Whale','🐋'],
+ igw:['Internet Gateway','two-way gate','Door','🚪'],
+ exit:['One-way exit','out only','Outbox tray','📤'],
+ lb1:['Load balancer','puff-alb','Bellhop bell','🛎️'],
+ lb2:['Load balancer','same one, second zone','Bellhop bell','🛎️'],
+ api:['Server','puff-api, no public address','Gear','⚙️'],
+ db:['Database','puff-db','File cabinet','🗄️']
+};
+Object.keys(N).forEach(k=>{const n=N[k];$('#'+k).innerHTML=em(n[2],n[3])+'<span><b>'+n[0]+'</b><small>'+n[1]+'</small></span>'});
+$('#heroEm').innerHTML=em('Globe with meridians','🌐');
+const LINKS=[['visitor','igw'],['igw','hub'],['igw','lb1'],['igw','lb2'],['igw','exit'],['lb1','api'],['exit','api'],['api','db']];
+const PLAYS={
+ visitor:[{to:'visitor',c:'A visitor opens the board.'},{to:'igw',c:'In through the two-way gate.'},{to:'lb1',c:'The load balancer is the only public door.'},{to:'api',c:'It passes the request to the server.'},{to:'db',c:'The server talks to the database.'}],
+ download:[{to:'api',c:'The server needs its image.',rt:'rq'},{to:'exit',c:'Its route table sends it to the one-way exit.',rt:'rq'},{to:'igw',c:'Out through the gate.',rt:'rp'},{to:'hub',c:'Docker Hub answers.'},{to:'igw',c:'The reply comes back.'},{to:'exit',c:'Only replies get back in.'},{to:'api',c:'The server gets its image.'}],
+ stranger:[{to:'visitor',c:'A stranger tries to reach the server.'},{to:'igw',c:'Past the gate.'},{to:'api',c:'Stopped, no public address and no way in.',stop:1}]
+};
+const FOCUS={
+ pub:{keep:['visitor','hub','igw','exit','lb1','lb2','rp'],c:'Public subnets face the internet.'},
+ pri:{keep:['api','db','rq'],c:'Private subnets have no way in from the internet.'},
+ zones:{keep:null,c:'Subnets come in pairs, one in each zone.'}
+};
+const stage=$('#stage'),lines=$('#lines'),dots=$('#dots'),cap=$('#cap');
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let run=0;
+const key=(a,b)=>[a,b].sort().join('-');
+function centre(id){
+  const r=$('#'+id).getBoundingClientRect(),s=stage.getBoundingClientRect();
+  return [r.left-s.left+r.width/2,r.top-s.top+r.height/2];
+}
+function d(a,b){const p=centre(a),q=centre(b);return 'M'+p[0]+' '+p[1]+' L'+q[0]+' '+q[1]}
+function draw(){
+  const on=[...lines.querySelectorAll('.on')].map(x=>x.dataset.k);
+  lines.innerHTML=LINKS.map(l=>'<path data-k="'+key(l[0],l[1])+'" d="'+d(l[0],l[1])+'"></path>').join('');
+  on.forEach(k=>{const p=lines.querySelector('[data-k="'+k+'"]');if(p)p.classList.add('on')});
+}
+function clearAll(){
+  run++;dots.innerHTML='';
+  document.querySelectorAll('.hot,.stop,.dim,.on').forEach(e=>e.classList.remove('hot','stop','dim','on'));
+  document.querySelectorAll('[aria-pressed]').forEach(b=>b.setAttribute('aria-pressed','false'));
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function move(from,to,me,stopShort){
+  return new Promise(done=>{
+    const p=centre(from),q=centre(to);
+    if(stopShort){q[0]=p[0]+(q[0]-p[0])*.72;q[1]=p[1]+(q[1]-p[1])*.72}
+    if(reduce)return done();
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r',8);dots.appendChild(c);
+    const t0=performance.now(),dur=650;
+    (function f(t){
+      if(me!==run){c.remove();return done()}
+      const k=Math.min(1,(t-t0)/dur);
+      c.setAttribute('cx',p[0]+(q[0]-p[0])*k);c.setAttribute('cy',p[1]+(q[1]-p[1])*k);
+      if(k<1)requestAnimationFrame(f);else{c.remove();done()}
+    })(t0);
+  });
+}
+async function play(name,btn){
+  clearAll();btn.setAttribute('aria-pressed','true');
+  const me=run,steps=PLAYS[name];let prev=null;
+  for(const s of steps){
+    document.querySelectorAll('.rt.hot').forEach(e=>e.classList.remove('hot'));
+    if(s.rt)$('#'+s.rt).classList.add('hot');
+    if(prev){
+      const p=lines.querySelector('[data-k="'+key(prev,s.to)+'"]');
+      if(p)p.classList.add('on');
+      await move(prev,s.to,me,s.stop);
+      if(me!==run)return;
+    }
+    $('#'+s.to).classList.add(s.stop?'stop':'hot');
+    cap.textContent=(s.stop?'✗ ':'')+s.c;
+    await wait(reduce?1400:950);
+    if(me!==run)return;
+    prev=s.to;
+  }
+  btn.setAttribute('aria-pressed','false');
+}
+function focus(f,btn){
+  const was=btn.getAttribute('aria-pressed')==='true';
+  clearAll();
+  if(was){cap.textContent='Press play, or pick a focus.';return}
+  btn.setAttribute('aria-pressed','true');
+  const F=FOCUS[f];cap.textContent=F.c;
+  if(F.keep)document.querySelectorAll('.node,.rt').forEach(e=>{if(!F.keep.includes(e.id))e.classList.add('dim')});
+  else document.querySelectorAll('.zone').forEach(e=>e.classList.add('hot'));
+}
+$('#bar').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.p)play(b.dataset.p,b);else focus(b.dataset.f,b);
+});
+draw();
+addEventListener('resize',draw);addEventListener('load',draw);
+if(window.ResizeObserver)new ResizeObserver(draw).observe(stage);
+</script>
+</body>
+</html>

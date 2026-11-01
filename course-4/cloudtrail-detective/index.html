@@ -76,18 +76,18 @@ const $=s=>document.querySelector(s);
 $('#heroEm').innerHTML=em('Video camera','📹');
 const ACC='123456789012';
 const E=[
- {id:'revoke',t:'15:10',n:'RevokeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-api-sg",\n"fromPort": 22, "toPort": 22,\n"cidrIp": "0.0.0.0/0"',why:'Port 22 again, but Revoke closes a door. This is the fix, not the cause.'},
- {id:'getp',t:'14:51',n:'GetParameter',u:'i-0a1b2c3d4e5f67890',r:'LabRole',ip:'10.0.3.25',p:'"name": "/puff/db/password",\n"withDecryption": true',why:'That is the instance reading its password at boot. Nothing to do with port 22.'},
- {id:'auth22',t:'14:32',n:'AuthorizeSecurityGroupIngress',u:'tom',r:'oncall',ip:'198.51.100.7',p:'"groupId": "puff-api-sg",\n"fromPort": 22, "toPort": 22,\n"cidrIp": "0.0.0.0/0"',why:'Authorize opens a door: port 22, from 0.0.0.0/0, on puff-api-sg. Got it.'},
- {id:'desc',t:'14:05',n:'DescribeSecurityGroups',u:'sam',r:'engineers',ip:'203.0.113.24',p:'"groupIds": ["puff-api-sg"]',why:'Describe only reads. Looking at a security group changes nothing.'},
- {id:'auth5432',t:'11:05',n:'AuthorizeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-db-sg",\n"fromPort": 5432, "toPort": 5432,\n"sourceGroup": "puff-api-sg"',why:'Same action, but port 5432, only from puff-api-sg. That is the database door, chained on purpose.'},
- {id:'auth443',t:'09:48',n:'AuthorizeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-alb-sg",\n"fromPort": 443, "toPort": 443,\n"cidrIp": "0.0.0.0/0"',why:'Open to the internet, but port 443 on the load balancer. That one is meant to be public.'},
+ {id:'revoke',t:'15:10',n:'RevokeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-api-sg",\n"fromPort": 22, "toPort": 22,\n"cidrIp": "0.0.0.0/0"',why:'Port 22 again, but Revoke closes a door, this is the fix.'},
+ {id:'getp',t:'14:51',n:'GetParameter',u:'i-0a1b2c3d4e5f67890',r:'LabRole',ip:'10.0.3.25',p:'"name": "/puff/db/password",\n"withDecryption": true',why:'That\'s the instance reading its password at boot, nothing to do with port 22.'},
+ {id:'auth22',t:'14:32',n:'AuthorizeSecurityGroupIngress',u:'tom',r:'oncall',ip:'198.51.100.7',p:'"groupId": "puff-api-sg",\n"fromPort": 22, "toPort": 22,\n"cidrIp": "0.0.0.0/0"',why:'Authorize opens a door, port 22 from 0.0.0.0/0 on puff-api-sg.'},
+ {id:'desc',t:'14:05',n:'DescribeSecurityGroups',u:'sam',r:'engineers',ip:'203.0.113.24',p:'"groupIds": ["puff-api-sg"]',why:'Describe only reads, looking at a security group changes nothing.'},
+ {id:'auth5432',t:'11:05',n:'AuthorizeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-db-sg",\n"fromPort": 5432, "toPort": 5432,\n"sourceGroup": "puff-api-sg"',why:'Same action, but port 5432 and only from puff-api-sg, that\'s the database rule.'},
+ {id:'auth443',t:'09:48',n:'AuthorizeSecurityGroupIngress',u:'lea',r:'platform',ip:'203.0.113.10',p:'"groupId": "puff-alb-sg",\n"fromPort": 443, "toPort": 443,\n"cidrIp": "0.0.0.0/0"',why:'Open to the internet, but port 443 on the load balancer, that one is meant to be public.'},
  {id:'run',t:'09:12',n:'RunInstances',u:'lea',r:'platform',ip:'203.0.113.10',p:'"instanceType": "t3.micro",\n"iamInstanceProfile": "LabInstanceProfile"',why:'Launching a server opens no port by itself.'}
 ];
 const Q=[
- {q:'Who opened it?',o:['lea','tom','sam','i-0a1b2c3d4e5f67890'],a:'tom',why:'The session name in userIdentity is tom.'},
- {q:'When?',o:['09:48','11:05','14:32','15:10'],a:'14:32',why:'eventTime says 14:32. At 15:10 lea closed it again.'},
- {q:'Through which role?',o:['platform','engineers','LabRole','oncall'],a:'oncall',why:'The ARN says assumed-role/oncall/tom: he was on duty with the oncall role.'}
+ {q:'Who opened it?',o:['lea','tom','sam','i-0a1b2c3d4e5f67890'],a:'tom',why:'The name at the end of the ARN in userIdentity is tom.'},
+ {q:'When?',o:['09:48','11:05','14:32','15:10'],a:'14:32',why:'eventTime says 14:32, and at 15:10 lea closed it again.'},
+ {q:'Through which role?',o:['platform','engineers','LabRole','oncall'],a:'oncall',why:'The ARN says assumed-role/oncall/tom, so he used the oncall role.'}
 ];
 let sel,phase,missed,qi,score,res,locked;
 function say(m,k){const f=$('#fb');f.className='fb '+(k||'');f.textContent=m}
@@ -96,7 +96,7 @@ function start(){
   $('#end').classList.add('hide');$('#fb').classList.remove('hide');
   $('#goal').innerHTML='Someone opened port 22 to the whole internet on <code>puff-api-sg</code>. Find the event.';
   $('#list').innerHTML=E.map(e=>'<button class="ev" data-id="'+e.id+'" aria-label="'+e.t+' '+e.n+' by '+e.u+'"><span class="t">'+e.t+'</span><span class="n">'+e.n+'</span><span class="u">'+e.u+'</span></button>').join('');
-  $('#panel').innerHTML='<div class="head">Event details</div><p>Pick an event on the list. Read <code>requestParameters</code> carefully.</p>';
+  $('#panel').innerHTML='<div class="head">Event details</div><p>Pick an event on the list and read <code>requestParameters</code>.</p>';
   say('Tap an event to read its details.');
 }
 function json(e){
@@ -117,12 +117,12 @@ function accuse(){
     b.classList.remove('sel');b.classList.add('right');
     if(!missed)score++;
     say('✓ '+sel.why,'ok');phase='ask';
-    $('#goal').textContent='Now answer like a detective, from the event JSON.';
+    $('#goal').textContent='Now answer from the event JSON.';
     setTimeout(ask,0);
   }else{
     missed++;b.classList.remove('sel');b.classList.add('wrong');b.disabled=true;
     say('✗ Not this one. '+sel.why,'bad');
-    $('#panel').innerHTML='<div class="head">Event details</div><p>✗ Ruled out. Try another event.</p>';
+    $('#panel').innerHTML='<div class="head">Event details</div><p>✗ Ruled out, try another event.</p>';
   }
 }
 function dots(){return '<div class="dots" aria-hidden="true">'+Q.map((_,i)=>'<span class="dot '+(res[i]===undefined?(i===qi?'on':''):(res[i]?'ok':'no'))+'"></span>').join('')+'</div>'}
@@ -139,14 +139,14 @@ function pick(b){
     else if(x===b){x.classList.add('wrong');x.querySelector('.mk').textContent='✗'}});
   $('#panel').querySelector('.dots').outerHTML=dots();
   say((ok?'✓ Yes! ':'✗ Not quite. ')+c.why,ok?'ok':'bad');
-  $('#nx').innerHTML='<div class="row"><button class="btn" id="n">'+(qi<Q.length-1?'Next':'Close the case')+'</button></div>';
+  $('#nx').innerHTML='<div class="row"><button class="btn" id="n">'+(qi<Q.length-1?'Next':'See my score')+'</button></div>';
   $('#n').focus({preventScroll:true});
   $('#n').onclick=()=>{qi++;qi<Q.length?ask():finish()};
 }
 function finish(){
-  phase='end';$('#fb').classList.add('hide');$('#goal').textContent='Case closed!';
+  phase='end';$('#fb').classList.add('hide');$('#goal').textContent='Done';
   const e=$('#end');e.classList.remove('hide');
-  e.innerHTML=em(score===4?'Trophy':'Magnifying glass tilted left',score===4?'🏆':'🔍')+'<h2>Case closed</h2><div class="score">Score: '+score+' / 4</div><p class="take">tom, role oncall, 14:32, from 198.51.100.7. A short conversation instead of a long investigation.</p><button class="btn" id="again">Play again</button>';
+  e.innerHTML=em(score===4?'Trophy':'Magnifying glass tilted left',score===4?'🏆':'🔍')+'<h2>Found it</h2><div class="score">Score: '+score+' / 4</div><p class="take">tom, role oncall, 14:32, from 198.51.100.7, now you know who to talk to.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();e.scrollIntoView({block:'nearest'});
 }
 start();

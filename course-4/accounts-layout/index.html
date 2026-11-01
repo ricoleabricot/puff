@@ -54,7 +54,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offse
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>One company, many accounts</h1><p>Drag each workload into its own AWS account. Or tap a card, then tap an account.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>One company, many accounts</h1><p>Drag each workload into the right AWS account, or tap a card then tap an account.</p></div></div>
   <div class="plates" id="plates"></div>
   <div class="count" id="count"></div>
   <div class="tray" id="tray" aria-label="Workloads to place"></div>
@@ -79,13 +79,13 @@ const PLATES=[
  {k:'logs',t:'Log archive',s:'Read by security only',e:['Video camera','📹']}
 ];
 const ITEMS=[
- {id:'Prod API + database',k:'prod',e:['Desktop computer','🖥️'],l:'Customer data lives in prod, away from everything else. A mistake in staging cannot reach it.'},
- {id:'Staging',k:'nonprod',e:['Hammer and wrench','🛠️'],l:'Staging sits in non-prod: engineers can write there without touching production.'},
- {id:'Dev',k:'nonprod',e:['Laptop','💻'],l:'Dev goes in non-prod too. Breaking it is fine, that is what it is for.'},
- {id:'Team experiments',k:'sandbox',e:['Robot','🤖'],l:'Experiments get a sandbox with a budget alert and a strict SCP, so a forgotten test cannot cost a fortune.'},
- {id:'Backup copies',k:'backup',e:['Package','📦'],l:'Backups in a separate account: even someone with full control of prod cannot delete the copies.'},
+ {id:'Prod API + database',k:'prod',e:['Desktop computer','🖥️'],l:'Customer data lives in prod, so a mistake in staging can\'t reach it.'},
+ {id:'Staging',k:'nonprod',e:['Hammer and wrench','🛠️'],l:'Staging sits in non-prod, engineers can write there without touching production.'},
+ {id:'Dev',k:'nonprod',e:['Laptop','💻'],l:'Dev goes in non-prod too, breaking it there is fine.'},
+ {id:'Team experiments',k:'sandbox',e:['Robot','🤖'],l:'Experiments get a sandbox with a budget alert and a strict SCP.'},
+ {id:'Backup copies',k:'backup',e:['Package','📦'],l:'Backups go in a separate account, so even someone with full control of prod can\'t delete the copies.'},
  {id:'CloudTrail from every account',k:'logs',e:['Scroll','📜'],l:'Every account sends CloudTrail to the log archive, where nobody in the workload accounts can erase it.'},
- {id:'Billing + SSO',k:'mgmt',e:['Money bag','💰'],l:'The management account holds Organizations, billing and SSO only. Nobody deploys workloads there.'}
+ {id:'Billing + SSO',k:'mgmt',e:['Money bag','💰'],l:'The management account holds Organizations, billing and SSO only, nobody deploys workloads there.'}
 ];
 let sel,missed,placed,drag,suppress;
 const platesEl=$('#plates'),tray=$('#tray'),fb=$('#fb'),endEl=$('#end');
@@ -111,19 +111,19 @@ function place(id,k){
     placed[id]=1;btn.remove();sel=null;
     const g=platesEl.querySelector('[data-k="'+k+'"] .got');
     g.insertAdjacentHTML('beforeend','<span>✓ '+id+'</span>');
-    say(fb,'✓ Yes! '+it.l,'ok');upd();
+    say(fb,'✓ '+it.l,'ok');upd();
     if(Object.keys(placed).length===ITEMS.length)finish();
   }else{
     missed[id]=1;btn.classList.add('miss','shake');btn.classList.remove('sel');sel=null;
     setTimeout(()=>btn.classList.remove('shake'),400);
-    say(fb,'✗ Not there. '+it.l,'bad');
+    say(fb,'✗ Not there, '+it.l,'bad');
   }
 }
 function finish(){
   const n=ITEMS.length-Object.keys(missed).length;
   fb.classList.add('hide');
   endEl.classList.remove('hide');
-  endEl.innerHTML=em('Party popper','🎉')+'<h2>Every workload has its own walls!</h2><div class="score">Score: '+n+' / '+ITEMS.length+' on the first try</div><p class="take">An account is the strongest wall AWS has: one mistake or one stolen password stays in one account.</p><button class="btn" id="again">Play again</button>';
+  endEl.innerHTML=em('Party popper','🎉')+'<h2>Every workload is in its account</h2><div class="score">Score: '+n+' / '+ITEMS.length+' on the first try</div><p class="take">An account is the strongest wall AWS has, one mistake or one stolen password stays in one account.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=()=>{fb.classList.remove('hide');start()};
   $('#again').focus();
 }

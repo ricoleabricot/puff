@@ -57,7 +57,7 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Subnet builder</h1><p>Give each subnet a route table so its resident can do its job.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Subnet builder</h1><p>Give each subnet the route table it needs.</p></div></div>
   <div class="vpc">
     <h2><span id="vpcEm"></span>puff-vpc <code>10.0.0.0/16</code></h2>
     <div class="rts">
@@ -79,17 +79,17 @@ const $=s=>document.querySelector(s);
 function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
 const SUB=[
  {id:'A',cidr:'10.0.0.0/20',az:'us-east-1a',job:'puff-alb and the NAT gateway',e:['Bellhop bell','🛎️'],k:'igw',
-  ok:'Public! The ALB greets visitors from the internet, and the NAT gateway must sit in a public subnet to get out.',
-  no:'With the NAT table, nobody on the internet can start a conversation here, so visitors never reach the ALB.'},
+  ok:'Public, the ALB takes visitors from the internet, and the NAT gateway has to sit in a public subnet to get out.',
+  no:'With the NAT table nothing on the internet can start a connection here, so visitors never reach the ALB.'},
  {id:'B',cidr:'10.0.16.0/20',az:'us-east-1b',job:'puff-alb, second AZ',e:['Bellhop bell','🛎️'],k:'igw',
-  ok:'Public! An ALB needs public subnets in at least two AZs.',
-  no:'The ALB needs a public subnet in this AZ too, so it needs the IGW table.'},
+  ok:'Public, an ALB needs public subnets in at least two AZs.',
+  no:'The ALB needs a public subnet in this AZ too, so use the IGW table.'},
  {id:'C',cidr:'10.0.128.0/20',az:'us-east-1a',job:'puff-api',e:['Gear','⚙️'],k:'nat',
-  ok:'Private! No road in, and the API still downloads Docker and its image through the NAT.',
-  no:'The IGW table gives this street a road from the internet. The API should only go out, through the NAT.'},
+  ok:'Private, no way in from the internet, and the API still downloads Docker and its image through the NAT.',
+  no:'The IGW table opens this subnet to the internet. The API should only go out, through the NAT.'},
  {id:'D',cidr:'10.0.144.0/20',az:'us-east-1b',job:'puff-db',e:['File cabinet','🗄️'],k:'nat',
-  ok:'Private! The database has no road in from the internet, only the local route from the API.',
-  no:'The IGW table opens a road from the internet to your database. That was session 2\'s problem.'}
+  ok:'Private, no way in from the internet, only the local route from the API.',
+  no:'The IGW table opens your database to the internet. That was the problem in course 2.'}
 ];
 let att,missed;
 const grid=$('#grid'),fb=$('#fb'),endEl=$('#end');
@@ -117,7 +117,7 @@ function attach(id,k){
 function finish(){
   const n=SUB.length-Object.keys(missed).length;
   fb.classList.add('hide');endEl.classList.remove('hide');
-  endEl.innerHTML=em('Party popper','🎉')+'<h2>Puff\'s network is ready!</h2><div class="score">Score: '+n+' / '+SUB.length+' on the first try</div><p class="take">Same subnets, same kind of addresses. The only difference is the route table.</p><button class="btn" id="again">Play again</button>';
+  endEl.innerHTML=em('Party popper','🎉')+'<h2>Puff\'s network is ready!</h2><div class="score">Score: '+n+' / '+SUB.length+' on the first try</div><p class="take">The only difference between these subnets is the route table.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();
 }
 grid.addEventListener('click',e=>{const b=e.target.closest('.acts button');if(b)attach(b.dataset.s,b.dataset.k)});

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blue/green and canary</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#FFF4EE;color:#3A2A24;font:15px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;padding:10px}
+.wrap{max-width:700px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#FFB59C,#F27E5E);color:#fff;border-radius:16px;padding:8px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(242,126,94,.3)}
+.hero h1{font-size:19px;margin:0;font-weight:800;line-height:1.15}
+.hero .em{width:36px;height:36px;flex:none;object-fit:contain}
+button{font:inherit;color:inherit;cursor:pointer;min-height:44px;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.chip{background:#fff;border:2px solid #F2DDD3;border-radius:14px;padding:0 14px;font-weight:700}
+.chip[aria-pressed="true"]{background:#FFE3D8;border-color:#F27E5E}
+.btn{background:linear-gradient(135deg,#F58D6F,#DF5F3F);color:#fff;font-weight:800;border:0;border-radius:14px;padding:0 18px;box-shadow:0 3px 8px rgba(223,95,63,.35)}
+.btn.ghost{background:#fff;color:#3A2A24;box-shadow:inset 0 0 0 2px #F0CDBE}
+.btn:disabled{opacity:.45;cursor:default}
+.right{margin-left:auto;display:flex;gap:6px}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(120,60,40,.1);padding:6px;margin-top:8px}
+svg{display:block;width:100%;height:auto;max-height:calc(100vh - 204px);min-height:250px;margin:0 auto}
+.box{fill:#FFFAF7;stroke:#F2DDD3;stroke-width:2}
+.box.blue{fill:#E4EFFC;stroke:#4A86D8}
+.box.green{fill:#E6F6EC;stroke:#3BAA6E}
+.box.off{opacity:.3;stroke-dasharray:6 5}
+.t1{font-weight:800;font-size:14px;fill:#3A2A24;text-anchor:middle}
+.t2{font-size:12px;fill:#3A2A24;opacity:.75;text-anchor:middle}
+.off-text{opacity:.3}
+.link{fill:none;stroke:#E7D2C8;stroke-width:3}
+.flow{fill:none;stroke-linecap:round;stroke-dasharray:2 14;animation:move 1s linear infinite}
+.flow.blue{stroke:#4A86D8}
+.flow.green{stroke:#3BAA6E}
+.share{font-weight:800;font-size:13px;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:4px;fill:#3A2A24}
+@keyframes move{to{stroke-dashoffset:-16}}
+.cap{min-height:44px;margin-top:8px;padding:8px 12px;border-radius:12px;background:#fff;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(120,60,40,.08)}
+.cap .n{background:#FFE3D8;color:#A2442A;border-radius:10px;padding:2px 8px;font-size:12px;flex:none;font-weight:800}
+.hide{display:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.flow{stroke-dasharray:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><span id="heroEm"></span><h1>Blue/green and canary</h1></div>
+  <div class="bar">
+    <button class="chip" data-m="bg" aria-pressed="true">Blue/green</button>
+    <button class="chip" data-m="ca" aria-pressed="false">Canary</button>
+    <div class="right">
+      <button class="btn" id="play">▶ Play</button>
+      <button class="btn ghost" id="next">Next step</button>
+    </div>
+  </div>
+  <div class="card">
+    <svg viewBox="0 0 340 330" role="img" aria-label="Users reach a load balancer, which sends traffic to blue servers, green servers or both. Both use one database.">
+      <path class="link" d="M170 50V78"/>
+      <path class="link" d="M130 128C130 160 85 150 85 182"/>
+      <path class="link" d="M210 128C210 160 255 150 255 182"/>
+      <path class="link" d="M85 236C85 262 150 250 150 274"/>
+      <path class="link" d="M255 236C255 262 190 250 190 274"/>
+
+      <path id="fTop" class="flow blue" d="M170 50V78" stroke-width="6"/>
+      <path id="fBlue" class="flow blue" d="M130 128C130 160 85 150 85 182"/>
+      <path id="fGreen" class="flow green" d="M210 128C210 160 255 150 255 182"/>
+
+      <rect class="box" x="110" y="8" width="120" height="42" rx="12"/>
+      <text class="t1" x="170" y="34">Users</text>
+
+      <rect class="box" x="70" y="78" width="200" height="50" rx="12"/>
+      <text class="t1" x="170" y="99">Load balancer</text>
+      <text class="t2" x="170" y="117" id="rule"></text>
+
+      <rect id="bBlue" class="box blue" x="10" y="182" width="150" height="54" rx="12"/>
+      <text class="t1" x="85" y="205">Blue servers</text>
+      <text class="t2" x="85" y="224">old version</text>
+
+      <g id="gGreen">
+        <rect class="box green" x="180" y="182" width="150" height="54" rx="12"/>
+        <text class="t1" x="255" y="205">Green servers</text>
+        <text class="t2" x="255" y="224">new version</text>
+      </g>
+
+      <rect class="box" x="105" y="274" width="130" height="48" rx="12"/>
+      <text class="t1" x="170" y="295">Database</text>
+      <text class="t2" x="170" y="312">only one</text>
+
+      <text class="share" x="82" y="162" id="pBlue"></text>
+      <text class="share" x="258" y="162" id="pGreen"></text>
+    </svg>
+  </div>
+  <div class="cap" role="status" aria-live="polite"><span class="n" id="n"></span><span id="cap"></span></div>
+</div>
+<script>
+const EB='https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/';
+const u=EB+'Vertical%20traffic%20light/3D/vertical_traffic_light_3d.png';
+document.getElementById('heroEm').innerHTML='<img class="em" src="'+u+'" alt="🚦" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(this.alt))">';
+const $=s=>document.querySelector(s);
+const M={
+ bg:[
+  {b:100,g:0,on:0,c:'All traffic goes to blue.'},
+  {b:100,g:0,on:1,c:'Green is built next to it, no traffic yet.'},
+  {b:0,g:100,on:1,c:'The listener flips, all traffic goes to green.'},
+  {b:100,g:0,on:1,c:'Problem? Flip back to blue, in seconds.'}
+ ],
+ ca:[
+  {b:100,g:0,on:0,c:'All traffic goes to blue.'},
+  {b:90,g:10,on:1,c:'The listener sends 10% to green, you watch the alarms.'},
+  {b:100,g:0,on:1,c:'Alarms fired? Set green back to 0, in seconds.'},
+  {b:0,g:100,on:1,c:'No alarms? All traffic goes to green.'}
+ ]
+};
+let mode='bg',i=0,timer=null;
+function setFlow(el,p){
+  el.style.display=p?'':'none';
+  el.setAttribute('stroke-width',p>=50?6:3);
+}
+function draw(){
+  const s=M[mode][i],L=M[mode].length;
+  setFlow($('#fBlue'),s.b);setFlow($('#fGreen'),s.g);
+  $('#fTop').setAttribute('class','flow '+(s.g>s.b?'green':'blue'));
+  $('#gGreen').querySelectorAll('rect').forEach(r=>r.classList.toggle('off',!s.on));
+  $('#gGreen').querySelectorAll('text').forEach(t=>t.classList.toggle('off-text',!s.on));
+  $('#pBlue').textContent=s.b+'%';
+  $('#pGreen').textContent=s.on?s.g+'%':'';
+  $('#rule').textContent='listener: '+s.b+' blue, '+s.g+' green';
+  $('#n').textContent='Step '+(i+1)+' of '+L;
+  $('#cap').textContent=s.c;
+}
+function stop(){clearInterval(timer);timer=null;$('#play').textContent='▶ Play'}
+function step(){
+  i=(i+1)%M[mode].length;draw();
+  if(timer&&i===M[mode].length-1)stop();
+}
+$('#play').onclick=()=>{
+  if(timer){stop();return}
+  i=0;draw();$('#play').textContent='⏸ Stop';
+  timer=setInterval(step,2200);
+};
+$('#next').onclick=()=>{stop();step()};
+document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+  stop();mode=b.dataset.m;i=0;
+  document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  draw();
+});
+draw();
+</script>
+</body>
+</html>

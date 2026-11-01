@@ -54,7 +54,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offse
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Pizza sorter</h1><p>Drag each service to the pizza that matches how much work you keep. Or tap a card, then tap a plate.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Pizza sorter</h1><p>Drag each service to the right pizza, or tap a card then tap a pizza. The more you cook, the more work you keep.</p></div></div>
   <div class="plates" id="plates"></div>
   <div class="count" id="count"></div>
   <div class="tray" id="tray" aria-label="Services to sort"></div>
@@ -71,19 +71,19 @@ const $=s=>document.querySelector(s);
 function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
 
 const PLATES=[
- {k:'IaaS',t:'Homemade',s:'You make the dough',e:['Cooking','🍳']},
- {k:'PaaS',t:'Frozen, you bake',s:'You just bake it',e:['Snowflake','❄️']},
+ {k:'IaaS',t:'Homemade',s:'You do the cooking',e:['Cooking','🍳']},
+ {k:'PaaS',t:'Frozen',s:'You just bake it',e:['Snowflake','❄️']},
  {k:'SaaS',t:'Delivered',s:'You just eat',e:['Motorcycle','🏍️']}
 ];
 const ITEMS=[
- {id:'EC2',k:'IaaS',e:['Laptop','💻'],l:'EC2 is IaaS: AWS runs the hardware, you manage the OS, runtime, app and data.'},
- {id:'EBS',k:'IaaS',e:['Floppy disk','💾'],l:'EBS is IaaS: AWS runs the disks, you manage the OS, app and data on them.'},
- {id:'RDS',k:'PaaS',e:['File cabinet','🗄️'],l:'RDS is PaaS: AWS installs and updates PostgreSQL and takes backups, you only own the tables and data.'},
- {id:'Lambda',k:'PaaS',e:['High voltage','⚡'],l:'Lambda is PaaS: AWS handles the OS and runtime, you bring your code and data.'},
- {id:'Heroku',k:'PaaS',e:['Rocket','🚀'],l:'Heroku is PaaS: it handles the OS, updates and runtime, you push your app and data.'},
- {id:'Gmail',k:'SaaS',e:['Incoming envelope','📨'],l:'Gmail is SaaS: you only bring your data and settings.'},
- {id:'Slack',k:'SaaS',e:['Speech balloon','💬'],l:'Slack is SaaS: the provider runs everything, you only bring your data and settings.'},
- {id:'Amazon WorkMail',k:'SaaS',e:['Briefcase','💼'],l:'Amazon WorkMail is SaaS: AWS runs everything, you only bring your data and settings.'}
+ {id:'EC2',k:'IaaS',e:['Laptop','💻'],l:'EC2 is IaaS, AWS runs the hardware and you manage the operating system, runtime, app and data.'},
+ {id:'EBS',k:'IaaS',e:['Floppy disk','💾'],l:'EBS (Elastic Block Store) is IaaS, AWS runs the disks and you manage what you put on them.'},
+ {id:'RDS',k:'PaaS',e:['File cabinet','🗄️'],l:'RDS is PaaS, AWS installs PostgreSQL, updates it and takes backups, you only own the tables and the data.'},
+ {id:'Lambda',k:'PaaS',e:['High voltage','⚡'],l:'Lambda is PaaS, AWS handles the updates and the runtime, you bring your code and data.'},
+ {id:'Heroku',k:'PaaS',e:['Rocket','🚀'],l:'Heroku is PaaS, it handles the updates and the runtime, you bring your app and data.'},
+ {id:'Gmail',k:'SaaS',e:['Incoming envelope','📨'],l:'Gmail is SaaS, you only bring your data and settings.'},
+ {id:'Slack',k:'SaaS',e:['Speech balloon','💬'],l:'Slack is SaaS, the provider runs everything and you only bring your data and settings.'},
+ {id:'Amazon WorkMail',k:'SaaS',e:['Briefcase','💼'],l:'Amazon WorkMail is SaaS, AWS runs everything and you only bring your data and settings.'}
 ];
 let sel,missed,placed,drag,suppress;
 const platesEl=$('#plates'),tray=$('#tray'),fb=$('#fb'),endEl=$('#end');
@@ -100,7 +100,7 @@ function upd(){$('#count').textContent=Object.keys(placed).length+' of '+ITEMS.l
 function selectItem(id){
   sel=sel===id?null:id;
   tray.querySelectorAll('.item').forEach(b=>b.classList.toggle('sel',b.dataset.id===sel));
-  if(sel)say(fb,'Now tap the plate for '+sel+'.');
+  if(sel)say(fb,'Now tap the pizza for '+sel+'.');
 }
 function place(id,k){
   const it=ITEMS.find(i=>i.id===id),btn=tray.querySelector('[data-id="'+CSS.escape(id)+'"]');
@@ -114,14 +114,14 @@ function place(id,k){
   }else{
     missed[id]=1;btn.classList.add('miss','shake');btn.classList.remove('sel');sel=null;
     setTimeout(()=>btn.classList.remove('shake'),400);
-    say(fb,'✗ Not there. '+it.l,'bad');
+    say(fb,'✗ Not quite. '+it.l,'bad');
   }
 }
 function finish(){
   const n=ITEMS.length-Object.keys(missed).length;
   fb.classList.add('hide');
   endEl.classList.remove('hide');
-  endEl.innerHTML=em('Party popper','🎉')+'<h2>All sorted!</h2><div class="score">Score: '+n+' / '+ITEMS.length+' on the first try</div><p class="take">Moving right means less work and less control.</p><button class="btn" id="again">Play again</button>';
+  endEl.innerHTML=em('Party popper','🎉')+'<h2>All sorted!</h2><div class="score">Score: '+n+' / '+ITEMS.length+' on the first try</div><p class="take">Moving right means less work and less control, so start as far right as you can.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=()=>{fb.classList.remove('hide');start()};
   $('#again').focus();
 }
@@ -132,7 +132,7 @@ tray.addEventListener('click',e=>{
 });
 platesEl.addEventListener('click',e=>{
   const p=e.target.closest('.plate');if(!p)return;
-  if(sel)place(sel,p.dataset.k);else say(fb,'Pick a card first, then tap a plate.');
+  if(sel)place(sel,p.dataset.k);else say(fb,'Pick a card first, then tap a pizza.');
 });
 tray.addEventListener('dragstart',e=>e.preventDefault());
 tray.addEventListener('pointerdown',e=>{

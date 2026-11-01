@@ -83,9 +83,9 @@ const TIERS=[
  {k:'data',tier:'Data',svc:'RDS',name:'puff-db',e:['File cabinet','🗄️'],f:[3]}
 ];
 const ITEMS=[
- {id:'page',t:'index.html',s:'The browser page',k:'pres',e:['Globe with meridians','🌐'],l:'The page is static files: S3 serves it as a static website.'},
+ {id:'page',t:'index.html',s:'The browser page',k:'pres',e:['Globe with meridians','🌐'],l:'The page is static files, so S3 serves it as a static website.'},
  {id:'api',t:'API container',s:'Flask, built from the Dockerfile',k:'logic',e:['Whale','🐳'],l:'The API runs in Docker on EC2 puff-api, built by user data on first boot.'},
- {id:'db',t:'PostgreSQL',s:'The db container',k:'data',e:['Elephant','🐘'],l:'The database moves to RDS puff-db: AWS takes the backups and patches.'}
+ {id:'db',t:'PostgreSQL',s:'The db container',k:'data',e:['Elephant','🐘'],l:'The database moves to RDS puff-db, AWS takes the backups and patches.'}
 ];
 let sel,missed,placed,drag,suppress;
 const tiersEl=$('#tiers'),tray=$('#tray'),fb=$('#fb'),endEl=$('#end');

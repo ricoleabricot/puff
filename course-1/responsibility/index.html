@@ -58,7 +58,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offse
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Who owns what on AWS?</h1><p>For each layer, guess: AWS or You? Then reveal.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Who owns what on AWS?</h1><p>For each layer, guess who handles it, AWS or you, then reveal.</p></div></div>
   <div class="tabs" role="tablist" id="tabs"></div>
   <div class="stack" id="stack"></div>
   <div class="bar"><button class="btn" id="reveal">Reveal</button><span class="sc" id="sc"></span></div>
@@ -85,9 +85,9 @@ const LAYERS=[
  {n:'Buildings, hardware, network',e:['Cityscape','🏙️'],a:['AWS','AWS','AWS'],note:['','','']}
 ];
 const SVC=[
- {k:'EC2',t:'EC2',s:'IaaS',own:'On EC2 you keep the OS, firewall, access and data.'},
- {k:'RDS',t:'RDS',s:'managed',own:'On RDS, AWS patches the OS and PostgreSQL. You keep firewall, access and data.'},
- {k:'S3',t:'S3',s:'managed storage',own:'On S3 you only own access, encryption and your files.'}
+ {k:'EC2',t:'EC2',s:'IaaS',own:'On EC2 you keep the operating system, the firewall, access and your data.'},
+ {k:'RDS',t:'RDS',s:'managed',own:'On RDS, AWS updates the operating system and PostgreSQL, you keep the firewall, access and your data.'},
+ {k:'S3',t:'S3',s:'managed storage',own:'On S3 you only own access, encryption, backups and your files.'}
 ];
 let cur,guess,shown,tally;
 const tabs=$('#tabs'),stack=$('#stack'),fb=$('#fb'),endEl=$('#end');
@@ -149,7 +149,7 @@ function finish(){
   const pts=SVC.reduce((n,s,i)=>n+right(i),0),max=SVC.reduce((n,s,i)=>n+total(i),0);
   fb.classList.add('hide');$('.bar').classList.add('hide');
   endEl.classList.remove('hide');
-  endEl.innerHTML=em('Trophy','🏆')+'<h2>Landlord and tenant, sorted</h2><div class="score">Score: '+pts+' / '+max+'</div><p class="take">The more managed the service, the less you own, but you always own access and your data.</p><button class="btn" id="again">Play again</button>';
+  endEl.innerHTML=em('Trophy','🏆')+'<h2>All done!</h2><div class="score">Score: '+pts+' / '+max+'</div><p class="take">The more managed the service, the less you own, but you always own identity, access and your data.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();
 }
 start();

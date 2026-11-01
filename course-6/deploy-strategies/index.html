@@ -65,7 +65,7 @@ th{font-size:12px;opacity:.75}
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Ship a buggy release</h1><p>Release a broken v2 with each strategy. Count the users hit and how fast you get back.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Ship a buggy release</h1><p>Release a broken v2 with each strategy, count the users hit and how fast you get back.</p></div></div>
   <div id="play">
     <div class="picks" id="picks"></div>
     <div class="card stage">
@@ -99,7 +99,7 @@ const S={
    {rows:[['puff-tg',[2,1,1,1],1]],share:.25,log:'Instance refresh: server 1 now runs v2.'},
    {rows:[['puff-tg',[2,2,1,1],1]],share:.5,log:'Server 2 runs v2. Alarm! Errors behind puff-alb.'},
    {rows:[['puff-tg',[1,2,1,1],1]],share:.25,log:'Rolling back means another rolling deploy: server 1 back to v1.'},
-   {rows:[['puff-tg',B,1]],share:0,log:'Server 2 back to v1. Fixed, but it took a while.'}]},
+   {rows:[['puff-tg',B,1]],share:0,log:'Server 2 back to v1. Fixed, it took a while.'}]},
  bluegreen:{n:'Blue/green',e:['Blue circle','🔵'],s:'Flip all at once',back:'Seconds (point back at blue)',extra:'Double for a while',
   steps:[
    {rows:[['blue',B,1]],share:0,log:'The blue fleet serves everyone on v1.'},
@@ -113,7 +113,7 @@ const S={
    {rows:[['blue',B,1],['green',[2],0]],share:0,log:'v2 share set back to 0. Fixed in seconds.'}]}
 };
 const QS=[
- {q:'Your budget can\'t pay for any extra servers, even for an hour.',a:'rolling',why:'Rolling swaps servers in place, no extra cost. The price is a slow way back.'},
+ {q:'Your budget can\'t pay for any extra servers, even for an hour.',a:'rolling',why:'Rolling swaps servers in place, no extra cost, but the way back is slow.'},
  {q:'You want a way back in seconds and can pay for a second fleet for a while.',a:'bluegreen',why:'Blue/green keeps the old fleet alive, so going back is one listener flip.'},
  {q:'You want a few real users to try v2 first, and your alarms are good.',a:'canary',why:'Canary sends a small share first. Without good alarms you won\'t see the 10% failing.'}
 ];
@@ -178,7 +178,7 @@ function quiz(){
 function end(){
   $('#quiz').classList.add('hide');$('#fb').classList.add('hide');
   const e=$('#end');e.classList.remove('hide');
-  e.innerHTML=em(score===3?'Trophy':'Thinking face',score===3?'🏆':'🤔')+'<h2>Release shipped!</h2><div class="score">Score: '+score+' / 3 teams matched</div><p class="take">Keep the old version alive and going back takes seconds.</p><button class="btn" id="again">Play again</button>';
+  e.innerHTML=em(score===3?'Trophy':'Thinking face',score===3?'🏆':'🤔')+'<h2>Release shipped!</h2><div class="score">Score: '+score+' / 3 teams matched</div><p class="take">If you keep the old version alive, going back takes seconds.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();
 }
 start();

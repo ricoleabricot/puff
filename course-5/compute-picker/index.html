@@ -82,20 +82,20 @@ const OPTS=[
 ];
 const JOBS=[
  {e:['Graduation cap','🎓'],t:'The board app’s API during the course: steady traffic from 52 students for 4 hours.',ok:['vm','ct'],
-  y:'Busy all day is where VMs are cheapest, and containers come close. It’s what Puff runs today.',
+  y:'VMs are cheapest when busy all day, containers come close. It’s what Puff runs today.',
   n:'Busy all day often makes Lambda the most expensive, and 52 students at once means many database connections on a db.t3.micro.'},
  {e:['Snail','🐌'],t:'The same API, used once a month by 3 people.',ok:['sl'],
-  y:'Idle 29 days a month: with Lambda that costs zero, servers would bill you every hour.',
+  y:'It’s idle 29 days a month, Lambda costs zero for that and servers bill you every hour.',
   n:'A VM or container runs (and bills) all month for 3 visits. Serverless costs zero when nobody uses it.'},
  {e:['Framed picture','🖼️'],t:'A job that resizes each uploaded image.',ok:['sl'],
   y:'An S3 upload triggers a function, exactly like your puff-upload-notifier. Nothing runs between uploads.',
-  n:'Rare work started by an event is Lambda’s sweet spot: an S3 upload triggers it, like puff-upload-notifier.'},
+  n:'Rare work started by an event fits Lambda, an S3 upload triggers it, like puff-upload-notifier.'},
  {e:['Crescent moon','🌙'],t:'A nightly export of all messages to S3 that takes 2 minutes.',ok:['sl'],
   y:'2 minutes a night fits well under Lambda’s 15 minute limit, and you pay for 2 minutes, not 24 hours.',
-  n:'A server for 2 minutes of work a night sits idle the rest of the day. 2 minutes fits under Lambda’s 15 minute max.'},
+  n:'A server sits idle the rest of the day for 2 minutes of work, and 2 minutes fits under Lambda’s 15 minute limit.'},
  {e:['Satellite antenna','📡'],t:'A WebSocket server pushing new messages live to every open browser.',ok:['vm','ct'],
-  y:'Open connections all day need something that stays up: a VM or a container.',
-  n:'Lambda runs 15 minutes at most and doesn’t keep connections open. Open connections need a VM or a container.'}
+  y:'Open connections need something that stays up, so a VM or a container.',
+  n:'Lambda runs 15 minutes at most, open connections need a VM or a container.'}
 ];
 let i,score,res,locked;
 function start(){i=0;score=0;res=[];$('#end').classList.add('hide');$('#game').classList.remove('hide');$('#fb').classList.remove('hide');$('#dots').classList.remove('hide');show()}
@@ -123,7 +123,7 @@ function finish(){
   $('#game').classList.add('hide');$('#fb').classList.add('hide');$('#next').classList.add('hide');$('#dots').classList.add('hide');
   const e=$('#end');e.classList.remove('hide');
   e.innerHTML=em(score===5?'Trophy':'Party popper',score===5?'🏆':'🎉')+'<h2>Workloads placed!</h2><div class="score">Score: '+score+' / 5</div>'
-   +'<div class="sum"><div>🖥️ 📦 Steady, always on, open connections: VM or container</div><div>⚡ Rare, spiky or started by an event, under 15 minutes: serverless</div></div>'
+   +'<div class="sum"><div>🖥️ 📦 Steady, always on or open connections: VM or container</div><div>⚡ Rare, spiky or started by an event, under 15 minutes: serverless</div></div>'
    +'<p class="take">Spiky or rare work leans serverless, steady work leans VMs or containers.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus({preventScroll:true});
 }

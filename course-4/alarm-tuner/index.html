@@ -54,7 +54,7 @@ input[type=range]{width:100%;height:44px;accent-color:#F27E5E}
   <div class="card">
     <div class="mt" id="mtitle"></div>
     <svg id="chart" viewBox="0 0 600 160" role="img" aria-label="Chart of ALB 5xx errors over one hour"></svg>
-    <div class="legend">Grey band: the container was down (the real outage). Bars: what the alarm sees per period. Red bells: ALARM emails.</div>
+    <div class="legend">The grey band is when the container was down, bars are what the alarm sees per period, bells are ALARM emails.</div>
   </div>
   <div class="card ctl">
     <div><label for="th">Threshold: <span id="thv"></span> errors or more per period</label><input type="range" id="th" min="1" max="40" step="1"></div>
@@ -66,7 +66,7 @@ input[type=range]{width:100%;height:44px;accent-color:#F27E5E}
     <div class="stat" id="sOu"><b id="nOu"></b><small>Real outage</small></div>
   </div>
   <div class="row"><span class="legend" id="tries"></span><button class="btn" id="lock">Lock in this alarm</button></div>
-  <div id="fb" class="fb" role="status" aria-live="polite">Right now every tiny blip wakes you up. Tune it.</div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Right now every small blip wakes you up, tune it.</div>
   <div id="end" class="end card hide"></div>
 </div>
 <script>
@@ -117,18 +117,18 @@ function render(){
   return r;
 }
 function verdict(r){
-  if(r.win)return['✓ One email, for the real outage, '+r.delay+' min after it started.'+(p===5?' Try 1 min: same email, sooner.':''),'ok'];
+  if(r.win)return['✓ One email, for the real outage, '+r.delay+' min after it started.'+(p===5?' Try 1 min, same email but sooner.':''),'ok'];
   if(!r.real&&r.fa)return['✗ You missed the outage and still got '+r.fa+' false '+(r.fa>1?'alarms':'alarm')+'.','bad'];
-  if(!r.real)return['✗ Silence. The outage never crossed '+th+', so nobody knows the board app is down.','bad'];
-  if(r.real>1)return['✗ '+r.real+' emails for one outage: the errors dip under '+th+' and the alarm flaps.','bad'];
-  return['✗ '+r.fa+' false '+(r.fa>1?'alarms':'alarm')+': small blips wake you up for nothing.','bad'];
+  if(!r.real)return['✗ The outage never crossed '+th+', so nobody knows the board app is down.','bad'];
+  if(r.real>1)return['✗ '+r.real+' emails for one outage, the errors dip under '+th+' and the alarm goes on and off.','bad'];
+  return['✗ '+r.fa+' false '+(r.fa>1?'alarms':'alarm')+', small blips wake you up for nothing.','bad'];
 }
 function say(m,k){const f=$('#fb');f.className='fb '+(k||'');f.textContent=m}
 function update(){const r=render();const v=verdict(r);say(v[0],v[1])}
 function start(){
   th=1;p=1;tries=0;$('#tries').textContent='';
   $('#end').classList.add('hide');$('#fb').classList.remove('hide');
-  render();say('Right now every tiny blip wakes you up. Tune it.');
+  render();say('Right now every small blip wakes you up, tune it.');
 }
 $('#th').addEventListener('input',e=>{th=+e.target.value;update()});
 document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{p=+b.dataset.p;update()});
@@ -138,7 +138,7 @@ $('#lock').onclick=()=>{
   if(!r.win){say('✗ Not yet. '+verdict(r)[0].slice(2),'bad');return}
   $('#fb').classList.add('hide');
   const e=$('#end');e.classList.remove('hide');
-  e.innerHTML=em(p===1&&tries===1?'Trophy':'Party popper',p===1?'🏆':'🎉')+'<h2>One email, the right one!</h2><div class="score">Score: threshold '+th+', period '+p+' min, email '+r.delay+' min after the outage, try '+tries+'</div><p class="take">Alert on what users feel. An email at 3am should mean users are hurting.</p><button class="btn" id="again">Play again</button>';
+  e.innerHTML=em(p===1&&tries===1?'Trophy':'Party popper',p===1?'🏆':'🎉')+'<h2>One email, the right one</h2><div class="score">Score: threshold '+th+', period '+p+' min, email '+r.delay+' min after the outage, try '+tries+'</div><p class="take">Alert on what users feel, an alert that wakes someone up should mean users are hurting.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();e.scrollIntoView({block:'nearest'});
 };
 window.addEventListener('resize',()=>render());

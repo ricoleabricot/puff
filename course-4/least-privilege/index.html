@@ -56,7 +56,7 @@ pre{margin:0;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;white-spa
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Least privilege meter</h1><p>Task: the Puff API reads <code>/puff/db/password</code> (a SecureString) at boot. Toggle until the meter says "just right", then ship.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Least privilege meter</h1><p>The Puff API reads <code>/puff/db/password</code> (a SecureString) at boot. Toggle until the meter says "Just right", then ship.</p></div></div>
   <div class="grid">
     <div class="card" id="controls"></div>
     <div>
@@ -68,7 +68,7 @@ pre{margin:0;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;white-spa
       <div class="card" style="margin-top:8px"><div class="grp"><h3>Your policy</h3></div><pre id="json" aria-label="Policy JSON preview"></pre></div>
     </div>
   </div>
-  <div id="fb" class="fb" role="status" aria-live="polite">This is the policy many people write on day one. Tighten it.</div>
+  <div id="fb" class="fb" role="status" aria-live="polite">This is the policy many people write on day one, tighten it.</div>
   <div id="end" class="end card hide"></div>
 </div>
 <script>
@@ -82,18 +82,18 @@ $('#heroEm').innerHTML=em('Key','🔑');
 
 const GROUPS=[
  {h:'SSM actions',items:[
-  {id:'get',t:'ssm:GetParameter',on:'GetParameter reads one parameter. That is the job.',off:'Without GetParameter the API cannot read its password.'},
-  {id:'put',t:'ssm:PutParameter',on:'PutParameter lets it overwrite the password. The API only reads.',off:'Good, the API never writes parameters.'},
-  {id:'del',t:'ssm:DeleteParameter',on:'DeleteParameter lets a hacked API delete parameters.',off:'Good, nothing to delete here.'},
-  {id:'ssmall',t:'ssm:*',on:'ssm:* means every SSM action, delete included.',off:'Bye ssm:*, the star means everything.'}
+  {id:'get',t:'ssm:GetParameter',on:'GetParameter reads one parameter, that\'s the job.',off:'Without GetParameter the API can\'t read its password.'},
+  {id:'put',t:'ssm:PutParameter',on:'PutParameter lets it overwrite the password, and the API only reads.',off:'Good, the API never writes parameters.'},
+  {id:'del',t:'ssm:DeleteParameter',on:'DeleteParameter lets a hacked API delete parameters.',off:'Good, the API never deletes parameters.'},
+  {id:'ssmall',t:'ssm:*',on:'ssm:* means every SSM action, delete included.',off:'Good, the star means everything.'}
  ]},
  {h:'KMS actions',items:[
   {id:'dec',t:'kms:Decrypt',on:'A SecureString is encrypted with KMS, so reading it needs kms:Decrypt.',off:'Without kms:Decrypt the SecureString stays locked.'},
-  {id:'kmsall',t:'kms:*',on:'kms:* is every KMS action. Way more than decrypting.',off:'Bye kms:*, decrypting is all it needs.'}
+  {id:'kmsall',t:'kms:*',on:'kms:* is every KMS action, way more than decrypting.',off:'Good, decrypting is all it needs.'}
  ]},
  {h:'SSM resource',radio:'res',items:[
   {id:'resAll',t:'*',on:'Resource * means every parameter in the account.',off:''},
-  {id:'resPuff',t:'parameter/puff/db/*',on:'Only the /puff/db/ path. A hacked API reads its own password and nothing else.',off:''}
+  {id:'resPuff',t:'parameter/puff/db/*',on:'Only the /puff/db/ path, a hacked API reads its own password and nothing else.',off:''}
  ]},
  {h:'KMS guard',items:[
   {id:'via',t:'Only through Parameter Store (kms:ViaService)',on:'Decrypt now only works when the request comes through Parameter Store.',off:'Without the guard, kms:Decrypt on * can decrypt anything KMS lets it touch.'}
@@ -105,7 +105,7 @@ function start(){
   S={get:false,put:false,del:false,ssmall:true,dec:false,kmsall:true,resAll:true,resPuff:false,via:false};
   tries=0;
   $('#end').classList.add('hide');$('#fb').classList.remove('hide');
-  say('This is the policy many people write on day one. Tighten it.');
+  say('This is the policy many people write on day one, tighten it.');
   render();
 }
 function say(m,k){const f=$('#fb');f.className='fb '+(k||'');f.textContent=m}
@@ -127,8 +127,8 @@ function policy(){
 }
 function check(){
   const lack=[],extra=[];
-  if(!S.get&&!S.ssmall)lack.push('the API cannot read the parameter: add ssm:GetParameter.');
-  if(!S.dec&&!S.kmsall)lack.push('the SecureString is encrypted with KMS: add kms:Decrypt.');
+  if(!S.get&&!S.ssmall)lack.push('the API can\'t read the parameter, add ssm:GetParameter.');
+  if(!S.dec&&!S.kmsall)lack.push('the SecureString is encrypted with KMS, add kms:Decrypt.');
   if(S.ssmall)extra.push('ssm:* also lets a hacked API delete every parameter.');
   if(S.put)extra.push('PutParameter lets it overwrite the password.');
   if(S.del)extra.push('DeleteParameter lets it delete parameters.');
@@ -141,7 +141,7 @@ function meter(){
   const r=check(),v=$('#verdict');
   ['mLo','mMid','mHi'].forEach(id=>$('#'+id).classList.remove('on'));
   if(r.lack.length){$('#mLo').classList.add('on');v.innerHTML='✗ Not enough';v.style.color='#C23B33'}
-  else if(r.extra.length){$('#mHi').classList.add('on');v.innerHTML='✗ Too much ('+r.extra.length+' extra '+(r.extra.length>1?'doors':'door')+' open)';v.style.color='#C23B33'}
+  else if(r.extra.length){$('#mHi').classList.add('on');v.innerHTML='✗ Too much ('+r.extra.length+' extra '+(r.extra.length>1?'rights':'right')+')';v.style.color='#C23B33'}
   else{$('#mMid').classList.add('on');v.innerHTML='✓ Just right';v.style.color='#237A4B'}
   return r;
 }
@@ -160,12 +160,12 @@ $('#ship').onclick=()=>{
   const r=check();
   if(!r.lack.length&&!r.extra.length){finish();return}
   $('#tries').textContent='Tries: '+tries;
-  say('✗ Not yet: '+(r.lack[0]||r.extra[0]),'bad');
+  say('✗ Not yet, '+(r.lack[0]||r.extra[0]),'bad');
 };
 function finish(){
   $('#fb').classList.add('hide');
   const e=$('#end');e.classList.remove('hide');
-  e.innerHTML=em(tries===1?'Trophy':'Party popper',tries===1?'🏆':'🎉')+'<h2>Just right!</h2><div class="score">Score: shipped on try '+tries+'</div><p class="take">One read action, one path, decrypt only through Parameter Store.</p><button class="btn" id="again">Play again</button>';
+  e.innerHTML=em(tries===1?'Trophy':'Party popper',tries===1?'🏆':'🎉')+'<h2>Just right!</h2><div class="score">Shipped on try '+tries+'</div><p class="take">One read action, one path, and decrypt only through Parameter Store.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();
   e.scrollIntoView({block:'nearest'});
 }

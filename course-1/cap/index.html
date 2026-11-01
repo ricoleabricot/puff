@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CAP: two notebooks</title>
+<title>Cut the line</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -69,7 +69,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #3A2A24;outline-offse
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Two notebooks, one phone line</h1><p>Paris and Lyon keep the same notebook. What happens when the line breaks?</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Cut the line</h1><p>Two friends keep the same notebook, one in Paris, one in Lyon, and they call after every change.</p></div></div>
   <div class="steps" id="steps"><span>1 Write</span><span>2 Cut</span><span>3 Choose</span></div>
   <div class="books">
     <div class="nb" id="nbP"></div>
@@ -107,7 +107,7 @@ function start(){
   score=0;phase=0;endEl.classList.add('hide');fb.classList.remove('hide');
   setLink(false);setSteps(0);
   nb(nbP,'Paris',['Cityscape','🏙️'],[]);nb(nbL,'Lyon',['House','🏠'],[]);
-  ctl.innerHTML='<p class="t">Step 1: write a message</p><p class="d">Type in the Paris notebook. Lyon gets a copy by phone.</p><form class="row" id="f"><input id="m" value="Lunch at 12" maxlength="30" aria-label="Message"><button class="btn" type="submit">Write in Paris</button></form>';
+  ctl.innerHTML='<p class="t">Write a message</p><p class="d">Type in the Paris notebook, Lyon gets a copy by phone.</p><form class="row" id="f"><input id="m" value="Lunch at 12" maxlength="30" aria-label="Message"><button class="btn" type="submit">Write in Paris</button></form>';
   say(fb,'Write something and watch both notebooks.');
   $('#f').onsubmit=e=>{
     e.preventDefault();
@@ -117,16 +117,16 @@ function start(){
     say(fb,'Calling Lyon…');
     setTimeout(()=>{
       nb(nbL,'Lyon',['House','🏠'],[{t:v}]);pop(nbL);
-      say(fb,'✓ Both copies match. Every change goes through the line.','ok');
+      say(fb,'✓ Both copies match, every change goes over the phone line.','ok');
       setSteps(1);
-      ctl.innerHTML='<p class="t">Step 2: the line breaks</p><p class="d">A digger cuts the cable. Paris and Lyon can no longer talk.</p><button class="btn" id="cut">✂ Cut the line</button>';
+      ctl.innerHTML='<p class="t">The phone line dies</p><p class="d">Cut the cable, Paris and Lyon can\'t talk anymore.</p><button class="btn" id="cut">✂ Cut the line</button>';
       $('#cut').onclick=cut;$('#cut').focus();
     },700);
   };
 }
 function cut(){
   setLink(true);setSteps(2);
-  say(fb,'✗ The line is cut. This is called a partition.','bad');
+  say(fb,'✗ The line is cut, that\'s a partition (a network split).','bad');
   bank();
 }
 function choices(onPick){
@@ -135,32 +135,32 @@ function choices(onPick){
 function bank(){
   nb(nbP,'Paris',['Cityscape','🏙️'],[{t:'Balance: €0'}]);
   nb(nbL,'Lyon',['House','🏠'],[{t:'Balance: €100',old:1}]);
-  ctl.innerHTML='<p class="t">Step 3: the bank</p><p class="d">You had €100 and took it all out in Paris. Now someone asks Lyon for €100. What should Lyon do?</p>'+choices();
+  ctl.innerHTML='<p class="t">The bank</p><p class="d">You had €100 and took it all out in Paris, now you ask Lyon for €100. What should Lyon do?</p>'+choices();
   wire('C',
-    {C:['Lyon says "try again later". Nobody can take €100 twice. Right for a bank.',1],
-     A:['Lyon pays €100 too. €200 left the bank and it only had €100.',0]},board);
+    {C:['Lyon says "try again later", so nobody can take €100 twice. A bank needs that.',1],
+     A:['Lyon pays €100 too, so you took €200 out of €100 and the bank loses money.',0]},board);
 }
 function board(){
   nb(nbP,'Paris',['Cityscape','🏙️'],[{t:'Lunch at 12'}]);
   nb(nbL,'Lyon',['House','🏠'],[{t:'(new message missing)',old:1}]);
-  ctl.innerHTML='<p class="t">Step 3 again: the board app</p><p class="d">A message was posted in Paris. A student opens the board in Lyon. What should Lyon do?</p>'+choices();
+  ctl.innerHTML='<p class="t">The board app</p><p class="d">A message was posted in Paris, and a student opens the board in Lyon. What should Lyon do?</p>'+choices();
   wire('A',
     {C:['Lyon shows an error until the line is back, just for a message that could wait.',0],
-     A:['Lyon shows the list without the new message. It shows up 20 s later. Nobody cares.',1]},end);
+     A:['Lyon shows the list without the new message, it shows up 20 seconds late and nobody cares.',1]},end);
 }
 function wire(right,res,next){
   ctl.querySelectorAll('button[data-c]').forEach(b=>b.onclick=()=>{
     const [t,ok]=res[b.dataset.c];
     if(ok)score++;
     ctl.querySelectorAll('button[data-c]').forEach(x=>{x.disabled=true;if(x===b)x.classList.add('pick')});
-    say(fb,(ok?'✓ ':'✗ ')+t+(ok?'':' Better: '+(right==='C'?'Refuse (Consistency).':'Answer (Availability).')),ok?'ok':'bad');
-    const n=document.createElement('button');n.className='btn';n.style.marginTop='8px';n.textContent=next===end?'See my score':'Next: the board app';
+    say(fb,(ok?'✓ ':'✗ ')+t+(ok?'':' Better to '+(right==='C'?'refuse, that\'s consistency.':'answer, that\'s availability.')),ok?'ok':'bad');
+    const n=document.createElement('button');n.className='btn';n.style.marginTop='8px';n.textContent=next===end?'See my score':'Now the board app';
     n.onclick=next;ctl.appendChild(n);n.focus();
   });
 }
 function end(){
   fb.classList.add('hide');endEl.classList.remove('hide');
-  endEl.innerHTML=em('Light bulb','💡')+'<h2>Line fixed, notebooks synced</h2><div class="score">Score: '+score+' / 2</div><p class="take">Networks break, so you choose C or A when they do.</p><button class="btn" id="again">Play again</button>';
+  endEl.innerHTML=em('Light bulb','💡')+'<h2>All done!</h2><div class="score">Score: '+score+' / 2</div><p class="take">Networks break, so you can\'t skip the P. When it happens you refuse to answer, or you answer with what you have.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();
 }
 start();

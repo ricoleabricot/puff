@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cloud quiz</title>
+<title>Today's quiz</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#FFF4EE;--ink:#3A2A24;--ok:#3BAA6E;--bad:#E5534B;--soft:0 4px 16px rgba(120,60,40,.10)}
@@ -37,7 +37,7 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
 </style>
 </head>
 <body>
-<div class="hero"><h1>Cloud quiz</h1><p id="goal">8 questions. Pick the best answer.</p></div>
+<div class="hero"><h1>Today's quiz</h1><p id="goal">8 questions on today, pick the best answer.</p></div>
 <div class="card" id="card" aria-live="polite"></div>
 <div class="dots" id="dots" aria-hidden="true"></div>
 <script>
@@ -45,34 +45,34 @@ const IMG=(n,f)=>`https://raw.githubusercontent.com/microsoft/fluentui-emoji/mai
 const Q=[
  {img:IMG("Automobile","automobile"),t:"What does the cloud change compared to owning servers?",
   o:["You rent capacity through an API and stop paying when you give it back","You buy faster servers","You no longer have anything to secure"],a:0,
-  why:"Like renting a car: AWS owns the hardware, you rent it by the second or hour."},
- {img:IMG("Pizza","pizza"),t:"RDS, where AWS installs, updates and backs up PostgreSQL for you, is…",
+  why:"AWS owns the hardware and you rent it by the second or the hour, like a car."},
+ {img:IMG("Pizza","pizza"),t:"On RDS, AWS installs PostgreSQL, updates it and takes backups for you. Which model is that?",
   o:["IaaS","SaaS","PaaS"],a:2,
-  why:"You only own the tables and data, AWS handles the rest: that's PaaS."},
- {img:IMG("Shopping%20cart","shopping_cart"),t:"2 servers at 8:55, 4 at 9:00, back to 2 at 9:30, without you. That's…",
+  why:"AWS does the rest and you only own the tables and the data, that's PaaS."},
+ {img:IMG("Shopping%20cart","shopping_cart"),t:"2 servers at 8:55, 4 at 9:00, back to 2 at 9:30, without you. What's that?",
   o:["Fault tolerance","Elasticity","Vertical scaling"],a:1,
   why:"Elasticity adds and removes resources by itself, following demand."},
- {img:IMG("Shield","shield"),t:"A server dies and traffic moves to the other one within seconds, after a short blip. That's…",
+ {img:IMG("Shield","shield"),t:"A server dies and traffic moves to the other one within seconds, after a short blip. What's that?",
   o:["High availability","Fault tolerance","Elasticity"],a:0,
-  why:"HA accepts a short blip and recovers fast. Fault tolerance would hide it completely."},
+  why:"High availability accepts a short blip and recovers fast, fault tolerance would hide it completely."},
  {img:IMG("Bank","bank"),t:"The link between a bank's two database copies goes down. What does the bank pick?",
-  o:["Availability: both sides keep accepting withdrawals","Neither, splits never happen","Consistency: one side stops accepting writes"],a:2,
-  why:"Otherwise you could take €100 on each side. CAP: during a split, pick one."},
+  o:["Availability, both sides keep accepting withdrawals","Neither, splits never happen","Consistency, one side stops accepting writes"],a:2,
+  why:"Otherwise you could take €100 on each side and the bank loses money."},
  {img:IMG("Bucket","bucket"),t:"A bucket was made public by mistake and leaked data. Whose fault?",
   o:["AWS's, it's their storage","Yours, access settings are on the customer side","Nobody's"],a:1,
-  why:"AWS secures the cloud, you secure what you put in it: data, access, settings."},
- {img:IMG("Office%20building","office_building"),t:"What is the standard way to get high availability on AWS?",
-  o:["Spread across 2 AZs","Buy a bigger server","Use only one Region and one AZ"],a:0,
-  why:"AZs have their own power and network, so one failing doesn't take you down."},
- {img:IMG("Key","key"),t:"Which is least privilege for a deploy script?",
+  why:"AWS looks after the cloud itself, you look after what you put in it, your data, access rules and settings."},
+ {img:IMG("Office%20building","office_building"),t:"What's the standard way to get high availability on AWS?",
+  o:["Spread across 2 Availability Zones (AZs)","Buy a bigger server","Use only one Region and one AZ"],a:0,
+  why:"Each AZ has its own power and network, so one failing doesn't take you down."},
+ {img:IMG("Key","key"),t:"Which one is least privilege for a deploy script?",
   o:["s3:* on every resource, we'll tighten later","Admin access for now","Only GetObject and PutObject on one bucket's files"],a:2,
-  why:"Start from nothing and add only what's missing. Later never comes."}
+  why:"Start from nothing and add what's missing, never start from * and plan to tighten it later, because you won't."}
 ];
 const $=s=>document.querySelector(s);
 const card=$("#card"),dots=$("#dots"),goal=$("#goal");
 let i,score,res,locked;
 function drawDots(){dots.innerHTML=Q.map((_,k)=>`<span class="dot ${res[k]===undefined?(k===i?"on":""):(res[k]?"ok":"no")}"></span>`).join("")}
-function start(){i=0;score=0;res=[];goal.textContent="8 questions. Pick the best answer.";dots.classList.remove("hide");show()}
+function start(){i=0;score=0;res=[];goal.textContent="8 questions on today, pick the best answer.";dots.classList.remove("hide");show()}
 function show(){
   locked=false;drawDots();
   const c=Q[i];
@@ -100,9 +100,9 @@ function pick(k){
 function end(){
   dots.classList.add("hide");goal.textContent="All done!";
   const band=score===8?["Trophy","trophy","Perfect! You're ready to build Puff."]
-   :score>=6?["Party%20popper","party_popper","Great job! A couple of ideas to re-read."]
-   :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
-   :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
+   :score>=6?["Party%20popper","party_popper","Great job! Re-read the ones you missed."]
+   :score>=4?["Thinking%20face","thinking_face","Not bad! Read the page again, then replay."]
+   :["Seedling","seedling","Re-read the page and try again."];
   card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">
    <p class="big">${score}/8</p><p class="fb ${score>=6?"ok":""}">${band[2]}</p>
    <button class="btn" id="again">Play again</button></div>`;

@@ -147,7 +147,7 @@ function renderCtl(){
     b.disabled=running||(k==='min'?(v<1||v>cfg.max):(v<cfg.min||v>12));
   });
   const w=$('#warn');
-  if(cfg.max>CAPMAX){w.classList.remove('hide');w.textContent='⚠️ Max '+cfg.max+' is above 9. The sandbox suspends your account past 9 running instances. Keep puff-asg at max 4.'}
+  if(cfg.max>CAPMAX){w.classList.remove('hide');w.textContent='⚠️ Max '+cfg.max+' is above 9, the sandbox suspends your account past 9 running instances. Keep puff-asg at max 4.'}
   else w.classList.add('hide');
 }
 let running=false,timer=null;
@@ -183,7 +183,7 @@ $('#play').onclick=()=>{
   if(running)return;
   running=true;$('#play').disabled=true;$('#tgt').disabled=true;$('#warm').disabled=true;renderCtl();reset();
   const c={...cfg,warm:$('#warm').checked},R=simulate(c);
-  let i=0;say($('#fb'),'8:00, the building is quiet.');
+  let i=0;say($('#fb'),'8:00, it\'s still quiet.');
   const tick=()=>{
     const p=R.hist[i];show(p);chart(R.hist.slice(0,i+1));
     if(R.susp===p.s)say($('#fb'),'🔥 '+hm(p.s)+': '+(p.run+p.pend)+' instances. Above 9 the sandbox suspends your account.','bad');
@@ -199,16 +199,16 @@ function finish(c,R){
   running=false;$('#play').disabled=false;$('#tgt').disabled=false;$('#warm').disabled=false;renderCtl();
   const end=$('#end');
   if(R.susp!==null){
-    end.innerHTML=em('Fire','🔥')+'<h2>Account suspended at '+hm(R.susp)+'</h2><div class="score">Score: 0 / 4</div><p class="take">Max above 9 lets the group launch past the sandbox cap. Keep puff-asg at max 4.</p><button class="btn" id="again">Try other settings</button>';
+    end.innerHTML=em('Fire','🔥')+'<h2>Account suspended at '+hm(R.susp)+'</h2><div class="score">Score: 0 / 4</div><p class="take">Max above 9 lets the group go past the sandbox cap, keep puff-asg at max 4.</p><button class="btn" id="again">Try other settings</button>';
   }else{
     const checks=[
       [R.errMin===0,R.errMin===0?'✓ No errors all day':'✗ '+R.errMin+' minutes with failing requests (servers at 100%)'],
       [R.worst<500,R.worst<500?'✓ Pages stayed fast (worst '+R.worst+' ms)':'✗ Slow pages: worst '+(R.worst>=1000?(R.worst/1000).toFixed(1)+' s':R.worst+' ms')],
-      [c.min>=2,c.min>=2?'✓ Min '+c.min+': a crash or a dead AZ leaves a server answering':'✗ Min 1: one crash and the board app is down until a new server boots'],
-      [R.hours<=BASE.hours*1.1,R.hours<=BASE.hours*1.1?'✓ Not wasteful: '+R.hours.toFixed(1)+' server-hours':'✗ '+R.hours.toFixed(1)+' server-hours: you pay for idle servers']
+      [c.min>=2,c.min>=2?'✓ Min '+c.min+', a crash or a dead AZ leaves a server answering':'✗ Min 1, one crash and the board app is down until a new server boots'],
+      [R.hours<=BASE.hours*1.1,R.hours<=BASE.hours*1.1?'✓ No waste, '+R.hours.toFixed(1)+' server-hours':'✗ '+R.hours.toFixed(1)+' server-hours, you pay for idle servers']
     ];
     const n=checks.filter(x=>x[0]).length;
-    end.innerHTML=em(n===4?'Trophy':'Thinking face',n===4?'🏆':'🤔')+'<h2>'+(n===4?'Smooth day!':'Day over')+'</h2><div class="score">Score: '+n+' / 4</div><div class="res">'+checks.map(x=>'<div class="'+(x[0]?'y':'n')+'">'+x[1]+'</div>').join('')+'</div><p class="take">Puff uses min 2, max 4, target 50%. New servers take minutes to boot, so for a rush you know about, warm up before it.</p><button class="btn" id="again">Play again</button>';
+    end.innerHTML=em(n===4?'Trophy':'Thinking face',n===4?'🏆':'🤔')+'<h2>'+(n===4?'Great day!':'Day over')+'</h2><div class="score">Score: '+n+' / 4</div><div class="res">'+checks.map(x=>'<div class="'+(x[0]?'y':'n')+'">'+x[1]+'</div>').join('')+'</div><p class="take">Puff uses min 2, max 4 and target 50%. New servers take minutes to boot, so scale up before a rush you know about.</p><button class="btn" id="again">Play again</button>';
   }
   $('#fb').classList.add('hide');end.classList.remove('hide');
   $('#again').onclick=()=>{reset();say($('#fb'),'Change a setting, then press Play.');$('#ctl').scrollIntoView({block:'nearest'})};

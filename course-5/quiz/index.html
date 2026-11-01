@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scaling quiz</title>
+<title>Today's quiz</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#FFF4EE;--ink:#3A2A24;--ok:#3BAA6E;--bad:#E5534B;--soft:0 4px 16px rgba(120,60,40,.10)}
@@ -37,7 +37,7 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
 </style>
 </head>
 <body>
-<div class="hero"><h1>Scaling quiz</h1><p id="goal">8 questions. Pick the best answer.</p></div>
+<div class="hero"><h1>Today's quiz</h1><p id="goal">8 questions on today, pick the best answer.</p></div>
 <div class="card" id="card" aria-live="polite"></div>
 <div class="dots" id="dots" aria-hidden="true"></div>
 <script>
@@ -45,7 +45,7 @@ const IMG=(n,f)=>`https://raw.githubusercontent.com/microsoft/fluentui-emoji/mai
 const Q=[
  {img:IMG("Office%20building","office_building"),t:"Two servers in two AZs, and traffic never changes. What do they give you?",
   o:["Scalability","High availability","Nothing, traffic is flat"],a:1,
-  why:"HA keeps you open when one piece breaks. Scalability is about keeping up with more people."},
+  why:"HA keeps you up when one piece breaks, scalability is about keeping up with more people."},
  {img:IMG("Money%20bag","money_bag"),t:"In an Auto Scaling group, the max number is also your…",
   o:["Cost ceiling","Health check","Launch template"],a:0,
   why:"The group never runs more than max servers, so max caps the bill too. On Puff it's 4."},
@@ -54,25 +54,25 @@ const Q=[
   why:"Anything kept only on the server disappears with it. State goes to RDS, S3 or a cache."},
  {img:IMG("Stethoscope","stethoscope"),t:"With --health-check-type ELB, what happens to a server failing /health?",
   o:["The group replaces it with a fresh one","The ALB stops sending it visitors, and that's all","Nothing until you reboot it"],a:0,
-  why:"The ALB hides a sick server, the Auto Scaling group gets rid of it. You want both."},
+  why:"The ALB hides a sick server, the Auto Scaling group gets rid of it, and you want both."},
  {img:IMG("Electric%20plug","electric_plug"),t:"puff-asg spans two AZs, puff-db lives in one. That AZ goes down. What happens?",
   o:["The other AZ's servers keep the board app working","The board app returns errors","RDS switches to its twin"],a:1,
-  why:"Every server points at one database. In the sandbox it's single-AZ, so it's your single point of failure."},
+  why:"Every server points at one database, and in the sandbox it's single-AZ, so it's your single point of failure."},
  {img:IMG("Convenience%20store","convenience_store"),t:"You upload a fixed index.html to S3. CloudFront still shows the old page. Why?",
   o:["The upload failed","CloudFront only reads S3 once a week","The edge copy is still fresh for its TTL"],a:2,
-  why:"Copies stay fresh for the TTL (24 hours by default). An invalidation throws them away early."},
+  why:"Copies stay fresh for the TTL (24 hours by default), an invalidation throws them away early."},
  {img:IMG("Stopwatch","stopwatch"),t:"Which job does NOT fit Lambda?",
   o:["A 30 minute video export","Resizing an uploaded image","A nightly 2 minute export"],a:0,
-  why:"A Lambda invocation runs 15 minutes at most. Long jobs need a VM or a container."},
+  why:"A Lambda invocation runs 15 minutes at most, long jobs need a VM or a container."},
  {img:IMG("Repeat%20button","repeat_button"),t:"An SQS standard queue delivers each message at least once. So your workers must be…",
   o:["Faster than the API","Idempotent: doing a job twice gives the same result","Running on Kubernetes"],a:1,
-  why:"Sometimes a message comes twice. Setting approved = true twice is fine, sending a payment twice is not."}
+  why:"Sometimes a message comes twice, setting approved = true twice is fine but sending a payment twice is not."}
 ];
 const $=s=>document.querySelector(s);
 const card=$("#card"),dots=$("#dots"),goal=$("#goal");
 let i,score,res,locked;
 function drawDots(){dots.innerHTML=Q.map((_,k)=>`<span class="dot ${res[k]===undefined?(k===i?"on":""):(res[k]?"ok":"no")}"></span>`).join("")}
-function start(){i=0;score=0;res=[];goal.textContent="8 questions. Pick the best answer.";dots.classList.remove("hide");show()}
+function start(){i=0;score=0;res=[];goal.textContent="8 questions on today, pick the best answer.";dots.classList.remove("hide");show()}
 function show(){
   locked=false;drawDots();
   const c=Q[i];
@@ -99,10 +99,10 @@ function pick(k){
 }
 function end(){
   dots.classList.add("hide");goal.textContent="All done!";
-  const band=score===8?["Trophy","trophy","Perfect! Puff is ready to stretch."]
-   :score>=6?["Party%20popper","party_popper","Great job! Just a couple of ideas to re-read."]
-   :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
-   :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
+  const band=score===8?["Trophy","trophy","Perfect, 8 out of 8!"]
+   :score>=6?["Party%20popper","party_popper","Great job, just a couple of things to re-read."]
+   :score>=4?["Thinking%20face","thinking_face","Not bad, go through the page again and replay."]
+   :["Seedling","seedling","Re-read the page and try again, you'll get there."];
   card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">
    <p class="big">${score}/8</p><p class="fb ${score>=6?"ok":""}">${band[2]}</p>
    <button class="btn" id="again">Play again</button></div>`;

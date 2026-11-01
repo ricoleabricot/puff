@@ -66,10 +66,10 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
       <div class="card"><div class="fname" id="f1"></div><div class="code" id="c1"></div></div>
       <div class="card"><div class="fname" id="f2"></div><div class="code" id="c2"></div></div>
     </div>
-    <div class="bar"><span class="count" id="count"></span><button class="btn hide" id="next">Now, where do they live?</button></div>
+    <div class="bar"><span class="count" id="count"></span><button class="btn hide" id="next">Where do they go?</button></div>
   </div>
   <div id="place" class="card hide"></div>
-  <div id="fb" class="fb" role="status" aria-live="polite">Dashed boxes are values. Some are secrets, some are plain settings.</div>
+  <div id="fb" class="fb" role="status" aria-live="polite">Dashed boxes are values, some are secrets and some are plain settings.</div>
   <div id="end" class="end card hide"></div>
 </div>
 <script>
@@ -85,15 +85,15 @@ $('#f2').innerHTML=em('Memo','📝')+'deploy.env (on a laptop)';
 
 // value tokens: id, text, secret?, why
 const T={
- host:{t:'puff-db.xxxxxxxxxxxx.us-east-1.rds.amazonaws.com',s:0,w:'The hostname is a setting: knowing it does not let anyone in.'},
+ host:{t:'puff-db.xxxxxxxxxxxx.us-east-1.rds.amazonaws.com',s:0,w:'The hostname is a setting, knowing it doesn\'t let anyone in.'},
  name:{t:'puff',s:0,w:'The database name is a plain setting, not a secret.'},
- user:{t:'puff',s:0,w:'The user name alone opens nothing. The password does.'},
- pw:{t:'Puff2026pw',s:1,w:'The database password, in clear in user data. Anyone with EC2 read access can read it.'},
- port:{t:'8080:8080',s:0,w:'A port number is a setting. Nothing to hide here.'},
+ user:{t:'puff',s:0,w:'The user name alone opens nothing, the password does.'},
+ pw:{t:'Puff2026pw',s:1,w:'The database password in clear in user data, anyone with EC2 read access can read it.'},
+ port:{t:'8080:8080',s:0,w:'A port number is a setting.'},
  region:{t:'us-east-1',s:0,w:'The region is a plain setting.'},
- akid:{t:'AKIA0000EXAMPLE00000',s:1,g:'key',w:'An access key (AKIA...). It never expires on its own, and bots find these in public repos within minutes.'},
- sak:{t:'wJalrXUtnEXAMPLESECRETKEY0000',s:1,g:'key',w:'The secret half of that access key. Together they work until someone deletes them.'},
- tok:{t:'tok_live_EXAMPLE_9f3k2',s:1,w:'An API token grants access, so it is a secret.'},
+ akid:{t:'AKIA0000EXAMPLE00000',s:1,g:'key',w:'An access key (AKIA...), it never expires on its own and bots find these in public repos within minutes.'},
+ sak:{t:'wJalrXUtnEXAMPLESECRETKEY0000',s:1,g:'key',w:'The secret half of that access key, together they work until someone deletes them.'},
+ tok:{t:'tok_live_EXAMPLE_9f3k2',s:1,w:'An API token grants access, so it\'s a secret.'},
  alb:{t:'puff-alb',s:0,w:'A resource name is a setting, not a secret.'}
 };
 const tk=id=>'<button class="tok" data-id="'+id+'">'+T[id].t+'</button>';
@@ -119,10 +119,10 @@ const SECRETS=Object.keys(T).filter(k=>T[k].s);
 // step 2 decisions
 const P=[
  {lbl:'DB_PASSWORD',a:'sec',w:'A password goes in Parameter Store as a SecureString, encrypted with KMS, read at boot through the instance role.'},
- {lbl:'NOTIFY_API_TOKEN',a:'sec',w:'A token grants access, so SecureString. Never in Git, never in user data.'},
- {lbl:'AWS access key (AKIA...)',a:'role',w:'Nobody should hold a key that never expires. Humans sign in through SSO, machines get a role, and both get temporary credentials.'},
- {lbl:'DB_HOST',a:'plain',w:'The hostname is a plain setting: a normal String parameter or config is fine.'},
- {lbl:'DB_USER',a:'plain',w:'The user name alone opens nothing, so plain text is fine. The password is what you protect.'}
+ {lbl:'NOTIFY_API_TOKEN',a:'sec',w:'A token grants access, so it goes in a SecureString, never in Git or user data.'},
+ {lbl:'AWS access key (AKIA...)',a:'role',w:'Nobody should hold a key that never expires, humans sign in through SSO and machines get a role.'},
+ {lbl:'DB_HOST',a:'plain',w:'The hostname is a plain setting, a normal String parameter or config is fine.'},
+ {lbl:'DB_USER',a:'plain',w:'The user name alone opens nothing, so plain text is fine.'}
 ];
 const O=[
  {k:'sec',t:'Parameter Store SecureString',e:['Locked','🔒']},
@@ -138,7 +138,7 @@ function start(){
   $('#hunt').classList.remove('hide');$('#place').classList.add('hide');$('#end').classList.add('hide');$('#fb').classList.remove('hide');
   $('#next').classList.add('hide');
   $('#goal').textContent='Step 1: tap every secret hiding in these two files.';
-  say('Dashed boxes are values. Some are secrets, some are plain settings.');
+  say('Dashed boxes are values, some are secrets and some are plain settings.');
   cnt();
 }
 function cnt(){$('#count').textContent='Secrets found: '+found.size+' of '+SECRETS.length}
@@ -150,14 +150,14 @@ $('#hunt').addEventListener('click',e=>{
     say('✓ Secret! '+v.w,'ok');cnt();
     if(found.size===SECRETS.length){
       $('#next').classList.remove('hide');$('#next').focus({preventScroll:true});
-      say('✓ All '+SECRETS.length+' secrets found. Now pick where each value should live.','ok');
+      say('✓ All '+SECRETS.length+' secrets found. Now pick where each value goes.','ok');
     }
   }else{
     wrong++;b.classList.add('nope');b.setAttribute('aria-label','not a secret: '+v.t);
-    say('✗ Not a secret. '+v.w,'bad');
+    say('✗ Not a secret, '+v.w,'bad');
   }
 });
-$('#next').onclick=()=>{pi=0;pscore=0;$('#hunt').classList.add('hide');$('#place').classList.remove('hide');$('#goal').textContent='Step 2: where should each value live?';ask()};
+$('#next').onclick=()=>{pi=0;pscore=0;$('#hunt').classList.add('hide');$('#place').classList.remove('hide');$('#goal').textContent='Step 2: where does each value go?';ask()};
 function ask(){
   locked=false;const p=P[pi];
   $('#place').innerHTML='<div class="tag">Value '+(pi+1)+' of '+P.length+'</div><div class="item">'+em('Key','🔑')+'<code>'+p.lbl+'</code></div>'+
@@ -178,10 +178,10 @@ function pick(b){
 }
 function finish(){
   $('#place').classList.add('hide');$('#fb').classList.add('hide');
-  $('#goal').textContent='Done!';
+  $('#goal').textContent='Done';
   const e=$('#end');e.classList.remove('hide');
   const perfect=!wrong&&pscore===P.length;
-  e.innerHTML=em(perfect?'Trophy':'Party popper',perfect?'🏆':'🎉')+'<h2>Secrets out of sight!</h2><div class="score">Score: '+pscore+' / '+P.length+' placed right, '+wrong+' wrong '+(wrong===1?'tap':'taps')+' in the hunt</div><p class="take">Never in Git, never in user data, never in an image. Readable only by who needs it.</p><button class="btn" id="again">Play again</button>';
+  e.innerHTML=em(perfect?'Trophy':'Party popper',perfect?'🏆':'🎉')+'<h2>Secrets out of sight</h2><div class="score">Score: '+pscore+' / '+P.length+' placed right, '+wrong+' wrong '+(wrong===1?'tap':'taps')+' in the hunt</div><p class="take">Never in Git, user data or a container image, and readable only by the identity that needs it.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();
 }
 start();

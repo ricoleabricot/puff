@@ -68,7 +68,7 @@ input[type=range]{width:100%;height:44px;accent-color:#F27E5E;margin:0}
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Saturday at the supermarket</h1><p>Change the crowd and the team, then watch the line.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Saturday at the supermarket</h1><p>Move the crowd, change the team, fire a cashier and see which word fits.</p></div></div>
 
   <div id="sim">
     <div class="ctl">
@@ -82,7 +82,7 @@ input[type=range]{width:100%;height:44px;accent-color:#F27E5E;margin:0}
       <div class="line" id="line" aria-label="Waiting line"></div>
       <div class="stats"><span id="sWait"></span><span id="sCash"></span></div>
     </div>
-    <div class="cap" id="cap" role="status" aria-live="polite">Scalability: more checkouts serve more people</div>
+    <div class="cap" id="cap" role="status" aria-live="polite">More checkouts serve more people, that's scalability</div>
       </div>
 
   <div id="quiz" class="hide">
@@ -128,8 +128,8 @@ function step(){
   if(S.mode==='elastic'){
     const want=Math.max(1,Math.min(MAXL,Math.ceil(arr/RATE+S.q/14)));
     const n=openCount();
-    if(want>n){setOpen(n+1);note('Elasticity: cashiers follow the crowd')}
-    else if(want<n&&S.tick%3===0){setOpen(n-1);note('Elasticity: extra cashiers go home when the line shrinks')}
+    if(want>n){setOpen(n+1);note('Cashiers follow the crowd, that\'s elasticity')}
+    else if(want<n&&S.tick%3===0){setOpen(n-1);note('The line shrinks and extra cashiers go home, that\'s elasticity')}
   }
   // serve
   if(S.blip>0)S.blip--;
@@ -145,11 +145,11 @@ function step(){
 }
 function caption(){
   if(S.msgT>0)return S.msg;
-  if(S.blip>0)return 'High availability: a short blip, then customers use the next checkout';
-  if(S.mode==='fixed'&&S.q>16)return 'Fixed team: the line grows and nobody comes to help';
-  if(S.mode==='elastic')return 'Elasticity: cashiers follow the crowd';
-  if(S.per===2)return 'Fault tolerance: two cashiers per checkout, so a loss goes unnoticed';
-  return 'Scalability: more checkouts serve more people';
+  if(S.blip>0)return 'A short blip, then customers walk to the next checkout, that\'s high availability';
+  if(S.mode==='fixed'&&S.q>16)return 'The team is fixed, so the line grows and nobody comes to help';
+  if(S.mode==='elastic')return 'Cashiers follow the crowd, that\'s elasticity';
+  if(S.per===2)return 'Two cashiers per checkout, nobody notices if one leaves, that\'s fault tolerance';
+  return 'More checkouts serve more people, that\'s scalability';
 }
 function render(){
   $('#crowdV').textContent=S.level===0?'none':S.level<4?'a few':S.level<8?'many':'a crowd';
@@ -176,20 +176,20 @@ document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));
   $('#add').disabled=S.mode==='elastic';
   if(S.mode==='fixed')setOpen(S.fixedN);
-  note(S.mode==='elastic'?'Elasticity: cashiers follow the crowd':'Fixed team: same checkouts all day');
+  note(S.mode==='elastic'?'Cashiers follow the crowd, that\'s elasticity':'The team is fixed, same checkouts all day');
   render();
 });
 document.querySelectorAll('[data-per]').forEach(b=>b.onclick=()=>{
   S.per=+b.dataset.per;
   document.querySelectorAll('[data-per]').forEach(x=>x.setAttribute('aria-pressed',x===b));
-  note(S.per===2?'Fault tolerance: two cashiers per checkout, so a loss goes unnoticed':'One cashier per checkout: cheaper, but a loss is visible');
+  note(S.per===2?'Two cashiers per checkout, nobody notices if one leaves, that\'s fault tolerance':'One cashier per checkout, it\'s cheaper but customers see the loss');
   render();
 });
 $('#crowd').oninput=e=>{S.level=+e.target.value;render()};
 $('#add').onclick=()=>{
   if(S.mode!=='fixed')return;
   if(S.fixedN>=MAXL){note('All 6 checkouts are open');render();return}
-  S.fixedN++;setOpen(S.fixedN);note('Scalability: more checkouts serve more people (you added it by hand)');render();
+  S.fixedN++;setOpen(S.fixedN);note('You added a checkout by hand, that\'s scalability');render();
 };
 $('#fire').onclick=()=>{
   const cands=[];
@@ -197,8 +197,8 @@ $('#fire').onclick=()=>{
   if(!cands.length){note('Nobody left to fire');render();return}
   const [i,j]=cands[Math.floor(Math.random()*cands.length)];
   const l=S.lanes[i];l.out[j]=14;
-  if(S.per===1){S.blip=3;note('High availability: a short blip, then customers use the next checkout')}
-  else note('Fault tolerance: the other cashier keeps going, nobody notices');
+  if(S.per===1){S.blip=3;note('A short blip, then customers walk to the next checkout, that\'s high availability')}
+  else note('The other cashier keeps going and nobody notices, that\'s fault tolerance');
   render();
 };
 let timer;
@@ -208,7 +208,7 @@ document.addEventListener('visibilitychange',()=>{document.hidden?clearInterval(
 /* quiz */
 const QS=[
  {a:'Elasticity',t:'Extra cashiers are called in when the line grows, and sent home after.',f:'Elasticity adds and removes resources by itself, following demand.'},
- {a:'Scalability',t:'More checkouts serve more people.',f:'Scalability means it can handle more load if you add resources.'},
+ {a:'Scalability',t:'More checkouts serve more people.',f:'Scalability means it handles more load if you add resources.'},
  {a:'High availability',t:'A cashier leaves, customers walk to the next checkout.',f:'High availability stays up when something fails, with at most a short blip.'},
  {a:'Fault tolerance',t:'Two cashiers per checkout, nobody notices if one leaves.',f:'Fault tolerance keeps working with zero visible interruption.'}
 ];
@@ -222,7 +222,7 @@ function startQuiz(){
 function showQ(){
   answered=false;
   const q=QS[qi];
-  $('#qn').textContent='Question '+(qi+1)+' of 4: which word is this?';
+  $('#qn').textContent='Question '+(qi+1)+' of 4, which word is this?';
   $('#qt').textContent=q.t;
   $('#qo').innerHTML=WORDS.map(w=>'<button data-w="'+w+'">'+w+'</button>').join('');
   say($('#fb'),'Pick a word.');
@@ -246,7 +246,7 @@ $('#next').onclick=()=>{
   if(qi<3){qi++;showQ();return}
   $('#quiz').classList.add('hide');
   const e=$('#end');e.classList.remove('hide');
-  e.innerHTML=em('Trophy','🏆')+'<h2>Checkout closed!</h2><div class="score">Score: '+score+' / 4</div><p class="take">Elastic follows demand, fault tolerant hides the failure.</p><button class="btn" id="again">Play again</button>';
+  e.innerHTML=em('Trophy','🏆')+'<h2>All done!</h2><div class="score">Score: '+score+' / 4</div><p class="take">High availability accepts a short blip, fault tolerance hides the failure and costs more.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=()=>{e.classList.add('hide');begin()};
   $('#again').focus();
 };

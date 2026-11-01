@@ -90,25 +90,25 @@ const N={
 const LEGS=[
  {t:'Trip 1: a student posts a message',e:['Incoming envelope','📨'],path:['browser','igw','alb','api','db'],
   why:{igw:'The Internet Gateway is the VPC\'s two-way gate to the internet.',
-   alb:'puff-alb sits in a public subnet, the only public door. puff-alb-sg allows port 80.',
+   alb:'puff-alb sits in a public subnet, it\'s the only public door, and puff-alb-sg allows port 80.',
    api:'The ALB forwards to puff-api on 8080 in a private subnet. puff-api-sg allows 8080 from puff-alb-sg.',
    db:'The API queries puff-db on 5432. The local route keeps it inside the VPC.'}},
  {t:'Trip 2: puff-api pulls its Docker image',e:['Package','📦'],path:['api','nat','igw','hub'],
   why:{nat:'The private route table sends 0.0.0.0/0 to the NAT gateway.',
    igw:'The NAT sits in a public subnet and leaves through the IGW with its own public IP.',
-   hub:'Docker Hub sees the NAT\'s public IP. It can reply, but it can never start a conversation with the API.'}}
+   hub:'Docker Hub sees the NAT\'s public IP. It can reply, but it can never start a connection to the API.'}}
 ];
 function wrong(leg,node){
   if(leg===0){
     if(node==='api')return'puff-api is in a private subnet with no public IP. Visitors only meet the ALB.';
     if(node==='db')return'puff-db only accepts 5432 from puff-api-sg, and nothing outside reaches a private subnet directly.';
     if(node==='nat')return'The NAT is a one-way exit. Nothing from the internet can come in through it.';
-    if(node==='alb')return'The ALB is in the VPC. The packet has to come through the VPC\'s gate first.';
+    if(node==='alb')return'The ALB is in the VPC, so the packet has to enter the VPC first.';
     if(node==='hub')return'Docker Hub isn\'t part of this trip.';
     return'Not that one. Where does the packet go next?';
   }
   if(node==='igw')return'A private subnet has no route to the IGW. Its 0.0.0.0/0 goes somewhere else first.';
-  if(node==='hub')return'Not yet: the packet has to leave the VPC first.';
+  if(node==='hub')return'Not yet, the packet has to leave the VPC first.';
   if(node==='alb')return'The ALB receives visitors. It doesn\'t carry the API\'s outbound calls.';
   if(node==='db')return'The database isn\'t on the way out.';
   if(node==='browser')return'This trip goes to Docker Hub, not to a browser.';

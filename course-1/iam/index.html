@@ -57,40 +57,40 @@ const B="arn:aws:s3:::puff-frontend-jdupont";
 // id, indent, text, explanation (null = plain, not tappable)
 const L=[
  [null,0,"{"],
- ["ver",1,'"Version": "2012-10-17",',"Version: the policy language version. Always 2012-10-17, leave it as is."],
+ ["ver",1,'"Version": "2012-10-17",',"The policy language version, always 2012-10-17, leave it as is."],
  [null,1,'"Statement": ['],
  [null,2,"{"],
- ["sid1",3,'"Sid": "ReadWriteFrontendFiles",',"Sid: just a name tag for this statement. This one is about files."],
- ["eff1",3,'"Effect": "Allow",',"Effect Allow: opens a door that is closed by default."],
- ["act1",3,'"Action": ["s3:GetObject", "s3:PutObject"],',"Action (service:operation): read a file (GetObject) and upload a file (PutObject)."],
- ["res1",3,`"Resource": "${B}/*"`,"Resource ends with /*: the files inside the bucket, not the bucket itself."],
+ ["sid1",3,'"Sid": "ReadWriteFrontendFiles",',"Sid is just a name for this statement, this one is about files."],
+ ["eff1",3,'"Effect": "Allow",',"This statement allows something, by default everything is denied."],
+ ["act1",3,'"Action": ["s3:GetObject", "s3:PutObject"],',"The action, written service:operation. Here it's read a file (GetObject) and upload a file (PutObject)."],
+ ["res1",3,`"Resource": "${B}/*"`,"It ends with /*, so it targets the files inside the bucket, not the bucket itself."],
  [null,2,"},"],
  [null,2,"{"],
- ["sid2",3,'"Sid": "ListFrontendBucket",',"Sid: a name tag. This one is about listing the bucket."],
- ["eff2",3,'"Effect": "Allow",',"Effect Allow: opens another door."],
- ["act2",3,'"Action": "s3:ListBucket",',"ListBucket: see what is inside the bucket. Listing is a bucket action."],
- ["res2",3,`"Resource": "${B}"`,"Resource without /*: the bucket itself. Listing needs this one, files need the /* one."],
+ ["sid2",3,'"Sid": "ListFrontendBucket",',"Another name, this one is about listing the bucket."],
+ ["eff2",3,'"Effect": "Allow",',"Allow again, for a second permission."],
+ ["act2",3,'"Action": "s3:ListBucket",',"ListBucket lets you see what's inside the bucket, listing is a bucket action."],
+ ["res2",3,`"Resource": "${B}"`,"No /* here, so it targets the bucket itself. Listing needs this one, files need the /* one."],
  [null,2,"},"],
  [null,2,"{"],
- ["sid3",3,'"Sid": "NeverDeleteBuckets",',"Sid: a name tag. It says what this statement is for."],
- ["eff3",3,'"Effect": "Deny",',"Effect Deny: an explicit Deny always wins over any Allow, from any policy."],
- ["act3",3,'"Action": "s3:DeleteBucket",',"DeleteBucket: only this action is blocked, nothing else."],
- ["res3",3,'"Resource": "*"',"Resource *: every bucket. None can be deleted."],
+ ["sid3",3,'"Sid": "NeverDeleteBuckets",',"The name says what this statement is for."],
+ ["eff3",3,'"Effect": "Deny",',"An explicit Deny always wins over any Allow, from any policy."],
+ ["act3",3,'"Action": "s3:DeleteBucket",',"Only DeleteBucket is blocked, nothing else."],
+ ["res3",3,'"Resource": "*"',"* means everything, so no bucket can be deleted."],
  [null,2,"}"],
  [null,1,"]"],
  [null,0,"}"]
 ];
 const Q=[
- {t:"Read the file <code>puff-frontend-jdupont/index.html</code>?",a:true,lines:["act1","res1"],
+ {t:"read the file <code>puff-frontend-jdupont/index.html</code>?",a:true,lines:["act1","res1"],
   why:"Statement 1 allows s3:GetObject on the files (/*) of this bucket."},
- {t:"Upload a file to <code>puff-frontend-jdupont</code>?",a:true,lines:["act1","res1"],
+ {t:"upload a file to <code>puff-frontend-jdupont</code>?",a:true,lines:["act1","res1"],
   why:"Statement 1 also allows s3:PutObject on the files of this bucket."},
- {t:"List the files of the bucket <code>puff-frontend-jdupont</code>?",a:true,lines:["act2","res2"],
+ {t:"list the files of the bucket <code>puff-frontend-jdupont</code>?",a:true,lines:["act2","res2"],
   why:"Statement 2 allows s3:ListBucket on the bucket itself (no /*)."},
- {t:"Delete the bucket <code>puff-frontend-jdupont</code>?",a:false,lines:["eff3","act3"],
+ {t:"delete the bucket <code>puff-frontend-jdupont</code>?",a:false,lines:["eff3","act3"],
   why:"Statement 3 is an explicit Deny on s3:DeleteBucket, and a Deny always wins."},
- {t:"Read the files of another bucket, <code>other-bucket</code>?",a:false,lines:["res1"],
-  why:"No line allows it: the Resource only covers puff-frontend-jdupont, and everything else is denied by default."}
+ {t:"read the files of another bucket, <code>other-bucket</code>?",a:false,lines:["res1"],
+  why:"No line allows it, the Resource only covers puff-frontend-jdupont and everything else is denied by default."}
 ];
 const $=s=>document.querySelector(s);
 const pol=$("#policy"),panel=$("#panel"),goal=$("#goal");
@@ -116,10 +116,10 @@ function read(){
   lines().forEach(x=>x.className=x.className.replace(/\b(sel|win|lose)\b/g,"").trim());
   goal.textContent="Tap a line to see what it means.";
   panel.innerHTML=`<div class="who"><img src="${IMG("Scroll","scroll")}" alt="" onerror="this.style.display='none'"><div><div class="tag">Step 1</div><b>A deploy script's policy</b></div></div>
-   <p class="exp" id="exp" style="margin-top:8px">Tap any line on the left.</p>
+   <p class="exp" id="exp" style="margin-top:8px">Tap any line of the policy.</p>
    <p class="note" id="prog">0/${Object.keys(byId).length} lines read</p>
-   <div class="row"><button class="btn hide" id="go">Ready for questions</button></div>
-   <p class="note">Tip: read 6 lines or more to unlock the questions.</p>`;
+   <div class="row"><button class="btn hide" id="go">Go to the questions</button></div>
+   <p class="note">Read 6 lines or more to unlock the questions.</p>`;
   $("#go").onclick=ask;
 }
 function dotsHtml(){return `<div class="dots" aria-hidden="true">${Q.map((_,i)=>`<span class="dot ${res[i]===undefined?(i===qi?"on":""):(res[i]?"ok":"no")}"></span>`).join("")}</div>`}
@@ -133,7 +133,7 @@ function q(){
   goal.textContent="Can this identity do it? Yes or No.";
   const c=Q[qi];
   panel.innerHTML=`${dotsHtml()}<div class="tag">Question ${qi+1} of ${Q.length}</div>
-   <p class="q">Can this identity… ${c.t}</p>
+   <p class="q">Can this identity ${c.t}</p>
    <div class="row"><button class="btn yes" data-a="1">✓ Yes</button><button class="btn nope" data-a="0">✗ No</button></div>
    <p class="exp" id="fb"></p><div id="nx"></div>`;
   panel.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>answer(b.dataset.a==="1"));
@@ -156,7 +156,7 @@ function end(){
   mode="end";
   lines().forEach(x=>x.classList.remove("sel","win","lose"));
   goal.textContent="Done!";
-  const msg=score===5?"Perfect! You read that policy like a pro.":score>=3?"Nice! Re-read the lines you missed.":"Good start. Tap the lines again and retry.";
+  const msg=score===5?"Perfect! You can read a policy now.":score>=3?"Nice! Re-read the lines you missed.":"Read the lines again and retry.";
   panel.innerHTML=`<div class="center"><img src="${IMG("Key","key")}" width="64" height="64" alt="" onerror="this.style.display='none'">
    <p class="big">${score}/5</p><p class="exp ${score===5?"ok":""}">${msg}</p>
    <p><b>Everything is denied until allowed, and an explicit Deny always wins.</b></p>

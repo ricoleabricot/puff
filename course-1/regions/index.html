@@ -43,7 +43,7 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
 .m span.l{font-weight:700}
 .bar{position:relative;background:#F6E6DD;border-radius:8px;height:24px;overflow:hidden}
 .bar>i{position:absolute;inset:0 auto 0 0;border-radius:8px;transition:width .5s}
-.bar>em{position:relative;font-style:normal;font-weight:700;padding:0 8px;line-height:24px;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.25);white-space:nowrap}
+.bar>em{position:relative;font-style:normal;font-weight:700;padding:0 8px;line-height:24px;color:#3A2A24;white-space:nowrap}
 .good>i{background:var(--ok)}.mid>i{background:var(--mid)}.bad>i{background:var(--bad)}
 .fb{margin:8px 0 0;font-weight:700;min-height:2.6em}
 .fb.ok{color:#23814f}.fb.no{color:#C0392F}
@@ -103,15 +103,15 @@ const lat={
   game:{"ap-northeast-1":10,"us-east-1":150,"eu-west-3":230,"eu-central-1":220}
 };
 const clients=[
- {k:"hosp",img:IMG("Hospital","hospital"),name:"A French hospital",need:"Stores patients' health data. Users are in France.",good:["eu-west-3","eu-central-1"],law:true,
+ {k:"hosp",img:IMG("Hospital","hospital"),name:"A French hospital",need:"Stores patients' health data, users are in France.",good:["eu-west-3","eu-central-1"],law:true,
   ok:"Yes! Health data has to stay in Europe, and Paris or Frankfurt are only ~10 ms apart.",
-  no:{"us-east-1":"Not quite: EU rules want health data in Europe, and Virginia is ~80 ms from Paris.","ap-northeast-1":"Not quite: far from France and outside Europe. Pick Paris or Frankfurt."}},
+  no:{"us-east-1":"Not quite, the law wants health data in Europe, and Virginia is ~80 ms from Paris.","ap-northeast-1":"Not quite, that's far from France and outside Europe, pick Paris or Frankfurt."}},
  {k:"start",img:IMG("Rocket","rocket"),name:"A US startup",need:"US users, tight budget, wants every service.",good:["us-east-1"],
-  ok:"Yes! us-east-1 is close to US users, among the cheapest, and has every service.",
-  no:"Not quite: farther from US users and usually pricier. us-east-1 is cheap, close and complete."},
- {k:"game",img:IMG("Video%20game","video_game"),name:"A game studio",need:"Players are in Japan. Every millisecond counts.",good:["ap-northeast-1"],
-  ok:"Yes! Tokyo is the closest region to players in Japan, so the lowest latency.",
-  no:"Not quite: that's a long trip for every move. Tokyo is the closest to Japan."}
+  ok:"Yes! us-east-1 is close to US users, among the cheapest and has every service.",
+  no:"Not quite, that's farther from US users and usually pricier, us-east-1 is close, cheap and has every service."},
+ {k:"game",img:IMG("Video%20game","video_game"),name:"A game studio",need:"Players are in Japan and every millisecond counts.",good:["ap-northeast-1"],
+  ok:"Yes! Tokyo is the closest region to players in Japan, so it has the lowest latency.",
+  no:"Not quite, that's too far for every move, Tokyo is the closest to Japan."}
 ];
 const $=s=>document.querySelector(s);
 const map=$("#map"),panel=$("#panel"),dots=$("#dots"),goal=$("#goal");
@@ -156,7 +156,7 @@ function pick(id){
   const c=clients[step],okp=c.good.includes(id);
   const ms=lat[c.k][id],approx=!(c.k==="hosp"&&(id==="eu-central-1"))&&!(c.k==="hosp"&&id==="us-east-1");
   const ll=level(ms,20,100),lawOk=c.law?id.startsWith("eu-"):true,cheap=id==="us-east-1";
-  const icon={good:"✓",mid:"~",bad:"✗"};
+  const icon={good:"✓",mid:"•",bad:"✗"};
   const fb=okp?c.ok:(typeof c.no==="string"?c.no:c.no[id]);
   if(okp)score++;
   res[step]=okp;
@@ -168,11 +168,11 @@ function pick(id){
   $("#out").innerHTML=`<div class="tag" style="margin-top:8px">${id} (${R[id].city})</div><div class="meters">
     ${meter("Latency",ll,Math.max(10,100-ms/2.4),`~${ms} ms${approx?"*":""}`,icon[ll])}
     ${meter("Law",lawOk?"good":"bad",lawOk?100:14,lawOk?"OK":"Not OK",lawOk?"✓":"✗")}
-    ${meter("Price",cheap?"good":"mid",cheap?90:50,cheap?"Cheaper":"Pricier",cheap?"✓":"~")}
-    ${meter("Services",cheap?"good":"mid",cheap?100:70,cheap?"Every one, first":"Some come later",cheap?"✓":"~")}
+    ${meter("Price",cheap?"good":"mid",cheap?90:50,cheap?"Cheaper":"Pricier",cheap?"✓":"•")}
+    ${meter("Services",cheap?"good":"mid",cheap?100:70,cheap?"Every one, first":"Some come later",cheap?"✓":"•")}
    </div>
    <p class="fb ${okp?"ok":"no"}">${okp?"✓":"✗"} ${fb}</p>
-   <p class="note">* approximate. Only Paris-Frankfurt ~10 ms and Paris-Virginia ~80 ms come from the course.</p>
+   <p class="note">* Rough numbers, only Paris to Frankfurt ~10 ms and Paris to Virginia ~80 ms come from the course.</p>
    <button class="btn" id="next">${step<2?"Next client":"Last step"}</button>`;
   $("#next").focus({preventScroll:true});
   $("#next").onclick=()=>{step++;step<3?show():az()};
@@ -181,7 +181,7 @@ function az(){
   step=3;drawDots();
   map.querySelectorAll(".pin").forEach(p=>{p.className="pin";p.disabled=false;p.querySelector(".mk")?.remove()});
   goal.textContent="A Region holds several Availability Zones (AZs).";
-  panel.innerHTML=`<div class="tag">Bonus step</div>
+  panel.innerHTML=`<div class="tag">Last step</div>
    <div class="who"><img src="${IMG("Office%20building","office_building")}" alt="" onerror="this.style.display='none'"><div><h2>Look inside a region</h2><p>Tap a region on the map to zoom in.</p></div></div><div id="out"></div>`;
 }
 function openRegion(id){
@@ -189,7 +189,7 @@ function openRegion(id){
   pin(id).classList.add("sel");
   cut=[false,false,false];
   const ids=["a","b","c"];
-  $("#out").innerHTML=`<div class="zoom"><h3>${id}: 3 Availability Zones</h3>
+  $("#out").innerHTML=`<div class="zoom"><h3>Availability Zones in ${id}</h3>
     <div class="azs">${ids.map((x,i)=>`<button class="az on" data-i="${i}" aria-pressed="false"><img src="${IMG("Office%20building","office_building")}" alt=""><span>${id}${x}</span><small>✓ running</small></button>`).join("")}</div></div>
     <p class="fb" id="azfb">Tap a building to cut its power.</p>
     <p class="note">Each AZ has its own power and network.</p>
@@ -202,8 +202,8 @@ function openRegion(id){
     const n=cut.filter(Boolean).length,up=3-n;
     $("#azfb").className="fb "+(up?"ok":"no");
     $("#azfb").textContent=n===0?"All 3 running. Tap one to cut its power."
-      :up===0?"✗ All 3 down: that's why you spread across AZs. Tap one to restore."
-      :`✓ ${up} AZ${up>1?"s":""} still running, your app stays up. That's why you spread across 2 AZs.`;
+      :up===0?"✗ All 3 down, so your app is down too. Tap one to restore."
+      :`✓ ${up} AZ${up>1?"s":""} still running, your app stays up, that's why you spread across 2 AZs.`;
     if(n)$("#done").classList.remove("hide");
   });
   $("#done").onclick=end;
@@ -211,13 +211,13 @@ function openRegion(id){
 function end(){
   step=4;drawDots();
   map.querySelectorAll(".pin").forEach(p=>p.disabled=true);
-  const msg=score===3?"Perfect! Law, latency and price: you can pick a region for a real constraint."
-    :score===2?"Nice! Re-check the one you missed: law, latency, price, services."
-    :"Good start. Look at the four criteria again and give it another go.";
+  const msg=score===3?"Perfect! You can pick a region for a real constraint."
+    :score===2?"Nice! Check the one you missed against law, latency, price and services."
+    :"Look at law, latency, price and services again, then play again.";
   goal.textContent="Done!";
   panel.innerHTML=`<div class="center"><img src="${IMG("Trophy","trophy")}" width="64" height="64" alt="" onerror="this.style.display='none'">
    <p class="big">${score}/3</p><p class="fb ${score===3?"ok":""}">${msg}</p>
-   <p>Pick by law, latency, price, services. Spread across 2 AZs.</p>
+   <p>Pick a region on law, latency, price and services, then spread across 2 AZs.</p>
    <button class="btn" id="again">Play again</button></div>`;
   $("#again").onclick=start;$("#again").focus({preventScroll:true});
 }

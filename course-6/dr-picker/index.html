@@ -53,7 +53,7 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Pick a disaster plan</h1><p>Each business can lose a region. Pick the cheapest plan that still meets its RPO and RTO.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Pick a disaster plan</h1><p>Each business can lose a region, pick the cheapest plan that still meets its RPO and RTO.</p></div></div>
   <div class="card" style="margin-top:10px" id="card"></div>
   <div class="rule">RPO = how much data you accept losing. RTO = how long you accept being down.</div>
   <div id="fb" class="fb" role="status" aria-live="polite"></div>
@@ -77,13 +77,13 @@ const PLANS=[
 ];
 const BIZ=[
  {e:['Newspaper','📰'],n:'A student club blog',d:'Posts once a week. Nobody reads it at night.',rpo:'a day of posts',rto:'a day',a:0,
-  why:'Losing hours of data and a day offline is fine here: backups only, the cheapest plan.'},
+  why:'Losing hours of data and a day offline is fine here, so backups only, the cheapest plan.'},
  {e:['Graduation cap','🎓'],n:'A school homework portal',d:'Students upload work all day.',rpo:'15 minutes of uploads',rto:'2 hours',a:1,
-  why:'Minutes of data loss and a couple of hours back: pilot light, data copied and the database already running.'},
+  why:'Minutes of data lost and back in a couple of hours, so pilot light, data copied and the database already running.'},
  {e:['Shopping cart','🛒'],n:'An online shop',d:'Every minute down means lost orders.',rpo:'1 minute of orders',rto:'10 minutes',a:2,
-  why:'Back in minutes with seconds of data lost: warm standby, a small full copy ready to scale up.'},
+  why:'Back in minutes with seconds of data lost, so warm standby, a small full copy ready to scale up.'},
  {e:['Credit card','💳'],n:'A card payment service',d:'Payments must never be lost or stop.',rpo:'zero',rto:'zero',a:3,
-  why:'Near zero on both counts means the full stack serving traffic in both places: multi-site.'}
+  why:'Near zero on both means the full stack serving traffic in both places, so multi-site.'}
 ];
 let i,score;
 function start(){i=0;score=0;$('#end').classList.add('hide');$('#fb').classList.remove('hide');$('#card').classList.remove('hide');show()}

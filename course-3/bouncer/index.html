@@ -55,9 +55,9 @@ button:focus-visible{outline:3px solid #3A2A24;outline-offset:2px}
 <div class="wrap">
   <div class="hero"><span id="heroEm"></span><div><h1>The bouncer</h1><p>Read the rules. Does each packet get in, or is it blocked?</p></div></div>
   <div class="rules">
-    <div class="rule" id="sg"><h2><span id="sgEm"></span>Security groups</h2><small>One door each. Allow only, anything not listed is out. Stateful: remembers who it let in.</small>
+    <div class="rule" id="sg"><h2><span id="sgEm"></span>Security groups</h2><small>One per resource, allow rules only, anything not listed stays out. Stateful, it remembers who it let in.</small>
       <ul><li><code>puff-alb-sg</code>: TCP 80 from <code>0.0.0.0/0</code></li><li><code>puff-api-sg</code>: TCP 8080 from <code>puff-alb-sg</code></li><li><code>puff-db-sg</code>: TCP 5432 from <code>puff-api-sg</code></li></ul></div>
-    <div class="rule" id="nacl"><h2><span id="naclEm"></span>Network ACL, public subnets</h2><small>Whole street. Lowest number first, first match wins. Stateless: no memory.</small>
+    <div class="rule" id="nacl"><h2><span id="naclEm"></span>Network ACL, public subnets</h2><small>Whole subnet, lowest number first, first match wins. Stateless, no memory.</small>
       <ul><li>In 90: DENY all from <code>203.0.113.0/24</code></li><li>In 100: ALLOW TCP 80 from <code>0.0.0.0/0</code></li><li>In *: DENY all</li><li>Out 100: ALLOW TCP 80 to <code>0.0.0.0/0</code></li><li>Out *: DENY all</li></ul></div>
   </div>
   <div class="card req" id="req" aria-live="polite"></div>
@@ -73,22 +73,22 @@ function em(name,chr,cls){
 const $=s=>document.querySelector(s);
 function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
 const R=[
- {f:'sg',tag:'Request 1 of 6 · at the door of puff-db',e:['File cabinet','🗄️'],t:'TCP <code>5432</code> from <code>puff-api</code> (it wears <code>puff-api-sg</code>)',a:1,
-  w:'puff-db-sg lets in port 5432 from anything wearing puff-api-sg.'},
- {f:'sg',tag:'Request 2 of 6 · at the door of puff-db',e:['Bellhop bell','🛎️'],t:'TCP <code>5432</code> from <code>puff-alb</code> (it wears <code>puff-alb-sg</code>)',a:0,
-  w:'Only puff-api-sg is on puff-db-sg\'s guest list. The ALB never talks to the database.'},
+ {f:'sg',tag:'Request 1 of 6 · at the door of puff-db',e:['File cabinet','🗄️'],t:'TCP <code>5432</code> from <code>puff-api</code> (it has <code>puff-api-sg</code>)',a:1,
+  w:'puff-db-sg lets in port 5432 from anything with puff-api-sg.'},
+ {f:'sg',tag:'Request 2 of 6 · at the door of puff-db',e:['Bellhop bell','🛎️'],t:'TCP <code>5432</code> from <code>puff-alb</code> (it has <code>puff-alb-sg</code>)',a:0,
+  w:'Only puff-api-sg is on puff-db-sg\'s list, the ALB never talks to the database.'},
  {f:'sg',tag:'Request 3 of 6 · at the door of puff-api',e:['Laptop','💻'],t:'TCP <code>22</code> (SSH) from <code>puff-alb</code>',a:0,
-  w:'puff-api-sg only lists 8080. A security group only allows, so anything not listed stays out.'},
+  w:'puff-api-sg only lists 8080, and anything not listed stays out.'},
  {f:'nacl',tag:'Request 4 of 6 · at the edge of the public subnets',e:['Mobile phone','📱'],t:'TCP <code>80</code> from <code>198.51.100.7</code>',a:1,
-  w:'Rule 90 doesn\'t match, rule 100 does: ALLOW.'},
+  w:'Rule 90 doesn\'t match, rule 100 does, so it\'s allowed.'},
  {f:'nacl',tag:'Request 5 of 6 · at the edge of the public subnets',e:['Stop sign','🛑'],t:'TCP <code>80</code> from <code>203.0.113.50</code>',a:0,
-  w:'Rule 90 matches first and says DENY. Rule 100 is never read. That\'s how you block one IP range.'},
+  w:'Rule 90 matches first and denies it, rule 100 is never read. That\'s how you block one IP range.'},
  {f:'nacl',tag:'Request 6 of 6 · at the edge of the public subnets',e:['Locked','🔒'],t:'TCP <code>443</code> from <code>198.51.100.7</code>',a:0,
-  w:'No numbered rule matches 443, so the * rule at the bottom says DENY.'},
+  w:'No numbered rule matches 443, so the * rule at the bottom denies it.'},
  {f:'sg',tag:'The reply · leaving puff-alb',e:['Envelope','✉️'],t:'Request 4 got in. The ALB answers <code>198.51.100.7</code> on port <code>50123</code>. Does <code>puff-alb-sg</code> let the reply out?',a:1,
-  w:'A security group is stateful: it remembers who it let in, so the reply goes out automatically.',bonus:1},
+  w:'A security group is stateful, it remembers who it let in, so the reply goes out automatically.',bonus:1},
  {f:'nacl',tag:'The reply · leaving the public subnet',e:['Hourglass not done','⏳'],t:'Same reply, port <code>50123</code>. Does the network ACL let it out?',a:0,
-  w:'A NACL is stateless: Out 100 only allows port 80, and replies go to ports 1024 to 65535. Dropped. From outside it looks like a timeout.',bonus:1}
+  w:'A NACL is stateless. Out 100 only allows port 80 and replies go to ports 1024 to 65535, so it\'s dropped, and from outside it looks like a timeout.',bonus:1}
 ];
 let i,score,locked;
 const req=$('#req'),fb=$('#fb'),endEl=$('#end');
@@ -114,7 +114,7 @@ function pick(a){
 function finish(){
   $('#sg').classList.remove('hot');$('#nacl').classList.remove('hot');
   req.classList.add('hide');fb.classList.add('hide');endEl.classList.remove('hide');
-  endEl.innerHTML=em(score>=6?'Trophy':'Thinking face',score>=6?'🏆':'🤔')+'<h2>Shift over!</h2><div class="score">Score: '+score+' / '+R.length+'</div><p class="take">Security groups remember and do most of the work. NACLs forget, so replies need their own rule.</p><button class="btn" id="again">Play again</button>';
+  endEl.innerHTML=em(score>=6?'Trophy':'Thinking face',score>=6?'🏆':'🤔')+'<h2>All done!</h2><div class="score">Score: '+score+' / '+R.length+'</div><p class="take">Security groups remember and do most of the work. NACLs forget, so replies need their own rule.</p><button class="btn" id="again">Play again</button>';
   $('#again').onclick=start;$('#again').focus();
 }
 req.addEventListener('click',e=>{const b=e.target.closest('.ch button');if(b)pick(+b.dataset.a)});

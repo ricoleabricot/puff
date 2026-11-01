@@ -66,7 +66,7 @@ th{font-size:12px;opacity:.75}
 </head>
 <body>
 <div class="wrap">
-  <div class="hero"><span id="heroEm"></span><div><h1>Read the change set</h1><p>Toggle a line in the template, predict what CloudFormation will do, then deploy.</p></div></div>
+  <div class="hero"><span id="heroEm"></span><div><h1>Read the change set</h1><p>Change a line in the template, say what CloudFormation will do, then deploy.</p></div></div>
   <div class="mission"><span class="tag" id="round"></span><span id="mission"></span></div>
   <div class="grid">
     <div class="card">
@@ -101,11 +101,11 @@ const TOGGLES=[
  {k:'db',l:'🗑 DbSecurityGroup'}
 ];
 const ROUNDS=[
- {k:'subnet',m:'Give Puff a second public subnet.',a:'Add',why:'A new logical ID in the template means a new resource: Add.'},
- {k:'tag',m:'Add a Project tag to the VPC (for the bill).',a:'Modify',why:'A tag is an in-place change: Modify, Replacement False.'},
- {k:'cidr',m:'Change the VPC CidrBlock to 10.1.0.0/16.',a:'Replace',why:'A new CidrBlock means a brand-new VPC: Modify with Replacement True.'},
- {k:'db',m:'Remove DbSecurityGroup from the template.',a:'Remove',why:'Gone from the template means gone from AWS: Remove.'},
- {k:null,m:'Deploy the exact same file again.',a:'None',why:'Declarative and idempotent: same file, nothing to do. "No changes to deploy".'}
+ {k:'subnet',m:'Give Puff a second public subnet.',a:'Add',why:'A new logical ID in the template means a new resource, so Add.'},
+ {k:'tag',m:'Add a Project tag to the VPC (for the bill).',a:'Modify',why:'A tag is an in-place change, so Modify with Replacement False.'},
+ {k:'cidr',m:'Change the VPC CidrBlock to 10.1.0.0/16.',a:'Replace',why:'A new CidrBlock means a brand-new VPC, so Modify with Replacement True.'},
+ {k:'db',m:'Remove DbSecurityGroup from the template.',a:'Remove',why:'If it leaves the template it leaves AWS, so Remove.'},
+ {k:null,m:'Deploy the exact same file again.',a:'None',why:'Same file, so nothing to do, you get "No changes to deploy".'}
 ];
 const PREDS=[['Add','Add'],['Modify','Modify'],['Replace','Replace'],['Remove','Remove'],['None','No changes']];
 let r,score,deployed,draft,phase;
@@ -207,10 +207,10 @@ $('#preds').addEventListener('click',e=>{
 });
 function finishRound(how){
   const R=ROUNDS[r];
-  if(!R.k){$('#status').textContent='No changes to deploy';say('✓ Nothing happened, and that is the point.','ok')}
-  else if(how==='cancel'){draft={...deployed};$('#status').textContent='Change set deleted, nothing touched';say('✓ Good call. You read Replacement True before executing, so no VPC got rebuilt.','ok')}
+  if(!R.k){$('#status').textContent='No changes to deploy';say('✓ Nothing happened, the same file changes nothing.','ok')}
+  else if(how==='cancel'){draft={...deployed};$('#status').textContent='Change set deleted, nothing touched';say('✓ Good call, you read Replacement True before executing and no VPC got rebuilt.','ok')}
   else{deployed={...draft};$('#status').textContent='puff-network: UPDATE_COMPLETE';
-    say(R.a==='Replace'?'✓ Done, but that was a brand-new VPC. On a database, it would be a new, empty one.':'✓ Deployed.',R.a==='Replace'?'bad':'ok')}
+    say(R.a==='Replace'?'✓ Done, but you got a brand-new VPC. On a database you get a new, empty one.':'✓ Deployed.',R.a==='Replace'?'bad':'ok')}
   phase='done';$('#acts').innerHTML='<button class="btn" id="next">'+(r<ROUNDS.length-1?'Next change':'See my score')+'</button>';
   drawToggles();drawTpl();
   $('#next').focus({preventScroll:true});

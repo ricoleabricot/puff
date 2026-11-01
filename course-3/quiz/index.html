@@ -64,7 +64,7 @@ const Q=[
  {img:IMG("Bucket","bucket"),t:"A private server copies backups to S3 through the NAT. The cheapest fix?",
   o:["A second NAT gateway","An interface endpoint per AZ","An S3 gateway endpoint in the route table"],a:2,
   why:"The S3 gateway endpoint is free, and S3 traffic stops touching the NAT."},
- {img:IMG("Bellhop%20bell","bellhop_bell"),t:"After Milestone 2, what can a stranger on the internet reach?",
+ {img:IMG("Bellhop%20bell","bellhop_bell"),t:"After today, what can a stranger on the internet reach?",
   o:["Port 80 on puff-alb","Port 8080 on puff-api","Port 5432 on puff-db"],a:0,
   why:"Only the ALB is public. The API and the database live in private subnets."}
 ];
@@ -99,10 +99,10 @@ function pick(k){
 }
 function end(){
   dots.classList.add("hide");goal.textContent="All done!";
-  const band=score===8?["Trophy","trophy","Perfect! Puff's network is in good hands."]
-   :score>=6?["Party%20popper","party_popper","Great job! A couple of ideas to re-read."]
-   :score>=4?["Thinking%20face","thinking_face","Not bad! Skim the page again, then replay."]
-   :["Seedling","seedling","Good start! Everyone begins here. Re-read the page and try again."];
+  const band=score===8?["Trophy","trophy","Perfect, you've got it."]
+   :score>=6?["Party%20popper","party_popper","Good, re-read the ones you missed."]
+   :score>=4?["Thinking%20face","thinking_face","Skim the page again, then replay."]
+   :["Seedling","seedling","Re-read the page and try again."];
   card.innerHTML=`<div class="center"><img src="${IMG(band[0],band[1])}" width="72" height="72" alt="" onerror="this.style.display='none'">
    <p class="big">${score}/8</p><p class="fb ${score>=6?"ok":""}">${band[2]}</p>
    <button class="btn" id="again">Play again</button></div>`;

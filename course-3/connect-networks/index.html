@@ -64,20 +64,20 @@ function em(name,chr,cls){
 const $=s=>document.querySelector(s);
 function say(el,msg,kind){el.className='fb '+(kind||'');el.textContent=msg}
 const T=[
- {k:'peer',l:'VPC peering',s:'a private road between two VPCs',e:['Bridge at night','🌉']},
- {k:'tgw',l:'Transit Gateway',s:'a roundabout everyone joins once',e:['Bus','🚌']},
+ {k:'peer',l:'VPC peering',s:'a private connection between two VPCs',e:['Bridge at night','🌉']},
+ {k:'tgw',l:'Transit Gateway',s:'a central hub every network joins once',e:['Bus','🚌']},
  {k:'vpn',l:'Site-to-Site VPN',s:'an encrypted tunnel over the internet',e:['Locked with key','🔐']},
  {k:'dx',l:'Direct Connect',s:'a private physical cable into AWS',e:['Electric plug','🔌']}
 ];
 const S=[
  {e:['Bar chart','📊'],t:'Puff\'s VPC and a new analytics VPC need to talk. Only those two.',a:'peer',
-  w:'Two or three VPCs: peering is simple and free to set up, and its "doesn\'t chain" limit doesn\'t hurt yet.'},
+  w:'Peering is simple and free to set up, and with two VPCs its "doesn\'t chain" limit doesn\'t hurt yet.'},
  {e:['Office building','🏢'],t:'Ten VPCs across several accounts, plus an office, all need to reach each other.',a:'tgw',
-  w:'With peering that\'s a web of links (45 for ten VPCs). A Transit Gateway takes one connection per network and keeps routing in one place.'},
+  w:'With peering that\'s 45 links for ten VPCs. A Transit Gateway takes one connection per network and keeps routing in one place.'},
  {e:['Hourglass not done','⏳'],t:'A company\'s office needs access to its AWS network this week.',a:'vpn',
-  w:'A Site-to-Site VPN is up in about an hour, encrypted and cheap. Direct Connect takes weeks.'},
+  w:'A Site-to-Site VPN is up in about an hour, encrypted and cheap, Direct Connect takes weeks.'},
  {e:['Factory','🏭'],t:'A data center sends terabytes to AWS every day and needs steady speed.',a:'dx',
-  w:'Direct Connect gives predictable speed and cheaper data at volume. Big companies keep a VPN as its backup.'}
+  w:'Direct Connect gives predictable speed and cheaper data at volume. Big companies often keep a VPN as its backup.'}
 ];
 let i,score,locked;
 const sc=$('#sc'),fb=$('#fb'),endEl=$('#end');

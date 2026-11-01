@@ -81,11 +81,11 @@ $('#heroEm').innerHTML=em('Receipt','🧾');
 
 const SURPRISE=['nat','alb','ip'];
 const WI=[
- {k:'four',l:'4 API servers, not 2',m:'+$17: doubling the servers (and their disks). Servers were never the big line.'},
- {k:'small',l:'Database one size up',m:'+$13: db.t3.small costs about twice the hourly price of db.t3.micro.'},
- {k:'idle',l:'Test stack left running',m:'+$37: a forgotten puff-cfn NAT gateway and its IP bill all month, zero visitors.'},
- {k:'data',l:'500 GB via the NAT',m:'+$23: ~$0.045 per GB through the NAT. Your S3 gateway endpoint makes S3 traffic free.'},
- {k:'nonat',l:'No NAT gateway',m:'-$37: cheaper, but private servers lose their way out to the internet (updates, image pulls).'}
+ {k:'four',l:'4 API servers, not 2',m:'+$17 for twice the servers and disks, servers were never the big line.'},
+ {k:'small',l:'Database one size up',m:'+$13, db.t3.small costs about twice the hourly price of db.t3.micro.'},
+ {k:'idle',l:'Test stack left running',m:'+$37, a forgotten puff-cfn NAT gateway and its IP bill all month with zero visitors.'},
+ {k:'data',l:'500 GB via the NAT',m:'+$23, about $0.045 per GB through the NAT. Your S3 gateway endpoint makes S3 traffic free.'},
+ {k:'nonat',l:'No NAT gateway',m:'-$37, cheaper, but private servers can no longer reach the internet (updates, image pulls).'}
 ];
 let phase,picked,score,w,tried;
 
@@ -134,7 +134,7 @@ $('#lines').addEventListener('click',e=>{
 });
 function check(){
   phase='reveal';score=picked.filter(k=>SURPRISE.includes(k)).length;draw();
-  say((score===3?'✓ Yes! ':'✗ '+score+' of 3. ')+'NAT gateway, load balancer and public IPs: ~$66 of ~$100. The two API servers are only ~$15.',score===3?'ok':'bad');
+  say((score===3?'✓ Yes! ':'✗ '+score+' of 3. ')+'NAT gateway, load balancer and public IPs make ~$66 of ~$100. The two API servers are only ~$15.',score===3?'ok':'bad');
   $('#go').innerHTML='<button class="btn" id="next">Now try what-ifs</button>';
   $('#next').onclick=whatifs;$('#next').focus({preventScroll:true});
 }
