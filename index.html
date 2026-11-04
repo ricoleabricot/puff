@@ -1,101 +1,47 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Puff · Cloud Computing 101</title>
-<style>
-  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #FFF4EE; color: #3A2A24; display: grid; place-items: center; min-height: 100vh; }
-  main { max-width: 560px; padding: 32px 16px; text-align: center; }
-  h1 { font-size: 2.4rem; margin: 0 0 8px; }
-  p { line-height: 1.5; }
-  .tag { display: inline-block; background: linear-gradient(135deg,#FFB59C,#F27E5E); color: #fff; padding: 4px 12px; border-radius: 999px; font-weight: 600; }
-  a { color: #C4553A; font-weight: 600; line-height: 2; }
-</style>
-</head>
-<body>
-<main>
-  <div style="font-size:4rem">☁️</div>
-  <h1>Puff</h1>
-  <p><span class="tag">Cloud Computing 101</span></p>
-  <p>Mini-games and videos for the course where you build your own small cloud on AWS. Open them from the links or QR codes in your course pages.</p>
-  <h2 style="margin-top:28px">Course 1 · Cloud fundamentals</h2>
-  <p>
-    <a href="course-1/pizza/">🍕 IaaS, PaaS or SaaS?</a><br>
-    <a href="course-1/supermarket/">🛒 The supermarket</a><br>
-    <a href="course-1/cap/">⚖️ Cut the line (CAP)</a><br>
-    <a href="course-1/responsibility/">🤝 Who owns what?</a><br>
-    <a href="course-1/regions/">🗺️ Pick a region</a><br>
-    <a href="course-1/iam/">🔐 Read a policy</a><br>
-    <a href="course-1/quiz/">🎲 Today's quiz</a>
-  </p>
-  <p>
-    <a href="course-1/videos/epita-c1-cloud.html">🎬 From your laptop to the cloud</a><br>
-    <a href="course-1/videos/epita-c1-regions.html">🎬 Regions and Availability Zones</a><br>
-    <a href="course-1/videos/epita-c1-iam.html">🎬 IAM: badges and keys</a>
-  </p>
-  <h2 style="margin-top:28px">Course 2 · Compute, data and the 3-tier app</h2>
-  <p>
-    <a href="course-2/db-picker/">🎮 Database picker</a><br>
-    <a href="course-2/instance-picker/">🎮 Instance picker</a><br>
-    <a href="course-2/pricing/">🎮 Pay for EC2</a><br>
-    <a href="course-2/quiz/">🎮 Session 2 quiz</a><br>
-    <a href="course-2/storage-match/">🎮 Storage match</a><br>
-    <a href="course-2/three-tier/">🎮 Laptop to cloud: the 3-tier app</a><br>
-    <a href="course-2/videos/epita-c2-databases.html">🎬 Managed databases</a><br>
-    <a href="course-2/videos/epita-c2-ec2.html">🎬 Servers you rent</a><br>
-  </p>
-  <h2 style="margin-top:28px">Course 3 · Networking</h2>
-  <p>
-    <a href="course-3/bouncer/">🎮 The bouncer: security group vs network ACL</a><br>
-    <a href="course-3/connect-networks/">🎮 Connect the networks</a><br>
-    <a href="course-3/packet-trip/">🎮 Packet trip: follow a request through Puff</a><br>
-    <a href="course-3/quiz/">🎮 Networking quiz</a><br>
-    <a href="course-3/subnet-builder/">🎮 Subnet builder: public or private</a><br>
-    <a href="course-3/videos/epita-c3-security-groups.html">🎬 Security groups</a><br>
-    <a href="course-3/videos/epita-c3-vpc.html">🎬 Your own private network</a><br>
-  </p>
-  <h2 style="margin-top:28px">Course 4 · Security, governance and monitoring</h2>
-  <p>
-    <a href="course-4/accounts-layout/">🎮 Accounts layout</a><br>
-    <a href="course-4/alarm-tuner/">🎮 Alarm tuner</a><br>
-    <a href="course-4/cloudtrail-detective/">🎮 CloudTrail detective</a><br>
-    <a href="course-4/least-privilege/">🎮 Least privilege meter</a><br>
-    <a href="course-4/quiz/">🎮 Course 4 quiz</a><br>
-    <a href="course-4/secret-hunt/">🎮 Secret hunt</a><br>
-    <a href="course-4/videos/epita-c4-monitoring.html">🎬 Smoke detectors for your cloud</a><br>
-    <a href="course-4/videos/epita-c4-secrets.html">🎬 Secrets and badges</a><br>
-  </p>
-  <h2 style="margin-top:28px">Course 5 · Scalable and cloud-native</h2>
-  <p>
-    <a href="course-5/autoscaling/">🎮 A day on the board app: Auto Scaling</a><br>
-    <a href="course-5/cache/">🎮 Corner shop cache: CloudFront in front of S3</a><br>
-    <a href="course-5/compute-picker/">🎮 Pick for Puff: VM, container or serverless</a><br>
-    <a href="course-5/queue/">🎮 The burst: with and without a queue</a><br>
-    <a href="course-5/quiz/">🎮 Scaling quiz</a><br>
-    <a href="course-5/videos/epita-c5-autoscaling.html">🎬 Hiring cashiers when the line grows</a><br>
-    <a href="course-5/videos/epita-c5-serverless.html">🎬 VMs, containers, serverless</a><br>
-  </p>
-  <h2 style="margin-top:28px">Course 6 · IaC, CI/CD and FinOps</h2>
-  <p>
-    <a href="course-6/bill/">🎮 Puff's monthly bill</a><br>
-    <a href="course-6/deploy-strategies/">🎮 Ship a buggy release</a><br>
-    <a href="course-6/dr-picker/">🎮 Pick a disaster plan</a><br>
-    <a href="course-6/quiz/">🎮 IaC, CI/CD and FinOps quiz</a><br>
-    <a href="course-6/recipe/">🎮 Read the change set</a><br>
-    <a href="course-6/videos/epita-c6-finops.html">🎬 What does Puff cost?</a><br>
-    <a href="course-6/videos/epita-c6-iac.html">🎬 The recipe, not the cake</a><br>
-  </p>
-  <h2 style="margin-top:28px">Maps</h2>
-  <p>
-    <a href="course-2/maps/naive-deploy/">🗺️ Course 2: Today's deploy</a><br>
-    <a href="course-3/maps/puff-network/">🗺️ Course 3: Puff's network</a><br>
-    <a href="course-4/maps/accounts-tree/">🗺️ Course 4: One organization, many accounts</a><br>
-    <a href="course-4/maps/envelope-encryption/">🗺️ Course 4: Envelope encryption</a><br>
-    <a href="course-5/maps/puff-full/">🗺️ Course 5: Full Puff map</a><br>
-    <a href="course-6/maps/blue-green/">🗺️ Course 6: Blue/green and canary</a><br>
-    <a href="project/maps/standard-package/">🗺️ Project: The standard Puff package</a><br>
-  </p>
-</main>
-</body>
-</html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud Computing 101 · Puff</title>
+<link rel="icon" type="image/png" href="assets/favicon.png"><style>:root{--bg:#FFF8F4;--ink:#3A2A24;--muted:#7C675E;--line:#F0DDD2;--peach:#F27E5E;--peach2:#FFB59C;--card:#fff;--code:#2B211D}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+a{color:#C4553A}
+.top{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;padding:12px 20px;background:rgba(255,248,244,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);font-size:15px;color:var(--muted)}
+.brand{font-weight:700;color:var(--ink);text-decoration:none}
+.banner{height:clamp(170px,32vw,430px);background-size:cover;background-position:center 30%}
+.wrap{display:grid;grid-template-columns:240px minmax(0,780px);gap:48px;justify-content:center;max-width:1160px;margin:0 auto;padding:0 20px 80px}
+.toc{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-top:32px;font-size:14px;line-height:1.4}
+.toc a{display:block;padding:6px 10px;border-radius:8px;color:var(--muted);text-decoration:none}
+.toc a:hover{background:#FFEDE4}.toc a.on{background:#FFEDE4;color:var(--ink);font-weight:600}
+.head{display:flex;gap:16px;align-items:center;margin-top:28px;position:relative}
+.head img{width:72px;height:72px;filter:drop-shadow(0 4px 8px rgba(58,42,36,.2))}
+.head>div{padding-top:0}
+h1{font-size:34px;line-height:1.2;margin:0 0 4px}.head p{margin:0;color:var(--muted)}
+h2{font-size:26px;line-height:1.3;margin:56px 0 12px;padding-top:40px;border-top:1px solid var(--line)}h3{font-size:21px;margin:32px 0 8px}h4{font-size:18px;margin:24px 0 6px}
+p{margin:0 0 14px}ul,ol{margin:0 0 14px;padding-left:24px}li{margin:4px 0}li ul,li ol{margin:4px 0}
+code{font:.88em ui-monospace,SFMono-Regular,Menlo,monospace;background:#FBE9E0;padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+pre.code{position:relative;background:var(--code);color:#F7EDE7;border-radius:12px;padding:16px;overflow:auto;margin:0 0 16px;font-size:14px;line-height:1.5}
+pre.code code{background:none;padding:0;color:inherit;overflow-wrap:normal}
+.copy{position:absolute;top:8px;right:8px;border:0;border-radius:7px;padding:4px 10px;background:#5a4a43;color:#fff;font-size:12px;cursor:pointer}
+.callout{display:flex;gap:12px;border-radius:14px;padding:14px 16px;margin:18px 0}
+.callout p:last-child,.callout ul:last-child{margin-bottom:0}.ic{font-size:22px;line-height:1.3}.mascot{width:44px;height:44px;object-fit:contain}.bd{min-width:0}
+.orange{background:#FFE9DF}.blue{background:#E6F0FB}.green{background:#E2F4E9}.yellow{background:#FDF3D3}.purple{background:#EFE8FB}.gray{background:#F3EEEA}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}.cols .callout{margin:0;height:100%}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:14px 0}
+summary{cursor:pointer;font-weight:600}.dt{padding-top:10px}
+.tw{overflow-x:auto;margin:0 0 16px}table{border-collapse:collapse;width:100%;font-size:15px;background:var(--card);border-radius:10px;overflow:hidden}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:#FFEDE4}
+figure{margin:20px 0}figcaption{display:flex;justify-content:space-between;gap:12px;font-weight:600;margin-bottom:8px}figcaption a{font-weight:400;font-size:14px;white-space:nowrap}
+iframe{width:100%;height:600px;border:1px solid var(--line);border-radius:14px;background:#fff}
+video{width:100%;border-radius:14px;background:#000;box-shadow:0 8px 24px rgba(58,42,36,.15)}
+.next{margin-top:40px;font-weight:600}
+@media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}body{font-size:16px}h1{font-size:27px}iframe{height:720px}.head img{width:56px;height:56px}}
+.tl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 10px 6px}.tl:first-child{margin-top:0}
+.toc .cur{background:#FFE2D5;color:var(--ink);font-weight:600}.soon{display:block;padding:6px 10px;color:#B9A79F;cursor:default}
+</style></head><body>
+<header class="top"><a href="./" class="brand">☁️ Puff</a><span>Cloud Computing 101</span></header>
+<div class="banner" style="background-image:url('assets/banners/home.jpg');background-position:center 30%"></div>
+<div class="wrap"><nav class="toc"><div class="tl">Courses</div><a href="" class="cur">🏠 Home</a><a href="course-1/">🌱 Course 1 · Cloud fundamentals</a><a href="course-2/">⚙️ Course 2 · Compute and data</a><a href="course-3/">🌐 Course 3 · Networking</a><span class="soon">🔒 Course 4 · Security and monitoring</span><span class="soon">🚀 Course 5 · Scaling</span><span class="soon">🛠️ Course 6 · IaC, CI/CD, FinOps</span><span class="soon">🏆 Project</span><div class="tl">On this page</div><a href="#preamble-why-this-course-exists">📜 Preamble: why this course exists</a><a href="#how-the-course-works">🧭 How the course works</a><a href="#the-timeline">🗺️ The timeline</a></nav><main>
+<div class="head"><img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Cloud/3D/cloud_3d.png" alt=""><div><h1>Cloud Computing 101</h1><p>AWS services course</p></div></div>
+<aside class="callout orange"><div class="ic"><img src="assets/rico.png" alt="Rico" class="mascot"></div><div class="bd"><p><b>Everything you need to go from "it runs on my laptop" to "it runs on AWS, and I can explain why"</b></p><p>I'm Rico, I run infrastructure at Alan, and this is the course I wish I'd had before my first night fixing a broken server.</p><p>This is our cloud course: six courses that build one small cloud → <b>Puff</b> ☁️</p></div></aside><h2 id="preamble-why-this-course-exists">📜 Preamble: why this course exists</h2><p>Almost every piece of software we use runs in the cloud, yet you can finish an engineering degree without ever deploying something past your laptop, isolating a network or looking at a cloud bill, and this course closes that gap.</p><p>AWS Academy comes with its own “Cloud Architecting course”.<br>It's solid, but it runs about 60 hours, stays generic and talks more about AWS services than about architecture.</p><p>So we will use this one instead: shorter, opinionated, built around one small cloud you grow step by step, and full of real-life stories from running things at Alan, my current company.<br>AWS's labs and sandbox stay, they're the best playground we could ask for.</p><h2 id="how-the-course-works">🧭 How the course works</h2><p>Each course mixes two things: concepts in plain words, and hands-on where you build them right away.<br>You don't need any work experience: if you know a bit of Linux, networking and Docker, you're ready.</p><p>The hands-on happens in AWS, never on a personal account, and nobody pays anything.</p><div class="cols"><div class="col"><aside class="callout blue"><div class="ic">📖</div><div class="bd"><p><b>Read</b></p><p>Every page stands on its own.<br>The text is the full source: maps and videos come on top of it, never instead of it.</p></div></aside></div><div class="col"><aside class="callout green"><div class="ic">🧪</div><div class="bd"><p><b>Build</b></p><p>Each hands-on ends with a ✅ checkpoint you verify yourself, and a 🧯 toggle for when it doesn't work.</p></div></aside></div><div class="col"><aside class="callout purple"><div class="ic">🤔</div><div class="bd"><p><b>Think</b></p><p>Each page closes with questions that make you reason, hints in a toggle, and links to go deeper.</p></div></aside></div></div><p>The thread running through it all is <b>Puff</b> ☁️, your own small cloud.</p><p>Course after course you give it what every cloud needs: storage, servers, a database, a private network, badges and keys, alarms, the ability to grow on its own, and finally a recipe to rebuild it all in one command.</p><p>Puff needs a customer from day one, so it gets a first tenant: the board app, a tiny message board where people post short messages and everyone sees them.<br>It's boring on purpose, we care about the cloud around it.</p><h2 id="the-timeline">🗺️ The timeline</h2><p>Each step builds on the previous one, so follow them in order.</p><div class="tw"><table><tr><th>Page</th><th>Puff gets...</th></tr><tr><td><a href="course-1/">Course 1 · Cloud fundamentals and the AWS ecosystem</a></td><td>📦 Storage, and a first page live on the internet</td></tr><tr><td><a href="course-2/">Course 2 · Compute, data and the 3-tier app</a></td><td>🖥️ Servers and a database, the board app moves in, wide open</td></tr><tr><td><a href="course-3/">Course 3 · Networking</a></td><td>🔒 A private network with a single front door</td></tr><tr><td>Course 4 · Security, governance and monitoring</td><td>🪪 Badges, safe secrets and a smoke detector</td></tr><tr><td>Course 5 · Scalable and cloud-native architectures</td><td>📈 The power to grow and heal on its own</td></tr><tr><td>Course 6 · IaC, CI/CD and FinOps</td><td>🧱 A recipe that rebuilds it all in one command</td></tr><tr><td>Project · Build it, defend it</td><td>🤝 A first customer, and your defense in front of me</td></tr></table></div><p class="next"><a href="all.html">All games and videos</a></p>
+</main></div><script>document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.nextElementSibling.textContent);b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200)});
+const l=[...document.querySelectorAll('.toc a')],o=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){l.forEach(a=>a.classList.toggle('on',a.hash==='#'+x.target.id))}}),{rootMargin:'-20% 0px -70% 0px'});document.querySelectorAll('h2[id]').forEach(h=>o.observe(h));</script></body></html>

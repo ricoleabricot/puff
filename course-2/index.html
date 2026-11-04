@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course 2 · Compute, data and the 3-tier app · Puff</title>
+<link rel="icon" type="image/png" href="../assets/favicon.png"><style>:root{--bg:#FFF8F4;--ink:#3A2A24;--muted:#7C675E;--line:#F0DDD2;--peach:#F27E5E;--peach2:#FFB59C;--card:#fff;--code:#2B211D}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+a{color:#C4553A}
+.top{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;padding:12px 20px;background:rgba(255,248,244,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);font-size:15px;color:var(--muted)}
+.brand{font-weight:700;color:var(--ink);text-decoration:none}
+.banner{height:clamp(170px,32vw,430px);background-size:cover;background-position:center 30%}
+.wrap{display:grid;grid-template-columns:240px minmax(0,780px);gap:48px;justify-content:center;max-width:1160px;margin:0 auto;padding:0 20px 80px}
+.toc{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-top:32px;font-size:14px;line-height:1.4}
+.toc a{display:block;padding:6px 10px;border-radius:8px;color:var(--muted);text-decoration:none}
+.toc a:hover{background:#FFEDE4}.toc a.on{background:#FFEDE4;color:var(--ink);font-weight:600}
+.head{display:flex;gap:16px;align-items:center;margin-top:28px;position:relative}
+.head img{width:72px;height:72px;filter:drop-shadow(0 4px 8px rgba(58,42,36,.2))}
+.head>div{padding-top:0}
+h1{font-size:34px;line-height:1.2;margin:0 0 4px}.head p{margin:0;color:var(--muted)}
+h2{font-size:26px;line-height:1.3;margin:56px 0 12px;padding-top:40px;border-top:1px solid var(--line)}h3{font-size:21px;margin:32px 0 8px}h4{font-size:18px;margin:24px 0 6px}
+p{margin:0 0 14px}ul,ol{margin:0 0 14px;padding-left:24px}li{margin:4px 0}li ul,li ol{margin:4px 0}
+code{font:.88em ui-monospace,SFMono-Regular,Menlo,monospace;background:#FBE9E0;padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+pre.code{position:relative;background:var(--code);color:#F7EDE7;border-radius:12px;padding:16px;overflow:auto;margin:0 0 16px;font-size:14px;line-height:1.5}
+pre.code code{background:none;padding:0;color:inherit;overflow-wrap:normal}
+.copy{position:absolute;top:8px;right:8px;border:0;border-radius:7px;padding:4px 10px;background:#5a4a43;color:#fff;font-size:12px;cursor:pointer}
+.callout{display:flex;gap:12px;border-radius:14px;padding:14px 16px;margin:18px 0}
+.callout p:last-child,.callout ul:last-child{margin-bottom:0}.ic{font-size:22px;line-height:1.3}.mascot{width:44px;height:44px;object-fit:contain}.bd{min-width:0}
+.orange{background:#FFE9DF}.blue{background:#E6F0FB}.green{background:#E2F4E9}.yellow{background:#FDF3D3}.purple{background:#EFE8FB}.gray{background:#F3EEEA}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}.cols .callout{margin:0;height:100%}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:14px 0}
+summary{cursor:pointer;font-weight:600}.dt{padding-top:10px}
+.tw{overflow-x:auto;margin:0 0 16px}table{border-collapse:collapse;width:100%;font-size:15px;background:var(--card);border-radius:10px;overflow:hidden}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:#FFEDE4}
+figure{margin:20px 0}figcaption{display:flex;justify-content:space-between;gap:12px;font-weight:600;margin-bottom:8px}figcaption a{font-weight:400;font-size:14px;white-space:nowrap}
+iframe{width:100%;height:600px;border:1px solid var(--line);border-radius:14px;background:#fff}
+video{width:100%;border-radius:14px;background:#000;box-shadow:0 8px 24px rgba(58,42,36,.15)}
+.next{margin-top:40px;font-weight:600}
+@media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}body{font-size:16px}h1{font-size:27px}iframe{height:720px}.head img{width:56px;height:56px}}
+.tl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 10px 6px}.tl:first-child{margin-top:0}
+.toc .cur{background:#FFE2D5;color:var(--ink);font-weight:600}.soon{display:block;padding:6px 10px;color:#B9A79F;cursor:default}
+</style></head><body>
+<header class="top"><a href="../" class="brand">☁️ Puff</a><span>Cloud Computing 101</span></header>
+<div class="banner" style="background-image:url('../assets/banners/course-2.jpg');background-position:center 30%"></div>
+<div class="wrap"><nav class="toc"><div class="tl">Courses</div><a href="../">🏠 Home</a><a href="../course-1/">🌱 Course 1 · Cloud fundamentals</a><a href="../course-2/" class="cur">⚙️ Course 2 · Compute and data</a><a href="../course-3/">🌐 Course 3 · Networking</a><span class="soon">🔒 Course 4 · Security and monitoring</span><span class="soon">🚀 Course 5 · Scaling</span><span class="soon">🛠️ Course 6 · IaC, CI/CD, FinOps</span><span class="soon">🏆 Project</span><div class="tl">On this page</div><a href="#by-the-end-of-today">🎯 By the end of today</a><a href="#the-plan-for-today">🗓️ The plan for today</a><a href="#ec2-a-computer-you-rent-by-the-second">🖥️ EC2: a computer you rent by the second</a><a href="#where-your-data-lives-on-a-server">💾 Where your data lives on a server</a><a href="#user-data-and-getting-into-the-box">🚀 User data and getting into the box</a><a href="#paying-for-ec2">💶 Paying for EC2</a><a href="#containers-on-a-plain-vm">🐳 Containers on a plain VM</a><a href="#rds-what-managed-means">🗄️ RDS: what "managed" means</a><a href="#dynamodb-or-rds">🧮 DynamoDB or RDS?</a><a href="#purpose-built-databases">🧰 Purpose-built databases</a><a href="#the-3-tier-app-from-your-laptop-to-the-cloud">🏗️ The 3-tier app, from your laptop to the cloud</a><a href="#hands-on-the-caf-dynamic-website">🧪 Hands-on: the café dynamic website</a><a href="#hands-on-create-an-rds-database">🧪 Hands-on: create an RDS database</a><a href="#hands-on-migrate-the-caf-database-to-rds">🧪 Hands-on: migrate the café database to RDS</a><a href="#hands-on-puff-gets-compute-and-a-database">🧪 Hands-on: Puff gets compute and a database</a><a href="#what-s-wrong-with-this-deploy">🕵️ What's wrong with this deploy?</a><a href="#today-s-quiz">🎲 Today's quiz</a><a href="#think-about-it">🤔 Think about it</a><a href="#go-deeper">📚 Go deeper</a></nav><main>
+<div class="head"><img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Gear/3D/gear_3d.png" alt=""><div><h1>Course 2 · Compute, data and the 3-tier app</h1><p>Servers and a database, the board app moves in, wide open</p></div></div>
+<aside class="callout orange"><div class="ic"><img src="../assets/rico.png" alt="Rico" class="mascot"></div><div class="bd"><p><b>Today, Puff gets a server that runs code and a database that remembers.</b></p><p>Last course your small cloud got storage.<br>Today it gets compute (EC2, AWS's rented virtual machines) and a managed database (RDS), and it welcomes its first tenant, the board app.</p><p><br>You'll deploy it the naive way: it will work, and it will be badly built on purpose, so you feel in your gut why we need the next courses.</p></div></aside><h2 id="by-the-end-of-today">🎯 By the end of today</h2><ul><li>You can launch an EC2 instance with the right image, size and disk, and have it set itself up on first boot with user data.</li><li>You can explain the three main ways to pay for EC2 (On-Demand, Savings Plans, Spot) and say when Spot is a bad idea.</li><li>You can choose between RDS, a database you run yourself on EC2, and DynamoDB, and defend your choice.</li><li>You can map a <code>docker compose</code> app on your laptop to a 3-tier deployment on AWS.</li><li>Puff has compute and a database, and the board app runs end to end in your sandbox: frontend on S3, API on EC2, PostgreSQL on RDS.</li></ul><h2 id="the-plan-for-today">🗓️ The plan for today</h2><div class="tw"><table><tr><th>Time</th><th>What</th><th>Where</th></tr><tr><td>0:00 (15mn)</td><td>Recap of course 1, today's target</td><td>Lecture</td></tr><tr><td>0:15 (45mn)</td><td>EC2, storage, pricing, containers on a VM</td><td>Lecture</td></tr><tr><td>1:00 (40mn)</td><td>Café dynamic website</td><td>Course lab: Module 5 café challenge lab</td></tr><tr><td>1:40 (30mn)</td><td>Databases: RDS, DynamoDB, purpose-built</td><td>Lecture</td></tr><tr><td>2:10 (10mn)</td><td><b>Break</b></td><td></td></tr><tr><td>2:20 (30mn)</td><td>Create an RDS database</td><td>Course lab: Module 6 guided lab</td></tr><tr><td>2:50 (10mn)</td><td>The 3-tier app, laptop to cloud</td><td>Lecture</td></tr><tr><td>3:00 (50mn)</td><td>Puff gets compute and a database: the naive deploy</td><td>Sandbox</td></tr><tr><td>3:50 (10mn)</td><td>What's wrong with this deploy?</td><td>Sandbox</td></tr></table></div><details><summary>📖 Words you'll meet today</summary><div class="dt"><ul><li><b>EC2 (Elastic Compute Cloud)</b>: the AWS service that rents you virtual machines.</li><li><b>Instance</b>: one virtual machine running on EC2.</li><li><b>AMI (Amazon Machine Image)</b>: the template an instance boots from, an operating system plus whatever was installed on it.</li><li><b>AZ (Availability Zone)</b>: one group of data centers inside a region. <code>us-east-1</code> has several, far enough apart that a fire in one doesn't reach the others.</li><li><b>EBS (Elastic Block Store)</b>: a disk that lives on the network and plugs into one instance.</li><li><b>User data</b>: a script an instance runs by itself, once, on its first boot.</li><li><b>Security group</b>: a firewall around a resource, a bouncer with a guest list.</li><li><b>RDS (Relational Database Service)</b>: a SQL database that AWS runs and looks after for you.</li><li><b>Managed service</b>: AWS does the boring operations (backups, patches, repairs) and you use the result.</li><li><b>DynamoDB</b>: AWS's key-value database with no server for you to size or patch.</li><li><b>Container</b>: your app plus everything it needs, packed into one image that runs the same everywhere.</li><li><b>Tenant</b>: a customer hosted on your cloud. Puff's first tenant is the board app.</li></ul></div></details><h2 id="ec2-a-computer-you-rent-by-the-second">🖥️ EC2: a computer you rent by the second</h2><p>Your code needs a computer to run on.<br>Buying one means waiting weeks and paying for it even while it sleeps, so instead you rent one from AWS in about a minute and pay by the second.</p><figure class="vid"><figcaption><span>🎬 Servers you rent (1 min 27)</span></figcaption><video controls playsinline preload="none" poster="../course-2/videos/epita-c2-ec2.jpg" src="../course-2/videos/epita-c2-ec2.mp4"></video></figure><p>That rented computer is an EC2 instance, a virtual machine living in one Availability Zone.<br>It's like a hotel room, you pick the size, you check in, you check out, and someone else fixes the plumbing.</p><p>Launching one means four choices:</p><ul><li>what it boots (the AMI),</li><li>how big it is (the instance type),</li><li>what disk it gets,</li><li>what it does on first boot (user data).</li></ul><p>The network part waits for next course.</p><p>An AMI is what the instance boots from, like a fresh laptop with the operating system already installed.<br>We use Amazon Linux 2023, its package manager is <code>dnf</code>.</p><p>The instance type is the room size. A <code>t3.micro</code> has 2 vCPUs (virtual processors) and 1 GiB of memory, plenty for the board app.<br>Families exist because apps need different things:</p><div class="tw"><table><tr><th>Family</th><th>Built for</th><th>Pick it when</th><th>Example</th></tr><tr><td>T (<code>t3</code>, <code>t4g</code>)</td><td>Short bursts of CPU</td><td>The CPU is mostly idle with short spikes</td><td>A small API, a dev box, the board app</td></tr><tr><td>M (<code>m7i</code>, <code>m7g</code>)</td><td>A bit of everything</td><td>You don't know yet, and the load is steady</td><td>A web app with real traffic</td></tr><tr><td>C (<code>c7i</code>, <code>c7g</code>)</td><td>Raw CPU</td><td>The processor is what slows you down</td><td>Video encoding, batch jobs, busy APIs</td></tr><tr><td>R (<code>r7i</code>, <code>r7g</code>)</td><td>Lots of memory</td><td>Your data must fit in RAM</td><td>Caches you run yourself, in-memory analytics</td></tr><tr><td>I (<code>i4i</code>)</td><td>Very fast local disk</td><td>You read and write the disk nonstop</td><td>Databases or search engines you run yourself</td></tr><tr><td>G, P (<code>g5</code>, <code>p5</code>)</td><td>GPUs</td><td>You train or serve machine learning models</td><td>Inference servers</td></tr></table></div><p>Start small in T or M, measure for a week, then resize.<br>Resizing is stop, change type, start, so a wrong guess costs you five minutes.</p><details><summary>🔍 Want more? Reading an instance type name, baking an AMI</summary><div class="dt"><ul><li>You can bake your own AMI from a configured instance, boots get faster but you rebuild the image every time you patch something.</li><li>In <code>m7g.large</code>, <code>m</code> is the family, <code>7</code> the generation, <code>g</code> means Graviton (AWS's own ARM processor), and <code>large</code> is the size.</li><li>Each size step roughly doubles the resources and the price: <code>large</code>, <code>xlarge</code>, <code>2xlarge</code>, and so on.</li></ul></div></details><aside class="callout yellow"><div class="ic">⚠️</div><div class="bd"><p>T instances earn CPU credits while idle and spend them when busy, like a phone plan with rollover data.</p><p>A <code>t3</code> running at 100% CPU for hours either gets slowed down (throttled) or, in the default "unlimited" mode, bills you for extra credits.<br><b>If your CPU graph is a flat line at the top, you picked the wrong family.</b></p></div></aside><figure class="play"><figcaption><span>🖥️ Pick the instance</span><a href="../course-2/instance-picker/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-2/instance-picker/" title="🖥️ Pick the instance" loading="lazy"></iframe></figure><h2 id="where-your-data-lives-on-a-server">💾 Where your data lives on a server</h2><p>Servers die, and when yours does, the question is which files die with it.<br>AWS gives you four places to keep data, and they don't behave the same when that happens.<br>EBS is like a USB drive plugged in through the network, EFS is the Elastic File System, and S3 is the storage you met in course 1.</p><div class="tw"><table><tr><th></th><th>EBS</th><th>Instance store</th><th>EFS</th><th>S3</th></tr><tr><td>What it is</td><td>A disk over the network</td><td>A physical disk in the host machine</td><td>A shared folder (NFS)</td><td>Files you fetch over HTTP</td></tr><tr><td>Plugged into</td><td>One instance, one AZ</td><td>That instance only</td><td>Many instances, many AZs</td><td>Nothing, you call an API</td></tr><tr><td>Survives a stop</td><td>Yes</td><td>No, wiped</td><td>Yes</td><td>Yes</td></tr><tr><td>Survives terminate</td><td>Only if "delete on termination" is off</td><td>No</td><td>Yes</td><td>Yes</td></tr><tr><td>Good for</td><td>The main disk, database files</td><td>Scratch space, caches</td><td>Files shared by many servers</td><td>Static sites, uploads, backups</td></tr><tr><td>Price feel</td><td>Medium</td><td>Included in the instance price</td><td>High per GB</td><td>Cheapest per GB</td></tr></table></div><p>Treat the instance and its disks as disposable.<br>Anything you can't lose goes to RDS, S3 or EFS, because in next courses, Puff will kill and replace your instances automatically.</p><details><summary>🔍 Want more? Disk details</summary><div class="dt"><ul><li>EBS snapshots are backups of a disk that only store what changed since the last one.</li><li>Your sandbox allows <code>gp2</code> disks up to 35 GB, and the board app needs about 2.</li></ul></div></details><figure class="play"><figcaption><span>💾 Storage match</span><a href="../course-2/storage-match/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-2/storage-match/" title="💾 Storage match" loading="lazy"></iframe></figure><h2 id="user-data-and-getting-into-the-box">🚀 User data and getting into the box</h2><p>User data is a script the instance runs once, as root (the admin user), on its first boot.<br>A tool called cloud-init reads it and runs it.</p><p>It's the cheapest automation there is, the instance sets itself up from a stock image and you never log in to install anything.</p><p>The script's output lands in <code>/var/log/cloud-init-output.log</code>.<br>That's the first file to read when something didn't start.</p><p>Sometimes you still need a shell on the machine, and there are two ways in.</p><div class="cols"><div class="col"><aside class="callout blue"><div class="ic">🅰️</div><div class="bd"><p><b>SSH with a key pair</b></p><p>SSH (Secure Shell) is the classic way to log into a remote machine. AWS stores the public key and you keep the private one (<code>vockey</code> in the sandbox).</p><p>You need port 22 open in the security group and a public IP.<br>Keys get copied, shared and forgotten, and an open port 22 gets scanned by bots within minutes.</p></div></aside></div><div class="col"><aside class="callout green"><div class="ic">🅱️</div><div class="bd"><p><b>Session Manager</b></p><p>An agent on the instance calls out to AWS, and you open a shell from the console or the CLI.</p><p>No open port, no key, and IAM (AWS's badges and keys system) decides who gets in and logs every session.</p></div></aside></div></div><h2 id="paying-for-ec2">💶 Paying for EC2</h2><p>The same machine can cost very different prices, depending on what you promise AWS.<br>It's like a taxi meter (On-Demand), a gym subscription (Savings Plans) or a standby plane ticket (Spot).</p><div class="tw"><table><tr><th>Model</th><th>How it works</th><th>Discount vs On-Demand</th><th>Use it for</th></tr><tr><td>On-Demand</td><td>Pay per second, stop anytime</td><td>None</td><td>New workloads, spiky or short-lived things, the sandbox</td></tr><tr><td>Savings Plans</td><td>Promise to spend a fixed \$/hour for 1 or 3 years</td><td>Up to about 72%</td><td>The steady base you'll run all year anyway</td></tr><tr><td>Reserved Instances</td><td>Promise to run one specific instance type for 1 or 3 years</td><td>Up to about 72%</td><td>Same idea, older and less flexible (still common for RDS)</td></tr><tr><td>Spot</td><td>Use AWS's spare machines, AWS can take them back</td><td>Up to about 90%</td><td>Work that can be interrupted: test runners, batch jobs, rendering</td></tr></table></div><p>The discount grows with what you give AWS, time for Savings Plans, the right to interrupt you for Spot.<br>Spot is a bad idea for anything that can't stop at two minutes' notice, like your only API server.</p><details><summary>🔍 Want more? Spot in practice</summary><div class="dt"><p>If the work can save its progress and retry (a batch job, a test run), that's 70 to 90% off.<br>If it holds data, losing the instance means your app is down.</p><p>A sensible mix is a Savings Plan for the base, On-Demand for peaks, Spot for work that doesn't mind dying.</p></div></details><aside class="callout purple"><div class="ic">💡</div><div class="bd"><p>Commitments lock you in for years, so make them your last step.<br>First pick the right sizes and turn off what sits idle, then commit to what's left.</p></div></aside><figure class="play"><figcaption><span>💶 Pay for EC2</span><a href="../course-2/pricing/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-2/pricing/" title="💶 Pay for EC2" loading="lazy"></iframe></figure><h2 id="containers-on-a-plain-vm">🐳 Containers on a plain VM</h2><p>You already know Docker, so the question is where the containers run.</p><p>AWS has two container platforms:</p><ul><li>ECS (Elastic Container Service) is its own, often used with Fargate so there are no servers for you to manage.</li><li>EKS (Elastic Kubernetes Service) is managed Kubernetes.</li></ul><p>Both are orchestrators, they decide which container runs on which machine.<br>Neither is available in your sandbox, so we run Docker straight on EC2, install it in user data, build the image, <code>docker run</code> it with a restart policy.</p><p>For a small app that's a valid real-world setup, one image you can rebuild, the same everywhere, nothing new to learn.<br>You give up what the orchestrator does, rolling out new versions without downtime, moving containers off a dead machine, packing many services onto few machines.</p><p>With one service and a handful of instances, Kubernetes is overhead.<br>Use it when you have many services and a team to run it.</p><aside class="callout gray"><div class="ic">🏢</div><div class="bd"><p>Real-world corner: at Alan, a health insurance company, our apps run in containers on Kubernetes clusters, described in Terraform (a tool that writes infrastructure as code).</p><p>That makes sense for many services and many engineers. It would be absurd for one Flask API.</p></div></aside><h2 id="rds-what-managed-means">🗄️ RDS: what "managed" means</h2><p>The database is the one piece of your app you can't rebuild from a script, lose it and the messages are gone.</p><figure class="vid"><figcaption><span>🎬 Managed databases (1 min 23)</span></figcaption><video controls playsinline preload="none" poster="../course-2/videos/epita-c2-databases.jpg" src="../course-2/videos/epita-c2-databases.mp4"></video></figure><p>RDS runs a relational engine (PostgreSQL, MySQL, MariaDB, Oracle, SQL Server, Aurora) on machines AWS operates, like renting a flat with a caretaker instead of owning a house.<br>You get an address like <code>puff-db.abc123xyz.us-east-1.rds.amazonaws.com</code> (the endpoint) and no shell on the server.</p><p>AWS handles:</p><ul><li>Backups, a daily snapshot plus a log of every change, kept 1 to 35 days, so you can rewind to any second inside that window (point-in-time recovery).</li><li>Patching, small version updates and OS patches happen during a maintenance window you choose.</li><li>Failover, with Multi-AZ a twin database in another AZ receives every write.<li>If the main one dies, RDS points the endpoint name to the twin, usually in a minute or two, and your app reconnects to the same address.</li><li>Your sandbox doesn't allow Multi-AZ, but real databases should have it.</li></li><li>Storage and monitoring, the disk grows without downtime, and metrics land in CloudWatch, AWS's monitoring service.</li></ul><p>The table design, slow queries, indexes, how many connections you open, passwords, sizing and the bill stay your job.</p><div class="tw"><table><tr><th></th><th>RDS PostgreSQL</th><th>PostgreSQL on EC2</th></tr><tr><td>Setup</td><td>A form or one CLI command</td><td>You install, configure and lock it down</td></tr><tr><td>Backups and restore</td><td>Built in, rewind to any second</td><td>You script <code>pg_dump</code> or log archiving and test restores</td></tr><tr><td>Surviving a crash</td><td>Tick the Multi-AZ box</td><td>You build replication and failover</td></tr><tr><td>Control</td><td>No superuser, limited extensions</td><td>Full root, any extension, any version</td></tr><tr><td>Cost</td><td>Higher per hour</td><td>Lower per hour, higher in your time</td></tr></table></div><p>The hours of human work you save on backups and failover are worth far more than the price difference.<br>Run it yourself only when you need something RDS can't do.</p><h2 id="dynamodb-or-rds">🧮 DynamoDB or RDS?</h2><p>Picking the wrong kind of database hurts for years, because data is hard to move.</p><p>DynamoDB is a serverless key-value and document database, no instance to size, millisecond reads at any scale, and you pay per request.<br>It's like a giant coat check, hand over your ticket and you get your coat back instantly, but you can't ask for every red coat.<br>So you design the table around the questions you'll ask it, up front, and there are no joins.</p><div class="tw"><table><tr><th></th><th>RDS (relational)</th><th>DynamoDB</th></tr><tr><td>How data looks</td><td>Tables that reference each other</td><td>Items fetched by their key</td></tr><tr><td>Questions you can ask</td><td>Any SQL, even ones you invent later</td><td>Only what your keys and indexes allow</td></tr><tr><td>Growing</td><td>Bigger instance, read-only copies</td><td>Automatic, nearly unlimited</td></tr><tr><td>Work for you</td><td>Instance size, connections, maintenance</td><td>Almost none</td></tr><tr><td>Good for</td><td>Business data with relations, reporting, future questions</td><td>Sessions, shopping carts, device state, lookups by ID</td></tr></table></div><p>Pick by how you'll read the data.<br>Relations and questions nobody has written yet go relational, huge volumes of lookups by key go to DynamoDB.</p><p><i>An insurer's members, contracts and claims reference each other and get queried in ways nobody predicted on day one, that's relational.<br>A "last seen" time per mobile phone, read and written millions of times a day by device ID, is a DynamoDB table.</i></p><p>The board app uses PostgreSQL, it's the safe default, and "list the 20 latest messages" is one line of SQL.</p><h2 id="purpose-built-databases">🧰 Purpose-built databases</h2><p>AWS sells one database per shape of data.<br>You won't use most of them this week, but you should recognize them on an architecture diagram.</p><aside class="callout yellow"><div class="ic">⚠️</div><div class="bd"><p>Every extra database is another thing to back up, secure, monitor and pay for.<br><b>Start with PostgreSQL and add a purpose-built engine when you can name the query it makes fast.</b></p></div></aside><details><summary>🔍 Want more? The database menu</summary><div class="dt"><div class="tw"><table><tr><th>Service</th><th>Shape</th><th>Typical use</th></tr><tr><td>Aurora</td><td>Relational, MySQL or PostgreSQL compatible, AWS storage layer</td><td>Same as RDS with faster failover and more read replicas</td></tr><tr><td>DynamoDB</td><td>Key-value and document</td><td>High-volume lookups by key</td></tr><tr><td>ElastiCache</td><td>In-memory (Redis/Valkey, Memcached)</td><td>Caching, sessions, rate limiting (not in your sandbox)</td></tr><tr><td>DocumentDB</td><td>JSON documents, MongoDB compatible</td><td>Apps written against MongoDB</td></tr><tr><td>Neptune</td><td>Graph</td><td>Fraud rings, recommendations, social graphs</td></tr><tr><td>Timestream</td><td>Time series</td><td>Metrics, IoT sensor readings</td></tr><tr><td>OpenSearch</td><td>Search index</td><td>Full-text search, log analytics</td></tr><tr><td>Redshift</td><td>Columnar data warehouse</td><td>Analytics over billions of rows</td></tr></table></div></div></details><figure class="play"><figcaption><span>🗄️ Pick the database</span><a href="../course-2/db-picker/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-2/db-picker/" title="🗄️ Pick the database" loading="lazy"></iframe></figure><h2 id="the-3-tier-app-from-your-laptop-to-the-cloud">🏗️ The 3-tier app, from your laptop to the cloud</h2><p>Most web apps have three tiers, like a restaurant:</p><ul><li>the dining room is the presentation tier (the browser),</li><li>the kitchen is the logic tier (the API),</li><li>the fridge is the data tier (the database).</li></ul><p>Each one only talks to its neighbor, so you can grow, protect or replace them separately.</p><p>On your laptop, it fits in a <code>compose.yaml</code> next to the code below:</p><pre class="code"><button class="copy" type="button">Copy</button><code class="yaml">services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: puff
+      POSTGRES_USER: puff
+      POSTGRES_PASSWORD: localdev
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "puff"]
+      interval: 2s
+      retries: 15
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_NAME: puff
+      DB_USER: puff
+      DB_PASSWORD: localdev
+    depends_on:
+      db:
+        condition: service_healthy</code></pre><p>Moving to the cloud means swapping each line for an AWS piece.<br>Today is the most direct swap, and Puff improves it piece by piece over the next courses:</p><div class="tw"><table><tr><th>On your laptop</th><th>Today on AWS</th><th>Where it ends up</th></tr><tr><td><code>db</code> container and its volume</td><td>RDS <code>puff-db</code> in the default VPC</td><td>RDS in private subnets (course 3)</td></tr><tr><td><code>api</code> built from the Dockerfile</td><td>Docker on EC2 <code>puff-api</code>, built by user data</td><td>Auto Scaling group behind a load balancer (courses 3 and 5)</td></tr><tr><td>Opening <code>index.html</code> locally</td><td>S3 static website</td><td>Behind CloudFront, AWS's content delivery network (course 5)</td></tr><tr><td><code>ports: 8080:8080</code></td><td>Port 8080 open to the internet</td><td>Only the load balancer is public (course 3)</td></tr><tr><td>Password in <code>environment:</code></td><td>Password in a <code>docker run -e</code></td><td>SSM Parameter Store (course 4)</td></tr><tr><td><code>docker compose up</code></td><td>You, typing CLI commands</td><td>CloudFormation (course 6)</td></tr></table></div><p>The default VPC (Virtual Private Cloud) is the ready-made network every AWS account starts with.</p><figure class="play"><figcaption><span>🗺️ Today's deploy</span><a href="../course-2/maps/naive-deploy/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-2/maps/naive-deploy/" title="🗺️ Today&#x27;s deploy" loading="lazy"></iframe></figure><p>The browser loads <code>index.html</code> from your S3 bucket, then calls <code>puff-api</code> on EC2 by its public IP, on port 8080.<br><code>puff-api</code> reads and writes messages in <code>puff-db</code> on port 5432, and both sit in the default VPC.<br>Anyone can reach the bucket and port 8080, only <code>puff-api</code> can reach <code>puff-db</code>.</p><figure class="play"><figcaption><span>🏗️ Laptop to cloud</span><a href="../course-2/three-tier/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-2/three-tier/" title="🏗️ Laptop to cloud" loading="lazy"></iframe></figure><h2 id="hands-on-the-caf-dynamic-website">🧪 Hands-on: the café dynamic website</h2><p>This one is a course lab, the Module 5 café challenge lab, creating a dynamic website for the café (FR: « Atelier Défi (café) : création d'un site web dynamique pour le café »).<br>The café moves from a static S3 site to a web app running on an EC2 instance.</p><p>It's a challenge lab, so the instructions are shorter and you make more decisions.<br>The café app is a classic setup where web server, app and database share one machine, the opposite of what the board app does today.</p><p>While you do it, look at this:</p><ul><li>Everything sits on one instance, if it dies, the site and the data die together. Count the single points of failure (the pieces whose loss takes everything down).</li><li>How the app finds its settings (database address, password). Are they in the code, a file, or a service? That question comes back in course 4.</li><li>If you create an AMI from the configured instance, compare it with the user data approach you'll use for Puff, a baked image versus setting up at boot.</li></ul><aside class="callout green"><div class="ic">✅</div><div class="bd"><p>How you know it works: the café website loads from the instance's public address and shows dynamic content (an order or a menu page served by the app, not a static file).</p></div></aside><h2 id="hands-on-create-an-rds-database">🧪 Hands-on: create an RDS database</h2><p>This one is a course lab too, the Module 6 guided lab, creating an Amazon RDS database (FR: « Atelier guidé : création d'une base de données Amazon RDS »).<br>You build an RDS instance inside a lab VPC, reached by a web server through security groups.</p><p>The VPC and web server are already built, you add the database and connect the two.<br>Creation takes several minutes, so read ahead meanwhile.</p><p>While you do it, look at this:</p><ul><li>The database's security group lets in traffic from the web server's security group, not from a range of IP addresses. That's how you'll wire <code>puff-db-sg</code> later today.</li><li>The DB subnet group covers two AZs. RDS insists on it even for a single-AZ database, so a twin or a restore has somewhere to go.</li><li>The app connects to an endpoint name, never to an IP. Why does that matter when the database fails over to its twin?</li></ul><aside class="callout green"><div class="ic">✅</div><div class="bd"><p>How you know it works: the lab's web app reads and writes rows in your RDS database.</p></div></aside><h2 id="hands-on-migrate-the-caf-database-to-rds">🧪 Hands-on: migrate the café database to RDS</h2><p>This one is the optional course lab, the Module 6 café challenge lab, migrating a database to Amazon RDS (FR: « Atelier Défi (café) : migration d'une base de données vers Amazon RDS »).<br>You move the café's local database onto RDS and point the app at it.</p><p>It's the classic first migration, export, import, change the connection setting.<br>Do it if you finish the board app's deploy early, or at home.</p><p>While you do it, look at this:</p><ul><li>Export then import is a copy at one moment in time. Anything written in between is lost unless you stop the app, so a real migration plans a downtime window or copies changes live (replication).</li><li>The app change is one setting. Apps that read their database address from config instead of code are cheap to move.</li></ul><aside class="callout green"><div class="ic">✅</div><div class="bd"><p>How you know it works: the café site shows the same orders as before, and they're stored in RDS.</p></div></aside><h2 id="hands-on-puff-gets-compute-and-a-database">🧪 Hands-on: Puff gets compute and a database</h2><p>This part happens in the sandbox.<br>You do the naive deploy, Puff gets compute and a database, and the board app goes live.<br>The frontend on your course 1 S3 bucket calls the API on EC2 <code>puff-api</code>, which stores messages in RDS <code>puff-db</code>.</p><p>Something will probably fail along the way, and that's fine.<br>Every error teaches you how a piece of AWS works, and the 🧯 toggle below lists the usual ones.</p><p><b>1. Start the sandbox and set your variables.<br></b>Open the "Environnement de test (sandbox)" module, click Start Lab, wait for the green dot, and use the browser terminal on the page.<br>Replace <code>yourlogin</code> with the login you used for your bucket in course 1.</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">export LOGIN=yourlogin
+export AWS_DEFAULT_REGION=us-east-1
+export DB_PASSWORD=$(python3 -c "import secrets; print(secrets.token_hex(12))")
+
+echo "Your DB password is $DB_PASSWORD"   # write it down, you'll need it if the terminal resets
+mkdir -p ~/puff &amp;&amp; cd ~/puff</code></pre><p><b>2. Create the board app's code.<br></b>This page is the only place the code lives.<br>Paste each block into the terminal and it creates the file in <code>~/puff</code>. Read <code>app.py</code> before you paste it, it's short.</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">cat &gt; app.py &lt;&lt;'EOF'
+import os
+
+import psycopg
+from flask import Flask, jsonify, request
+from psycopg.rows import dict_row
+
+app = Flask(__name__)
+
+
+def db():
+    return psycopg.connect(
+        host=os.environ["DB_HOST"],
+        dbname=os.environ.get("DB_NAME", "puff"),
+        user=os.environ.get("DB_USER", "puff"),
+        password=os.environ["DB_PASSWORD"],
+        connect_timeout=5,
+        row_factory=dict_row,
+    )
+
+
+with db() as conn:  # runs once at startup: create the table if missing
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS messages ("
+        " id SERIAL PRIMARY KEY, author TEXT NOT NULL, text TEXT NOT NULL,"
+        " created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+    )
+
+
+@app.after_request
+def cors(resp):  # lets the S3 website (another origin) call this API
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return resp
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/api/messages")
+def list_messages():
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT id, author, text, created_at FROM messages"
+            " ORDER BY id DESC LIMIT 20"
+        ).fetchall()
+    return jsonify(rows)
+
+
+@app.post("/api/messages")
+def post_message():
+    data = request.get_json(silent=True) or {}
+    author = str(data.get("author", "")).strip()[:40]
+    text = str(data.get("text", "")).strip()[:280]
+    if not author or not text:
+        return {"error": "author and text are required"}, 400
+    with db() as conn:
+        row = conn.execute(
+            "INSERT INTO messages (author, text) VALUES (%s, %s)"
+            " RETURNING id, author, text, created_at",
+            (author, text),
+        ).fetchone()
+    return jsonify(row), 201
+EOF</code></pre><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">cat &gt; requirements.txt &lt;&lt;'EOF'
+flask&gt;=3.0,&lt;4
+psycopg[binary]&gt;=3.2,&lt;4
+gunicorn&gt;=22,&lt;24
+EOF</code></pre><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">cat &gt; Dockerfile &lt;&lt;'EOF'
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app.py .
+EXPOSE 8080
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--preload", "--access-logfile", "-", "app:app"]
+EOF</code></pre><details><summary>🔍 Want more? Why the code looks like this</summary><div class="dt"><ul><li>Each request opens a short-lived database connection, which is fine at this scale.</li><li>The <code>%s</code> placeholders let psycopg escape the values, so nobody can slip SQL commands in through the form (SQL injection).</li><li><code>--preload</code> loads the app once before gunicorn starts two workers, so <code>CREATE TABLE</code> runs once.</li><li>The CORS (Cross-Origin Resource Sharing) header exists because the page comes from your S3 website, a different origin, and browsers block the call unless the API says it's allowed.</li></ul></div></details><p>And the frontend, with the API address in one constant at the top of the script:</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">cat &gt; index.html &lt;&lt;'EOF'
+&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;title&gt;Puff&lt;/title&gt;
+  &lt;style&gt;
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    form { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    input { padding: .5rem; }
+    #text { flex: 1; }
+    li { list-style: none; padding: .4rem 0; border-bottom: 1px solid #eee; }
+    small { color: #888; }
+    #error { color: #b00; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Puff&lt;/h1&gt;
+  &lt;form id="form"&gt;
+    &lt;input id="author" placeholder="Your name" maxlength="40" required&gt;
+    &lt;input id="text" placeholder="Say something" maxlength="280" required&gt;
+    &lt;button&gt;Post&lt;/button&gt;
+  &lt;/form&gt;
+  &lt;p id="error"&gt;&lt;/p&gt;
+  &lt;ul id="messages"&gt;&lt;/ul&gt;
+  &lt;script&gt;
+    const API_BASE = "http://REPLACE_WITH_PUBLIC_IP:8080";
+
+    const list = document.getElementById("messages");
+    const error = document.getElementById("error");
+
+    async function load() {
+      try {
+        const res = await fetch(`${API_BASE}/api/messages`);
+        const messages = await res.json();
+        list.replaceChildren(...messages.map((m) =&gt; {
+          const li = document.createElement("li");
+          li.textContent = `${m.author}: ${m.text} `;  // textContent, never innerHTML: no HTML injection
+          const when = document.createElement("small");
+          when.textContent = new Date(m.created_at).toLocaleTimeString();
+          li.append(when);
+          return li;
+        }));
+        error.textContent = "";
+      } catch (e) {
+        error.textContent = `Cannot reach the API at ${API_BASE}`;
+      }
+    }
+
+    document.getElementById("form").addEventListener("submit", async (event) =&gt; {
+      event.preventDefault();
+      const text = document.getElementById("text");
+      try {
+        const res = await fetch(`${API_BASE}/api/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ author: document.getElementById("author").value, text: text.value }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        text.value = "";
+        load();
+      } catch (e) {
+        error.textContent = `Post failed: ${e.message}`;
+      }
+    });
+
+    load();
+    setInterval(load, 5000);
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+EOF</code></pre><p><b>3. Create the security groups.<br></b>One for the API, one for the database.<br>The database's group only lets in instances that have the API's group.</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">VPC_ID=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
+  --query 'Vpcs[0].VpcId' --output text)
+
+API_SG=$(aws ec2 create-security-group --group-name puff-api-sg \
+  --description "Puff API" --vpc-id "$VPC_ID" --query GroupId --output text)
+
+DB_SG=$(aws ec2 create-security-group --group-name puff-db-sg \
+  --description "Puff database" --vpc-id "$VPC_ID" --query GroupId --output text)
+
+# Sin: API open to the whole internet. Course 3 puts it behind a load balancer.
+aws ec2 authorize-security-group-ingress --group-id "$API_SG" \
+  --protocol tcp --port 8080 --cidr 0.0.0.0/0
+
+# Sin: SSH open to the whole internet, for debugging. Course 4 replaces it with Session Manager.
+aws ec2 authorize-security-group-ingress --group-id "$API_SG" \
+  --protocol tcp --port 22 --cidr 0.0.0.0/0
+
+# Good: PostgreSQL only from the API's security group.
+aws ec2 authorize-security-group-ingress --group-id "$DB_SG" \
+  --protocol tcp --port 5432 --source-group "$API_SG"
+
+echo "VPC=$VPC_ID API_SG=$API_SG DB_SG=$DB_SG"</code></pre><p><code>0.0.0.0/0</code> means "every address on the internet". Each line marked "Sin" is a shortcut we'll pay back in a later course.</p><p><b>4. Create the database.<br></b>In the console, this is <b>RDS &gt; Databases &gt; Create database</b> with:</p><ul><li>Standard create, PostgreSQL, Free tier or Dev/Test template</li><li>identifier <code>puff-db</code>,</li><li>master username <code>puff</code>,</li><li>your password, <code>db.t3.micro</code>,</li><li>20 GB <code>gp2</code>, single-AZ, default VPC, Public access No,</li><li>security group <code>puff-db-sg</code> (remove <code>default</code>),</li><li>initial database name <code>puff</code> (under Additional configuration, easy to miss),</li><li>Enhanced monitoring unchecked.</li></ul><p>The CLI does the same in one command:</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">aws rds create-db-instance \
+  --db-instance-identifier puff-db \
+  --engine postgres \
+  --db-instance-class db.t3.micro \
+  --allocated-storage 20 \
+  --storage-type gp2 \
+  --db-name puff \
+  --master-username puff \
+  --master-user-password "$DB_PASSWORD" \
+  --vpc-security-group-ids "$DB_SG" \
+  --no-multi-az \
+  --no-publicly-accessible \
+  --backup-retention-period 1 \
+  --monitoring-interval 0 \
+  --no-enable-performance-insights
+
+aws rds wait db-instance-available --db-instance-identifier puff-db   # 5 to 10 minutes
+
+export DB_HOST=$(aws rds describe-db-instances --db-instance-identifier puff-db \
+  --query 'DBInstances[0].Endpoint.Address' --output text)
+echo "$DB_HOST"</code></pre><p><b>5. Build the user data script.<br></b>This generates <code>user-data.sh</code> from the files you created, it installs Docker, writes the three files, builds the image and runs the container.<br>Your shell fills in <code>$DB_HOST</code> and <code>$DB_PASSWORD</code> right now, so the password ends up in plain text inside the script.</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">cat &gt; user-data.sh &lt;&lt;EOF
+#!/bin/bash
+# Puff API bootstrap: runs once, as root, on first boot
+set -euxo pipefail
+dnf install -y docker
+systemctl enable --now docker
+mkdir -p /opt/puff &amp;&amp; cd /opt/puff
+cat &gt; app.py &lt;&lt;'FILE'
+$(cat app.py)
+FILE
+cat &gt; requirements.txt &lt;&lt;'FILE'
+$(cat requirements.txt)
+FILE
+cat &gt; Dockerfile &lt;&lt;'FILE'
+$(cat Dockerfile)
+FILE
+docker build -t puff-api .
+docker run -d --name puff-api --restart unless-stopped -p 8080:8080 \\
+  -e DB_HOST=$DB_HOST -e DB_NAME=puff -e DB_USER=puff \\
+  -e DB_PASSWORD=$DB_PASSWORD \\
+  puff-api
+EOF
+cat user-data.sh   # read it: this is exactly what the instance will run</code></pre><p><b>6. Launch </b><b><code>puff-api</code></b><b>.<br></b>Amazon Linux 2023, <code>t3.micro</code>, <code>LabInstanceProfile</code>, default VPC (whose subnets hand out a public IP automatically).<br>In the console that's <b>EC2 &gt; Instances &gt; Launch instance</b>, with the contents of <code>user-data.sh</code> pasted in <b>Advanced details &gt; User data</b>. From the terminal:</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">aws ec2 run-instances \
+  --image-id resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 \
+  --instance-type t3.micro \
+  --key-name vockey \
+  --iam-instance-profile Name=LabInstanceProfile \
+  --security-group-ids "$API_SG" \
+  --user-data file://user-data.sh \
+  --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=puff-api}]' \
+  --query 'Instances[0].InstanceId' --output text
+
+aws ec2 wait instance-running --filters Name=tag:Name,Values=puff-api
+
+export API_IP=$(aws ec2 describe-instances \
+  --filters Name=tag:Name,Values=puff-api Name=instance-state-name,Values=running \
+  --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+echo "$API_IP"</code></pre><p>Give it two or three minutes after "running", Docker installs, the base image downloads from Docker Hub, pip installs the dependencies.</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">curl -s "http://$API_IP:8080/health"</code></pre><p><b>7. Point the frontend at the API.</b> Replace the placeholder and upload over your course 1 page.</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">sed -i "s|REPLACE_WITH_PUBLIC_IP|$API_IP|" index.html
+aws s3 cp index.html "s3://puff-frontend-$LOGIN/index.html" --content-type text/html
+
+echo "http://puff-frontend-$LOGIN.s3-website-us-east-1.amazonaws.com"</code></pre><p>Open that URL and post a message, then ask your neighbor to open your URL and post one too.<br>Congratulations, your cloud has its first tenant 🌻</p><aside class="callout green"><div class="ic">✅</div><div class="bd"><p>How you know it works: <code>curl -s http://&lt;public-ip&gt;:8080/health</code> prints <code>{"status":"ok"}</code>, <code>curl -s http://&lt;public-ip&gt;:8080/api/messages</code> returns a JSON list, and a message posted from <code>http://puff-frontend-&lt;yourlogin&gt;.s3-website-us-east-1.amazonaws.com</code> appears in the list within 5 seconds.</p></div></aside><details><summary>🧯 If it doesn't work</summary><div class="dt"><ul><li><code>curl</code> hangs: wait two minutes, then check <code>puff-api-sg</code> has the 8080 rule.</li><li><code>curl</code> says "connection refused": the instance is up but the container isn't. Connect with <b>EC2 &gt; Instances &gt; puff-api &gt; Connect &gt; EC2 Instance Connect</b> and run <code>sudo tail -50 /var/log/cloud-init-output.log</code>, then <code>sudo docker ps -a</code> and <code>sudo docker logs puff-api</code>.</li><li>Container logs show a database timeout: <code>puff-db-sg</code> must allow 5432 from <code>puff-api-sg</code>.</li><li>"password authentication failed": <code>DB_PASSWORD</code> was regenerated after a terminal reset. Reset it with <code>aws rds modify-db-instance --db-instance-identifier puff-db --master-user-password "$DB_PASSWORD" --apply-immediately</code>, then rebuild <code>user-data.sh</code> and relaunch the instance.</li><li>"database puff does not exist": the console form's initial database name was left empty. Delete and recreate <code>puff-db</code> with it filled in.</li><li>The website shows "Cannot reach the API": you opened the bucket over <code>https://</code>, which blocks calls to an <code>http://</code> API. Use the <code>s3-website</code> URL above. Also check <code>API_IP</code> in <code>index.html</code> with <code>grep API_BASE index.html</code>.</li><li>Terminal reset and your variables are gone: rerun <code>export LOGIN=...</code> and <code>export DB_PASSWORD=&lt;the one you wrote down&gt;</code>, then reread the IDs with <code>aws ec2 describe-security-groups --filters Name=group-name,Values=puff-api-sg,puff-db-sg --query 'SecurityGroups[].[GroupName,GroupId]' --output text</code>.</li><li>The public IP changed after a stop and start: recreate <code>index.html</code> and rerun step 7.</li></ul></div></details><p>Don't delete anything at the end, next course starts from this deploy.</p><h2 id="what-s-wrong-with-this-deploy">🕵️ What's wrong with this deploy?</h2><aside class="callout gray"><div class="ic">🧭</div><div class="bd"><p>No lab for this one, you look at what you built the way an attacker would, then the way the person woken up at 3 a.m. when it breaks would.</p></div></aside><p>The board app works, now list at least five problems with it, and for each one, what could happen and which AWS piece would fix it.<br>Five minutes alone, then compare with your neighbor.</p><p>Look at who can reach what, where the secrets are, what happens when something dies, and how you'd know it broke.<br>Keep your list, because next courses tick it off one capability at a time.</p><details><summary>💡 The list we'll fix</summary><div class="dt"><ul><li>The API is reachable by anyone on port 8080, with no load balancer in front. Course 3.</li><li>The database sits in a subnet routed to the internet, only a security group protects it. Course 3.</li><li>SSH is open to <code>0.0.0.0/0</code> and depends on a shared key. Course 4.</li><li>The DB password is in plain text in user data, the boot log and the container environment. Course 4.</li><li>No HTTPS anywhere: messages and the API travel in clear text. Courses 3 and 5.</li><li>One instance in one AZ: if it dies, Puff is down until someone notices. Course 5.</li><li>The frontend calls a raw public IP that changes on every stop and start. Courses 3 and 5.</li><li>No monitoring, no alerts, no audit of who changed what. Course 4.</li><li>Single-AZ database and an untested restore. Multi-AZ isn't allowed here, so it goes in your project justification.</li><li>Everything was clicked or typed by hand, so nobody can rebuild it identically. Course 6.</li></ul></div></details><h2 id="today-s-quiz">🎲 Today's quiz</h2><figure class="play"><figcaption><span>🎲 Today's quiz</span><a href="../course-2/quiz/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-2/quiz/" title="🎲 Today&#x27;s quiz" loading="lazy"></iframe></figure><h2 id="think-about-it">🤔 Think about it</h2><ul><li>Your API runs at 5% CPU most of the day and 80% for ten minutes every hour. Which instance family fits, and what would make you change your mind?</li><li>A nightly job processes 2 hours of data and can restart from its last saved point. Which pricing model would you pick, and what happens to your bill and your deadline if AWS takes the instance back halfway?</li><li>Why does the API connect to the database by its endpoint name rather than an IP, and what would break during a Multi-AZ failover if it didn't?</li><li>If you terminate <code>puff-api</code> and launch a new one with the same user data, what survives and what's lost? Why is that exactly what you want?</li></ul><details><summary>💡 Hints</summary><div class="dt"><ul><li>Burstable instances earn credits during the quiet 50 minutes. Look at whether the credit balance ever hits zero.</li><li>Spot is built for work that can be interrupted. Think about the deadline: what if no spare machine is free for an hour?</li><li>RDS moves the endpoint name to the twin. An IP would keep pointing at the dead database.</li><li>The data is in RDS, the code is rebuilt from user data. Nothing on the instance is precious, which is exactly what Auto Scaling needs in course 5.</li></ul></div></details><h2 id="go-deeper">📚 Go deeper</h2><ul><li><a href="https://aws.amazon.com/ec2/instance-types/">Amazon EC2 instance types</a></li><li><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html">Run commands when you launch an EC2 instance with user data</a></li><li><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html">Amazon EC2 Spot Instances</a></li><li><a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZSingleStandby.html">Multi-AZ DB instance deployments for Amazon RDS</a></li><li><a href="https://aws.amazon.com/products/databases/">Purpose-built databases on AWS</a></li><li><a href="https://www.psycopg.org/psycopg3/docs/">psycopg 3 documentation</a></li></ul><p class="next"><a href="../">Back to the timeline</a></p>
+</main></div><script>document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.nextElementSibling.textContent);b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200)});
+const l=[...document.querySelectorAll('.toc a')],o=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){l.forEach(a=>a.classList.toggle('on',a.hash==='#'+x.target.id))}}),{rootMargin:'-20% 0px -70% 0px'});document.querySelectorAll('h2[id]').forEach(h=>o.observe(h));</script></body></html>
