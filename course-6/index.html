@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course 6 · IaC, CI/CD and FinOps · Puff</title>
+<link rel="icon" type="image/png" href="../assets/favicon.png"><style>:root{--bg:#FFF8F4;--ink:#3A2A24;--muted:#7C675E;--line:#F0DDD2;--peach:#F27E5E;--peach2:#FFB59C;--card:#fff;--code:#2B211D}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+a{color:#C4553A}
+.top{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;padding:12px 20px;background:rgba(255,248,244,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);font-size:15px;color:var(--muted)}
+.brand{font-weight:700;color:var(--ink);text-decoration:none}
+.banner{height:clamp(170px,32vw,430px);background-size:cover;background-position:center 30%}
+.wrap{display:grid;grid-template-columns:240px minmax(0,780px);gap:48px;justify-content:center;max-width:1160px;margin:0 auto;padding:0 20px 80px}
+.toc{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding-top:32px;font-size:14px;line-height:1.4}
+.toc a{display:block;padding:6px 10px;border-radius:8px;color:var(--muted);text-decoration:none}
+.toc a:hover{background:#FFEDE4}.toc a.on{background:#FFEDE4;color:var(--ink);font-weight:600}
+.head{display:flex;gap:16px;align-items:center;margin-top:28px;position:relative}
+.head img{width:72px;height:72px;filter:drop-shadow(0 4px 8px rgba(58,42,36,.2))}
+.head>div{padding-top:0}
+h1{font-size:34px;line-height:1.2;margin:0 0 4px}.head p{margin:0;color:var(--muted)}
+h2{font-size:26px;line-height:1.3;margin:56px 0 12px;padding-top:40px;border-top:1px solid var(--line)}h3{font-size:21px;margin:32px 0 8px}h4{font-size:18px;margin:24px 0 6px}
+p{margin:0 0 14px}ul,ol{margin:0 0 14px;padding-left:24px}li{margin:4px 0}li ul,li ol{margin:4px 0}
+code{font:.88em ui-monospace,SFMono-Regular,Menlo,monospace;background:#FBE9E0;padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+pre.code{position:relative;background:var(--code);color:#F7EDE7;border-radius:12px;padding:16px;overflow:auto;margin:0 0 16px;font-size:14px;line-height:1.5}
+pre.code code{background:none;padding:0;color:inherit;overflow-wrap:normal}
+.copy{position:absolute;top:8px;right:8px;border:0;border-radius:7px;padding:4px 10px;background:#5a4a43;color:#fff;font-size:12px;cursor:pointer}
+.callout{display:flex;gap:12px;border-radius:14px;padding:14px 16px;margin:18px 0}
+.callout p:last-child,.callout ul:last-child{margin-bottom:0}.ic{font-size:22px;line-height:1.3}.mascot{width:44px;height:44px;object-fit:contain}.bd{min-width:0}
+.orange{background:#FFE9DF}.blue{background:#E6F0FB}.green{background:#E2F4E9}.yellow{background:#FDF3D3}.purple{background:#EFE8FB}.gray{background:#F3EEEA}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}.cols .callout{margin:0;height:100%}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:14px 0}
+summary{cursor:pointer;font-weight:600}.dt{padding-top:10px}
+.tw{overflow-x:auto;margin:0 0 16px}table{border-collapse:collapse;width:100%;font-size:15px;background:var(--card);border-radius:10px;overflow:hidden}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:#FFEDE4}
+figure{margin:20px 0}figcaption{display:flex;justify-content:space-between;gap:12px;font-weight:600;margin-bottom:8px}figcaption a{font-weight:400;font-size:14px;white-space:nowrap}
+iframe{width:100%;height:600px;border:1px solid var(--line);border-radius:14px;background:#fff}
+video{width:100%;border-radius:14px;background:#000;box-shadow:0 8px 24px rgba(58,42,36,.15)}
+.next{margin-top:40px;font-weight:600}
+@media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.toc{display:none}body{font-size:16px}h1{font-size:27px}iframe{height:720px}.head img{width:56px;height:56px}}
+.tl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 10px 6px}.tl:first-child{margin-top:0}
+.toc .cur{background:#FFE2D5;color:var(--ink);font-weight:600}.soon{display:block;padding:6px 10px;color:#B9A79F;cursor:default}
+</style></head><body>
+<header class="top"><a href="../" class="brand">☁️ Puff</a><span>Cloud Computing 101</span></header>
+<div class="banner" style="background-image:url('../assets/banners/course-6.jpg');background-position:center 30%"></div>
+<div class="wrap"><nav class="toc"><div class="tl">Courses</div><a href="../">🏠 Home</a><a href="../course-1/">🌱 Course 1 · Cloud fundamentals</a><a href="../course-2/">⚙️ Course 2 · Compute and data</a><a href="../course-3/">📡 Course 3 · Networking</a><a href="../course-4/">🔒 Course 4 · Security and monitoring</a><a href="../course-5/">🚀 Course 5 · Scaling</a><a href="../course-6/" class="cur">🛠️ Course 6 · IaC, CI/CD, FinOps</a><span class="soon">🏆 Project</span><div class="tl">On this page</div><a href="#by-the-end-of-today">🎯 By the end of today</a><a href="#the-plan-for-today">🗓️ The plan for today</a><a href="#why-infrastructure-as-code">🧱 Why infrastructure as code</a><a href="#cloudformation-templates-stacks-change-sets">📜 CloudFormation: templates, stacks, change sets</a><a href="#cloudformation-vs-terraform">⚖️ CloudFormation vs Terraform</a><a href="#hands-on-automating-infrastructure-with-cloudformation">🧪 Hands-on: automating infrastructure with CloudFormation</a><a href="#hands-on-puff-s-network-as-code">🧪 Hands-on: Puff's network as code</a><a href="#ci-cd-from-a-commit-to-production">🚚 CI/CD: from a commit to production</a><a href="#deployment-strategies">🎭 Deployment strategies</a><a href="#finops-knowing-what-you-pay-for">💸 FinOps: knowing what you pay for</a><a href="#disaster-recovery-in-one-table">🛟 Disaster recovery in one table</a><a href="#well-architected-recap-what-you-did-on-puff">🏛️ Well-Architected recap: what you did on Puff</a><a href="#project-puff-starts-today">🚀 Project Puff starts today</a><a href="#today-s-quiz">🎲 Today's quiz</a><a href="#think-about-it">🤔 Think about it</a><a href="#go-deeper">📚 Go deeper</a></nav><main>
+<div class="head"><img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Hammer and wrench/3D/hammer_and_wrench_3d.png" alt=""><div><h1>Course 6 · IaC, CI/CD and FinOps</h1><p>A recipe that rebuilds it all in one command</p></div></div>
+<aside class="callout orange"><div class="ic"><img src="../assets/rico.png" alt="Rico" class="mascot"></div><div class="bd"><p><b>Over the last courses you built Puff by hand, today you write it down so a machine can rebuild it in five minutes.</b></p><p>Right now Puff lives in your clicks and your memory, so nobody (you included) could rebuild it the same way tomorrow.<br>Today Puff's network becomes one template, and you see how code gets shipped and how to keep the bill under control.<br>Then the project starts, and your group becomes the team running its own Puff.</p></div></aside><h2 id="by-the-end-of-today">🎯 By the end of today</h2><ul><li>You can explain why teams write their infrastructure as code, and the difference between "write the steps" and "write the end result".</li><li>You can deploy, update (through a change set) and delete a CloudFormation stack from the command line.</li><li>You can compare CloudFormation and Terraform and say which one you'd pick for Puff.</li><li>You can sketch how a code change travels to production, and pick between rolling, blue/green and canary deployments.</li><li>You can estimate what your Puff costs per month and spot the line items that surprise people.</li></ul><h2 id="the-plan-for-today">🗓️ The plan for today</h2><div class="tw"><table><tr><th>Time</th><th>What</th><th>Where</th></tr><tr><td>0:00 (20mn)</td><td>Why infrastructure as code, CloudFormation anatomy, Terraform comparison</td><td>Lecture</td></tr><tr><td>0:20 to (30mn)</td><td>Automating infrastructure with CloudFormation</td><td>Course lab: Module 11 guided lab</td></tr><tr><td>0:50 to (30mn)</td><td>Puff's network as code: <code>puff-network.yaml</code>, deploy, change set, delete</td><td>Sandbox</td></tr><tr><td>1:20 to (15mn)</td><td>CI/CD and deployment strategies</td><td>Lecture</td></tr><tr><td>1:35 to (15mn)</td><td>FinOps, price your Puff stack, DR and Well-Architected recap</td><td>Lecture + <a href="http://calculator.aws">calculator.aws</a></td></tr><tr><td>1:50 to (10mn)</td><td><b>Break</b></td><td></td></tr><tr><td>2:00 to (2h)</td><td>Project preparation</td><td>Sandbox</td></tr></table></div><details><summary>📖 Words you'll meet today</summary><div class="dt"><ul><li><b>IaC (infrastructure as code)</b>: describing your servers, networks and databases in text files, so a tool can build them for you.</li><li><b>Template</b>: the text file (YAML, a simple indented format) that describes what you want, like a recipe.</li><li><b>Stack</b>: the real resources CloudFormation built from one template, managed as one block. It's the cake you get from the recipe.</li><li><b>Change set</b>: a preview of what an update would add, modify or delete, before anything happens.</li><li><b>Drift</b>: when the real infrastructure no longer matches the template, because someone changed it by hand.</li><li><b>Idempotent</b>: running the same thing twice gives the same result as running it once.</li><li><b>Tenant</b>: a customer hosted on your cloud. The board app is Puff's first one.</li><li><b>CI/CD (continuous integration / continuous delivery)</b>: automation that builds, tests and deploys every change you push.</li><li><b>Artifact</b>: the one packaged thing you deploy, for Puff a Docker image.</li><li><b>Rollback</b>: going back to the last version that worked.</li><li><b>FinOps</b>: treating the cloud bill as something engineers watch, the same way they watch errors.</li><li><b>RPO / RTO</b>: how much data you accept losing, and how long you accept being down, after a disaster.</li></ul></div></details><h2 id="why-infrastructure-as-code">🧱 Why infrastructure as code</h2><p><i>Six months from now, someone has opened port 22 on </i><i><code>puff-api-sg</code></i><i> "for five minutes" during an incident, someone else has changed the database size from the console, and the only record of the VPC (Virtual Private Cloud, your private network) is your memory of course 3.</i><br>Nobody knows what Puff really looks like anymore.</p><p>Infrastructure as code fixes that.<br>You describe your cloud in text files, you keep them in Git, and a tool makes AWS match the files.</p><figure class="vid"><figcaption><span>🎬 The recipe, not the cake (1 min 30)</span></figcaption><video controls playsinline preload="none" poster="../course-6/videos/epita-c6-iac.jpg" src="../course-6/videos/epita-c6-iac.mp4"></video></figure><p>The template is like a recipe, and the running infrastructure is the cake.<br>If you lose the cake you bake another one, if you lose the recipe you're guessing.</p><p>Four things get better once you do this:</p><ul><li>You see drift. When reality differs from the code the tool tells you, you don't wait for something to break.</li><li>Changes get reviewed. A firewall change becomes a pull request a classmate reads before it ships, and you keep a history of who changed what.</li><li>Copies are identical. A test copy and the real thing come from the same template, so "it worked in test" means something.</li><li>Recovery gets simple. If you lose a region you redeploy the files somewhere else, no rebuilding from screenshots at 3:00.</li></ul><h3>Write the steps, or write the end result</h3><p>There are two ways to automate infrastructure, and the difference matters more than the tool you pick.</p><div class="cols"><div class="col"><aside class="callout blue"><div class="ic">🅰️</div><div class="bd"><p><b>Imperative: you write the steps</b></p><p>A bash script with <code>aws ec2 create-vpc</code>, then <code>create-subnet</code>, then <code>create-nat-gateway</code>. Run it twice and you get two VPCs.</p><p>If it crashes halfway, you work out by hand where it stopped.<br>It's fine for a one-off, it's painful for anything you keep.</p></div></aside></div><div class="col"><aside class="callout green"><div class="ic">🅱️</div><div class="bd"><p><b>Declarative: you write the end result</b></p><p>"There is a VPC 10.0.0.0/16 with four subnets." The tool compares that with what exists and works out the steps itself.</p><p>Run it twice and the second run does nothing.<br>CloudFormation and Terraform both work this way.</p></div></aside></div></div><p>Declarative tools are idempotent, so applying the same file again is safe, that's what lets you automate changes and review them.</p><h2 id="cloudformation-templates-stacks-change-sets">📜 CloudFormation: templates, stacks, change sets</h2><p>CloudFormation is AWS's own IaC service.<br>You give it a template written in YAML (or JSON, another text format), and it builds a stack, all the real resources that template describes, managed as one unit.</p><p>Delete the stack and everything in it goes away, in the right order, and nothing gets left behind.</p><p>A template has three sections you'll use all the time:</p><ul><li><code>Parameters</code>: inputs you give at deploy time, like a name prefix or a size.<li>One template can then serve several copies of Puff.</li></li><li><code>Resources</code>: the only required section.<li>Each resource has a logical ID (your nickname for it inside the template), a <code>Type</code> (what to build) and <code>Properties</code> (how).</li></li><li><code>Outputs</code>: values the stack shows once it's built, like a VPC ID, so people and other stacks can find them.</li></ul><p>Here's a tiny example with comments, one bucket for Puff:</p><pre class="code"><button class="copy" type="button">Copy</button><code class="yaml">AWSTemplateFormatVersion: "2010-09-09"
+Description: Tiny example, one S3 bucket
+
+Parameters:
+  Login:                          # passed at deploy time
+    Type: String
+    Description: Your EPITA login, used in the bucket name
+
+Resources:
+  AssetsBucket:                   # logical ID, used inside the template
+    Type: AWS::S3::Bucket         # what to create
+    Properties:
+      BucketName: !Sub "puff-assets-${Login}"   # !Sub fills in ${Login}
+      Tags:
+        - Key: Project
+          Value: puff
+
+Outputs:
+  BucketArn:
+    Value: !GetAtt AssetsBucket.Arn   # !GetAtt reads an attribute of a resource</code></pre><p>Two functions do most of the work.<br><code>!Ref X</code> gives you the ID of resource <code>X</code> (or the value of parameter <code>X</code>), <code>!GetAtt X.Attr</code> gives you one specific attribute of it.</p><p>Every <code>!Ref</code> also tells CloudFormation "this depends on that", so it builds the VPC before the subnet that points at it.<br>When a dependency is real but invisible (a route to the internet only works once the gateway is attached), you add <code>DependsOn</code> by hand.</p><p>Three stack features matter in real life:</p><ul><li>Change sets show you what CloudFormation would add, modify or remove, before an update.<li>It also tells you if a change means <i>replacement</i>, which deletes the resource and builds a new one. For a database that's a new, empty database, so read that column every time.</li></li><li>Automatic rollback puts everything back the way it was if a deploy fails halfway, so you don't end up with half a Puff.</li><li>Drift detection compares each resource with the template and flags anything changed by hand, like that port 22 rule.</li></ul><aside class="callout yellow"><div class="ic">⚠️</div><div class="bd"><p><b>Once a resource belongs to a stack, change it through the stack only.</b></p><p>Editing it in the console creates drift, and the next stack update may quietly undo your fix or fail on it.</p></div></aside><figure class="play"><figcaption><span>📜 Read the change set</span><a href="../course-6/recipe/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-6/recipe/" title="📜 Read the change set" loading="lazy"></iframe></figure><h2 id="cloudformation-vs-terraform">⚖️ CloudFormation vs Terraform</h2><aside class="callout gray"><div class="ic">🗒️</div><div class="bd"><p>No lab for this one, Terraform isn't part of the AWS Academy course, so we compare on paper.</p></div></aside><p>Terraform (by HashiCorp) is the other big declarative tool.<br>You write HCL (HashiCorp Configuration Language, its own small language), run <code>terraform plan</code> to preview, then <code>terraform apply</code> to build.<br>The plan is the same idea as a change set.</p><p>The big difference is who runs it, AWS runs CloudFormation for you and it only speaks AWS, you run Terraform yourself and it speaks to almost every cloud and online tool.</p><pre class="code"><button class="copy" type="button">Copy</button><code class="hcl">resource "aws_vpc" "puff" {
+  cidr_block = "10.0.0.0/16"
+  tags       = { Name = "puff-vpc" }
+}
+
+# terraform plan  -&gt;  + aws_vpc.puff will be created
+# terraform apply -&gt;  creates it and records the ID in the state</code></pre><p>CloudFormation wins on zero setup and tight AWS integration, Terraform wins when your infrastructure goes beyond AWS.</p><details><summary>🔍 Want more? Side by side, and Terraform state</summary><div class="dt"><div class="tw"><table><tr><th></th><th>CloudFormation</th><th>Terraform</th></tr><tr><td>Who runs it</td><td>AWS runs it for you</td><td>You run it, on your laptop or in a pipeline</td></tr><tr><td>Clouds</td><td>AWS only</td><td>AWS, GCP, Azure, Datadog, GitHub, Cloudflare and thousands more through plugins called providers</td></tr><tr><td>Language</td><td>YAML or JSON with a few built-in functions</td><td>HCL, with loops, modules and expressions</td></tr><tr><td>Where it remembers what it built</td><td>Inside AWS, nothing to manage</td><td>A state file you store and lock yourself</td></tr><tr><td>Preview</td><td>Change set</td><td><code>terraform plan</code></td></tr><tr><td>Fails halfway</td><td>Rolls back by itself</td><td>Stops where it failed, you fix and re-apply</td></tr><tr><td>Drift</td><td>Drift detection when you ask</td><td>Every <code>plan</code> shows it</td></tr><tr><td>Reuse</td><td>Nested stacks, modules, AWS Quick Starts</td><td>A huge public library of modules</td></tr><tr><td>Licence</td><td>Free, part of AWS</td><td>BSL (a source-available licence) since 2023, OpenTofu is the open-source fork</td></tr></table></div><p>Terraform keeps a state file, a JSON record that maps every resource in your code to its real ID in the cloud (<code>aws_vpc.puff</code> is <code>vpc-0abc...</code>).<br>On each <code>plan</code> it refreshes that record against reality and compares it with your code.</p><p>Teams keep state remotely (an S3 bucket with locking, for example) so two people can't apply at the same time, and they guard it carefully, because state can contain passwords in plain text.<br>CloudFormation's version of this mapping is the <b>Resources</b> tab of a stack, which AWS stores for you.</p></div></details><aside class="callout gray"><div class="ic">🏢</div><div class="bd"><p>Real-world corner: at Alan, a health insurance company running on AWS, we use Terraform.</p><p>Our setup covers AWS resources, monitoring, DNS (the system that turns names into addresses), SaaS tools (software we rent online) and several AWS accounts, and we want one tool with one workflow, not a different tool per vendor.</p><p>If you only ever touch AWS, CloudFormation is a fine choice, and the habits you build today (read the preview, never click in production) carry over.</p></div></aside><h2 id="hands-on-automating-infrastructure-with-cloudformation">🧪 Hands-on: automating infrastructure with CloudFormation</h2><p>This one is a course lab: Module 11 guided lab, automating infrastructure with AWS CloudFormation (in French, « Atelier guidé : automatisation de l'infrastructure avec AWS CloudFormation »).<br>You deploy a stack from a template, update it and delete it, all in AWS's pre-built lab account.</p><p>Open the lab from the course Modules list, click Start Lab and wait for the green dot.<br>Keep this page open next to it, the lab tells you what to click, this page tells you what to look at.</p><p>While you do it, look at this:</p><ul><li>The <b>Events</b> tab of the stack. Resources are created in dependency order, and independent ones in parallel.<li>Nobody wrote that order by hand, it comes from the <code>!Ref</code> links.</li></li><li>When you update the stack, check which resources show "Modify" and which show "Replacement". Ask yourself what replacement would mean for a database.</li><li>The <b>Resources</b> tab maps logical IDs (the template's nicknames) to physical IDs (the real AWS IDs). That's how CloudFormation remembers what it built.</li><li>Deleting the stack removes everything, in reverse order, without you hunting through five consoles.</li></ul><aside class="callout green"><div class="ic">✅</div><div class="bd"><p>How you know it works: the stack reaches <code>CREATE_COMPLETE</code>, then <code>UPDATE_COMPLETE</code> after your change, and the lab's check passes. You can explain in one sentence why a replacement is riskier than a modification.</p></div></aside><h2 id="hands-on-puff-s-network-as-code">🧪 Hands-on: Puff's network as code</h2><p>This part happens in the sandbox.<br>This is the step that turns Puff into a real platform, because every tenant lives on the network.<br>Once it's a template, giving a new customer their own copy of Puff's network is one <code>deploy</code> command with a different name prefix, and you do exactly that with the prefix <code>puff-cfn</code>.</p><p>You write <code>puff-network.yaml</code>, a template that recreates your course 3 network:</p><ul><li>the VPC and 4 subnets in 2 AZs (Availability Zones, separate data centers in the region),</li><li>the internet gateway and the NAT gateway (the one-way exit door for private servers),</li><li>route tables, an S3 gateway endpoint and the three chained security groups.</li></ul><p>You deploy it as stack <code>puff-network</code>, update it through a change set, then delete it.</p><p>If a step fails, CloudFormation's error messages are some of the clearest in AWS, and the 🧯 toggle below covers the usual ones.</p><ol start="1"><li>Start the sandbox, open the browser terminal, and check you're in the right place:</li></ol><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">aws sts get-caller-identity
+aws configure get region   # expect us-east-1</code></pre><ol start="2"><li>If your course 3 VPC still exists, this stack creates a second one next to it, and that's fine (names are only tags). To tell them apart, deploy with the prefix <code>puff-cfn</code> in step 4.<br>Each VPC needs one Elastic IP (a fixed public address) for its NAT, and the default limit is 5, so release any you no longer use.</li><li>Create the template. Run <code>cat &gt; puff-network.yaml &lt;&lt;'EOF'</code>, paste the whole template below, then type <code>EOF</code> on its own line and press Enter.<br>Take a minute to read it first, every block is something you clicked in course 3.</li></ol><pre class="code"><button class="copy" type="button">Copy</button><code class="yaml">AWSTemplateFormatVersion: "2010-09-09"
+Description: Puff network, the course 3 VPC as code
+
+Parameters:
+  NamePrefix:
+    Type: String
+    Default: puff
+    Description: Prefix for Name tags (use puff-cfn if your course 3 VPC still exists)
+
+Resources:
+  # VPC and internet access
+  PuffVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-vpc"
+
+  PuffIgw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-igw"
+
+  PuffIgwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref PuffVpc
+      InternetGatewayId: !Ref PuffIgw
+
+  # Subnets: 2 public, 2 private, spread over the first two AZs
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PuffVpc
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-public-a"
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PuffVpc
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-public-b"
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PuffVpc
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-private-a"
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PuffVpc
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-private-b"
+
+  # Public routing: default route to the internet gateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PuffVpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-public-rt"
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: PuffIgwAttachment   # the IGW must be attached before a route can use it
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref PuffIgw
+
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+
+  # One NAT gateway in public subnet A (cheap, but a single point of failure)
+  NatEip:
+    Type: AWS::EC2::EIP
+    DependsOn: PuffIgwAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-nat-eip"
+
+  PuffNatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEip.AllocationId
+      SubnetId: !Ref PublicSubnetA
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-nat"
+
+  # Private routing: default route to the NAT gateway
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PuffVpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-private-rt"
+
+  PrivateDefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref PuffNatGateway
+
+  PrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref PrivateRouteTable
+
+  # S3 traffic from private subnets skips the NAT (free, faster)
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref PuffVpc
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+
+  # Chained security groups: internet -&gt; ALB -&gt; API -&gt; DB
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Puff ALB, HTTP from the internet
+      VpcId: !Ref PuffVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-alb-sg"
+
+  ApiSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Puff API, port 8080 from the ALB only
+      VpcId: !Ref PuffVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !GetAtt AlbSecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-api-sg"
+
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Puff database, PostgreSQL from the API only
+      VpcId: !Ref PuffVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !GetAtt ApiSecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-db-sg"
+
+Outputs:
+  VpcId:
+    Description: Puff VPC
+    Value: !Ref PuffVpc
+  PublicSubnetIds:
+    Description: Public subnets, for the ALB
+    Value: !Join [",", [!Ref PublicSubnetA, !Ref PublicSubnetB]]
+  PrivateSubnetIds:
+    Description: Private subnets, for the API instances and RDS
+    Value: !Join [",", [!Ref PrivateSubnetA, !Ref PrivateSubnetB]]
+  AlbSecurityGroupId:
+    Value: !GetAtt AlbSecurityGroup.GroupId
+  ApiSecurityGroupId:
+    Value: !GetAtt ApiSecurityGroup.GroupId
+  DbSecurityGroupId:
+    Value: !GetAtt DbSecurityGroup.GroupId
+  NatGatewayId:
+    Value: !Ref PuffNatGateway</code></pre><ol start="4"><li>Validate, then deploy. This is the one command that builds a whole network.<br><code>deploy</code> creates a change set, executes it and waits, which takes 3 to 5 minutes (the NAT gateway is the slow one).</li></ol><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">aws cloudformation validate-template --template-body file://puff-network.yaml
+aws cloudformation deploy \
+  --template-file puff-network.yaml \
+  --stack-name puff-network \
+  --parameter-overrides NamePrefix=puff-cfn</code></pre><p>While it runs, open <b>CloudFormation &gt; Stacks &gt; puff-network &gt; Events</b> and watch the order: VPC and internet gateway first, subnets and route tables in parallel, the NAT gateway last.</p><ol start="5"><li>Read the outputs. This is how the rest of your Puff (or your project group) finds the network.</li></ol><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">aws cloudformation describe-stacks --stack-name puff-network \
+  --query "Stacks[0].Outputs[].[OutputKey,OutputValue]" --output table</code></pre><aside class="callout green"><div class="ic">✅</div><div class="bd"><p>How you know it works: <code>aws cloudformation describe-stacks --stack-name puff-network --query "Stacks[0].StackStatus"</code> returns <code>"CREATE_COMPLETE"</code>, and the outputs table shows 7 rows, with two comma-separated subnet IDs in each subnet row.</p></div></aside><ol start="6"><li>Optional, 3 minutes: catch drift. You add a rule behind CloudFormation's back, like the colleague from the story above, then ask it what changed.</li></ol><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">API_SG=$(aws cloudformation describe-stacks --stack-name puff-network \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiSecurityGroupId'].OutputValue" --output text)
+
+aws ec2 authorize-security-group-ingress --group-id "$API_SG" \
+  --protocol tcp --port 22 --cidr 10.0.0.0/16
+
+DRIFT_ID=$(aws cloudformation detect-stack-drift --stack-name puff-network \
+  --query StackDriftDetectionId --output text)
+sleep 20
+
+aws cloudformation describe-stack-drift-detection-status \
+  --stack-drift-detection-id "$DRIFT_ID" --query StackDriftStatus
+aws cloudformation describe-stack-resource-drifts --stack-name puff-network \
+  --stack-resource-drift-status-filters MODIFIED \
+  --query "StackResourceDrifts[].LogicalResourceId"</code></pre><p>You should see <code>"DRIFTED"</code> and <code>["ApiSecurityGroup"]</code>.</p><ol start="7"><li>Make one change through a change set. Add a cost tag to the VPC in <code>puff-network.yaml</code> (you'll see why in the FinOps section), so its <code>Tags</code> block becomes:</li></ol><pre class="code"><button class="copy" type="button">Copy</button><code class="yaml">      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-vpc"
+        - Key: Project
+          Value: puff</code></pre><p>Then create the change set, read it, and only then execute it:</p><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">aws cloudformation create-change-set --stack-name puff-network \
+  --change-set-name add-project-tag \
+  --template-body file://puff-network.yaml \
+  --parameters ParameterKey=NamePrefix,UsePreviousValue=true
+aws cloudformation wait change-set-create-complete \
+  --stack-name puff-network --change-set-name add-project-tag
+aws cloudformation describe-change-set --stack-name puff-network \
+  --change-set-name add-project-tag \
+  --query "Changes[].ResourceChange.[Action,LogicalResourceId,Replacement]" --output table
+aws cloudformation execute-change-set --stack-name puff-network \
+  --change-set-name add-project-tag
+aws cloudformation wait stack-update-complete --stack-name puff-network</code></pre><p>The change set should list one line: <code>Modify | PuffVpc | False</code>. A tag is an in-place change.<br>Change <code>CidrBlock</code> instead and you'd see <code>True</code>, which means a brand-new VPC, so read this table before executing, every time.</p><ol start="8"><li>Delete the stack. The NAT gateway bills by the hour even with zero traffic, so don't leave it running.</li></ol><pre class="code"><button class="copy" type="button">Copy</button><code class="bash">aws cloudformation delete-stack --stack-name puff-network
+aws cloudformation wait stack-delete-complete --stack-name puff-network
+aws ec2 describe-nat-gateways --filter Name=tag:Name,Values=puff-cfn-nat \
+  --query "NatGateways[].State"</code></pre><aside class="callout green"><div class="ic">✅</div><div class="bd"><p>How you know it works: <code>wait stack-delete-complete</code> returns without error, and the last command prints <code>["deleted"]</code> (or <code>[]</code> once AWS forgets it).</p></div></aside><p>Stretch: add the ALB (Application Load Balancer, it spreads requests across your servers) and its target group to the template.<br>Append these resources under <code>Resources</code>, add the two outputs, and update the stack through a change set as in step 7 (redeploy first if you deleted it).</p><pre class="code"><button class="copy" type="button">Copy</button><code class="yaml">  PuffAlb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DependsOn: PuffIgwAttachment
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      Subnets: [!Ref PublicSubnetA, !Ref PublicSubnetB]
+      SecurityGroups: [!GetAtt AlbSecurityGroup.GroupId]
+      Tags:
+        - Key: Name
+          Value: !Sub "${NamePrefix}-alb"
+
+  PuffTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref PuffVpc
+      Protocol: HTTP
+      Port: 8080
+      TargetType: instance
+      HealthCheckPath: /health
+      Matcher:
+        HttpCode: "200"
+
+  PuffHttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref PuffAlb
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref PuffTargetGroup</code></pre><pre class="code"><button class="copy" type="button">Copy</button><code class="yaml">  AlbDnsName:
+    Value: !GetAtt PuffAlb.DNSName
+  TargetGroupArn:
+    Value: !Ref PuffTargetGroup</code></pre><p><code>curl -i http://&lt;AlbDnsName&gt;/health</code> should answer <code>503 Service Temporarily Unavailable</code>, the ALB works but it has no healthy targets yet.<br>Point an Auto Scaling group at <code>TargetGroupArn</code> and it turns into a <code>200</code>.</p><details><summary>🧯 If it doesn't work</summary><div class="dt"><ul><li><code>Template format error</code> or <code>YAML not well-formed</code>: the paste lost indentation. Check with <code>head -20 puff-network.yaml</code>, every level is two spaces, no tabs.</li><li>Stack in <code>ROLLBACK_COMPLETE</code>: a creation failed and was rolled back. Find the first <code>CREATE_FAILED</code> line in the Events tab, fix it, then <code>aws cloudformation delete-stack --stack-name puff-network</code> before deploying again (a stack in that state can't be updated).</li><li><code>The maximum number of addresses has been reached</code>: you hit the Elastic IP limit. Release unused ones in <b>EC2 &gt; Elastic IPs</b>.</li><li><code>No changes to deploy</code>: your file is identical to what's deployed. Did you save the edit?</li><li><code>DELETE_FAILED</code> on a subnet or security group: something outside the stack (an instance, an ALB from another exercise) still uses it. Delete that first, then retry <code>delete-stack</code>.</li><li><code>AccessDenied</code> on <code>ec2:CreateVpc</code> or <code>CreateNatGateway</code>: tell me straight away, it's a sandbox restriction, not your template.</li></ul></div></details><h2 id="ci-cd-from-a-commit-to-production">🚚 CI/CD: from a commit to production</h2><aside class="callout gray"><div class="ic">🗒️</div><div class="bd"><p>No lab for this one, CodePipeline and CodeBuild aren't available in the sandbox, so you read a pipeline instead of running one.</p></div></aside><p>Deploys are risky, and a deploy from someone's laptop on a Friday evening is worse.<br>CI/CD takes the manual work out of it.</p><p>Continuous integration means every change pushed to Git is built and tested automatically, like a robot that checks every homework before it's handed in.<br>Continuous delivery means every change that passes can go live through the same automated path.</p><p>The pipeline is a few stages in a row, and each one only runs if the previous one passed:</p><ul><li>Build turns source code into an artifact: one packaged, versioned thing you deploy.<li>For the board app, a Docker image tagged with the Git commit ID (its SHA, a unique fingerprint).</li></li><li>Test runs that exact artifact: unit tests, then the container against a real PostgreSQL database.</li><li>Deploy pushes the same artifact to a test copy (staging) first, then to production, often with a human approval in between.</li></ul><p><b>Build once, promote the same image everywhere.</b><br>If you rebuild for production, production runs something you never tested.</p><details><summary>🔍 Want more? A real pipeline for the board app</summary><div class="dt"><p>Here's what a GitHub Actions pipeline for the board app could look like. You can't run it in the course (no ECR, AWS's private image registry, and no GitHub access to your sandbox), so read it as a design.<br><code>123456789012</code> is AWS's placeholder account number for docs, and <code>puff-app.yaml</code> is the app template you'd get by growing today's stretch.</p><pre class="code"><button class="copy" type="button">Copy</button><code class="yaml">name: puff-api
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write      # lets the job get short-lived AWS credentials (OIDC), no stored keys
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  IMAGE: 123456789012.dkr.ecr.us-east-1.amazonaws.com/puff-api
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: puff
+          POSTGRES_USER: puff
+          POSTGRES_PASSWORD: test
+        ports: ["5432:5432"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the artifact
+        run: docker build -t "$IMAGE:${{ github.sha }}" .
+      - name: Integration test against a real PostgreSQL
+        run: |
+          docker run -d --network host -e DB_HOST=localhost -e DB_NAME=puff \
+            -e DB_USER=puff -e DB_PASSWORD=test "$IMAGE:${{ github.sha }}"
+          sleep 5
+          curl -fsS localhost:8080/health
+          curl -fsS -X POST localhost:8080/api/messages \
+            -H 'Content-Type: application/json' -d '{"author":"ci","text":"hello"}'
+          curl -fsS localhost:8080/api/messages | grep -q hello
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/puff-ci
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Push the artifact
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin "${IMAGE%%/*}"
+          docker push "$IMAGE:${{ github.sha }}"
+
+  deploy-staging:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/puff-deploy-staging
+          aws-region: ${{ env.AWS_REGION }}
+      - run: |
+          aws cloudformation deploy --template-file puff-app.yaml \
+            --stack-name puff-app-staging \
+            --parameter-overrides Env=staging ImageTag=${{ github.sha }}
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production    # configured in GitHub to require a reviewer's approval
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/puff-deploy-production
+          aws-region: ${{ env.AWS_REGION }}
+      - run: |
+          aws cloudformation deploy --template-file puff-app.yaml \
+            --stack-name puff-app-production \
+            --parameter-overrides Env=production ImageTag=${{ github.sha }}</code></pre><p>Look at three things:</p><ul><li>the same <code>${{ github.sha }}</code> image goes to both environments,</li><li>each environment has its own IAM (Identity and Access Management) role, so a staging job can't touch production,</li><li>no AWS password or key is stored anywhere. The job gets short-lived credentials through OIDC (OpenID Connect, a way to prove "I'm this GitHub job" without a stored secret).</li></ul></div></details><h2 id="deployment-strategies">🎭 Deployment strategies</h2><p>Once the new image exists, you need to swap it in without anyone noticing.<br>There are three usual ways to do it.</p><ul><li>Rolling replaces your servers a few at a time.</li><li>Blue/green builds a full second set of servers next to the live one, then moves all traffic at once.</li><li>Canary sends a small share of traffic to the new version first, and you watch what happens.</li></ul><div class="tw"><table><tr><th></th><th>Rolling</th><th>Blue/green</th><th>Canary</th></tr><tr><td>How</td><td>Replace servers a few at a time (an instance refresh of the ASG, the Auto Scaling group)</td><td>Build a full second fleet (green) next to the live one (blue), then switch all traffic at once</td><td>Send a small share of traffic (say 10%) to the new version, watch, then go to 100%</td></tr><tr><td>On Puff</td><td><code>puff-asg</code> replaces 1 instance at a time behind <code>puff-alb</code></td><td>Two target groups, <code>puff-tg-blue</code> and <code>puff-tg-green</code>, the ALB listener points at one, deploying means repointing the listener</td><td>Same two target groups, the listener splits traffic 90/10, then 0/100</td></tr><tr><td>Going back</td><td>Another rolling deploy of the old version (slow)</td><td>Point the listener back at blue (seconds)</td><td>Set the new version's share back to 0 (seconds)</td></tr><tr><td>Extra cost during the deploy</td><td>None</td><td>Double the servers for a while</td><td>A little</td></tr><tr><td>Watch out</td><td>Old and new versions run at the same time, so the database must work with both</td><td>Blue and green share one database, so both must accept its structure</td><td>You need good alarms, or you won't see the 10% failing</td></tr></table></div><figure class="play"><figcaption><span>🗺️ Blue/green and canary</span><a href="../course-6/maps/blue-green/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-6/maps/blue-green/" title="🗺️ Blue/green and canary" loading="lazy"></iframe></figure><p>On Puff, users reach <code>puff-alb</code>, and its listener is the rule that decides where each request goes.<br>The listener points at a target group, which is a list of servers. Blue is the current Auto Scaling group, green is the new one, and both use the same database.</p><p>With blue/green, green gets built while blue still serves everyone, then the listener flips all traffic to green.<br>If something breaks you flip it back to blue, in seconds.</p><p>With canary, the same listener splits traffic by weight, 90% to blue and 10% to green, and you watch the alarms.<br>If they fire you set green back to 0, in seconds. If they stay quiet you move all traffic to green.</p><p>Blue/green and canary give you an instant way back by keeping the old version alive.<br>The database is what makes every strategy hard, because there's only one.</p><figure class="play"><figcaption><span>🚀 Ship a buggy release</span><a href="../course-6/deploy-strategies/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-6/deploy-strategies/" title="🚀 Ship a buggy release" loading="lazy"></iframe></figure><h2 id="finops-knowing-what-you-pay-for">💸 FinOps: knowing what you pay for</h2><aside class="callout gray"><div class="ic">🗒️</div><div class="bd"><p>No lab for this one, Cost Explorer, billing and budgets are blocked in the sandbox, so we use the public AWS Pricing Calculator.</p></div></aside><p>In the cloud, whoever picks the server size is spending money, often without seeing the bill.<br>FinOps means engineers look at cost the way they look at errors and speed.</p><p>When your group defends its Puff, "what does it cost?" will be one of my first questions.</p><figure class="vid"><figcaption><span>🎬 What does Puff cost? (1 min 20)</span></figcaption><video controls playsinline preload="none" poster="../course-6/videos/epita-c6-finops.jpg" src="../course-6/videos/epita-c6-finops.mp4"></video></figure><h3>The usual cost surprises</h3><ul><li>NAT gateway data. You pay per hour and per GB through it, that's why your template sends S3 traffic through the free gateway endpoint.</li><li>Idle resources. A NAT gateway, a load balancer or a database costs the same with zero visitors, so a forgotten test stack still bills all weekend.</li><li>Oversized servers, like a big <code>m5.2xlarge</code> picked "to be safe" that sits at 4% CPU for a year.</li><li>Data going out. Traffic to the internet costs per GB past a free allowance, and so does traffic between AZs and regions, traffic coming in is free.</li><li>Forgotten leftovers. Old disk snapshots, unattached disks and machine images pile up.</li><li>Public IPv4 addresses. Every one (your NAT's Elastic IP, the ALB's addresses) is billed per hour.</li></ul><details><summary>🔍 Want more? Pricing models</summary><div class="dt"><div class="tw"><table><tr><th>Model</th><th>What you commit to</th><th>Typical saving vs On-Demand</th><th>Use it for</th></tr><tr><td>On-Demand</td><td>Nothing, pay per second or hour</td><td>None</td><td>New or unpredictable workloads, everything in this course</td></tr><tr><td>Savings Plans</td><td>A \$/hour spend for 1 or 3 years, any instance type</td><td>Up to about 70%</td><td>The steady base you're sure to run next year</td></tr><tr><td>Reserved Instances</td><td>One instance type (and region) for 1 or 3 years</td><td>Similar to Savings Plans</td><td>Databases, if you want the deepest discount. Database Savings Plans exist too, 1 year, up to 20% on provisioned instances</td></tr><tr><td>Spot</td><td>Nothing, but AWS can take the server back with a 2-minute warning</td><td>Up to about 90%</td><td>Work that can be interrupted: batch jobs, CI runners, extra Auto Scaling capacity</td></tr></table></div><p>For a real Puff, you'd cover the two always-on API servers and the database with commitments and let Spot absorb the peaks.</p></div></details><details><summary>🔍 Want more? Tagging and rightsizing</summary><div class="dt"><p>You can't cut what you can't see.<br>A tag like <code>Project=puff</code> (the one you added in step 7), <code>Environment=staging</code> or <code>Owner=team-name</code> lets the billing tools split the bill.</p><p>People miss two details, a tag must be switched on as a cost allocation tag in the billing console before it appears in reports, and it only counts from that day.<br>Tags added by hand get forgotten, so put them in the template (CloudFormation stack tags spread to the resources) or in Terraform's defaults.</p><p>Rightsizing means matching size to real use. Look at two weeks of CloudWatch CPU (memory needs the CloudWatch agent): if the peak stays well under 40%, try one size down.<br>Burstable <code>t3</code> servers are a good default for mostly idle services like the board app, as long as they don't run out of CPU credits.</p><p>Separate AWS accounts per team or environment are the most reliable cost split, because you don't depend on anyone adding a tag.</p></div></details><h3>Exercise: price your Puff per month</h3><p>Open <a href="https://calculator.aws/">https://calculator.aws/</a>, pick <b>US East (N. Virginia)</b>, and add the services of the Puff you finished in course 5.<br>Assume 730 hours a month and low traffic.<br>Compare with the table below and save the calculator's share link, you'll reuse it in your project justification.</p><p>All prices below are rough public On-Demand us-east-1 prices, rounded, so check the calculator for today's numbers.</p><div class="tw"><table><tr><th>Item</th><th>Assumption</th><th>Approx. price</th><th>Approx. per month</th></tr><tr><td>EC2 <code>t3.micro</code> × 2 (ASG min 2)</td><td>730 h each</td><td>\~\$0.0104/h</td><td>\~\$15</td></tr><tr><td>EBS gp2 8 GB × 2</td><td>root volumes</td><td>\~\$0.10/GB-month</td><td>\~\$2</td></tr><tr><td>RDS PostgreSQL <code>db.t3.micro</code>, single-AZ</td><td>730 h + 20 GB gp2</td><td>\~\$0.018/h + \~\$0.115/GB-month</td><td>\~\$16</td></tr><tr><td>Application Load Balancer</td><td>730 h + \~1 LCU</td><td>\~\$0.0225/h + \~\$0.008/LCU-h</td><td>\~\$22</td></tr><tr><td>NAT gateway</td><td>730 h + a few GB</td><td>\~\$0.045/h + \~\$0.045/GB</td><td>\~\$33</td></tr><tr><td>Public IPv4 × 3</td><td>NAT EIP + 2 ALB addresses</td><td>\~\$0.005/h each</td><td>\~\$11</td></tr><tr><td>S3 + CloudFront</td><td>a few MB, little traffic</td><td>mostly free tier</td><td>\~\$1</td></tr><tr><td>CloudWatch alarms, SNS, Lambda</td><td>2 alarms, a few emails, few invocations</td><td>\~\$0.10/alarm, rest free tier</td><td>\&lt;\$1</td></tr><tr><td>Total</td><td></td><td></td><td>\~\$100</td></tr></table></div><p>(EBS is the disk attached to each server, an LCU is the ALB's unit of work.)</p><p>Look where the money goes, the NAT gateway, the ALB and public IPs make up about two thirds, the two API servers about a sixth.<br>What would you change if Puff hosted a side project with three users? And if it hosted 10,000?</p><figure class="play"><figcaption><span>🧾 Puff's monthly bill</span><a href="../course-6/bill/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-6/bill/" title="🧾 Puff&#x27;s monthly bill" loading="lazy"></iframe></figure><h2 id="disaster-recovery-in-one-table">🛟 Disaster recovery in one table</h2><p>DR (disaster recovery) is your plan for the day a whole region goes down, and two numbers define it:</p><ul><li>RPO (recovery point objective) is how much data you accept losing, counted in time.</li><li>RTO (recovery time objective) is how long you accept being down.</li></ul><p>Smaller numbers always cost more.</p><div class="tw"><table><tr><th>Strategy</th><th>What runs in the backup region</th><th>RPO</th><th>RTO</th><th>Cost</th></tr><tr><td>Backup and restore</td><td>Nothing, only backups</td><td>Hours</td><td>Hours to a day</td><td>\$</td></tr><tr><td>Pilot light</td><td>Data copied, the database running, app servers off</td><td>Minutes</td><td>Tens of minutes to hours</td><td>\$\$</td></tr><tr><td>Warm standby</td><td>A small but complete copy, scaled up when needed</td><td>Seconds to minutes</td><td>Minutes</td><td>\$\$\$</td></tr><tr><td>Multi-site (active/active)</td><td>The full stack serving traffic in both places</td><td>Near zero</td><td>Near zero</td><td>\$\$\$\$</td></tr></table></div><p>Today's work helps here.<br>With <code>puff-network.yaml</code> and templates like it, "restore" means deploying them in another region and loading the latest backup, you don't rebuild by hand under stress.</p><p>Many companies also copy backups to a separate AWS account, so one bad mistake (or one stolen credential) can't delete everything.</p><figure class="play"><figcaption><span>🛟 Pick a disaster plan</span><a href="../course-6/dr-picker/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-6/dr-picker/" title="🛟 Pick a disaster plan" loading="lazy"></iframe></figure><h2 id="well-architected-recap-what-you-did-on-puff">🏛️ Well-Architected recap: what you did on Puff</h2><p>AWS's Well-Architected Framework is a checklist of six pillars for judging a cloud setup.<br>Here's how your Puff scores, and it doubles as a checklist for your project justification.</p><div class="tw"><table><tr><th>Pillar</th><th>What it asks</th><th>What you did on Puff</th></tr><tr><td>Operational excellence</td><td>Can you run and change it safely?</td><td>Network in a CloudFormation template, change sets before updates, CloudWatch alarms to SNS</td></tr><tr><td>Security</td><td>Is the data and access protected?</td><td>Private subnets, chained security groups (puff-alb-sg, puff-api-sg, puff-db-sg), DB password in Parameter Store, Session Manager instead of SSH, CloudTrail</td></tr><tr><td>Reliability</td><td>Does it survive failures and growth?</td><td>2 AZs, ASG min 2 with <code>/health</code> checks behind the ALB (known gaps: one NAT gateway, single-AZ RDS)</td></tr><tr><td>Performance efficiency</td><td>Are you using the right resources?</td><td>CloudFront in front of the frontend, target tracking on CPU 50%, S3 gateway endpoint</td></tr><tr><td>Cost optimization</td><td>Do you pay only for what you need?</td><td><code>t3.micro</code> and <code>db.t3.micro</code>, <code>Project</code> tag, monthly estimate, deleting idle stacks</td></tr><tr><td>Sustainability</td><td>Is the footprint as small as it can be?</td><td>Scale in when idle, small burstable instances, nothing left running after the lab session</td></tr></table></div><h2 id="project-puff-starts-today">🚀 Project Puff starts today</h2><p>You formed your groups of 4 at the end of course 5.<br>From now on, each group is the team running one Puff.<br>Pick one member's stack as the base, onboard one customer from the use-case list on the Project page, and adapt your cloud to what that customer needs.</p><p>Then you defend it like a small cloud provider pitching to a client, what you promise, what it costs (bring your calculator link), how it's secured, and what breaks first.</p><p>Defenses go one group after the other from about 2:20, 4 minutes of presentation plus 2 minutes of questions, while the other groups keep building.<br>Before the break, run step 8 to delete your practice stack, then redeploy what your group needs in one member's account.</p><h2 id="today-s-quiz">🎲 Today's quiz</h2><figure class="play"><figcaption><span>🎲 Today's quiz</span><a href="../course-6/quiz/" target="_blank" rel="noopener">Open full screen</a></figcaption><iframe src="../course-6/quiz/" title="🎲 Today&#x27;s quiz" loading="lazy"></iframe></figure><h2 id="think-about-it">🤔 Think about it</h2><ul><li>A classmate fixes a bug by editing a security group in the console. The next morning, another teammate deploys an unrelated change to the same stack. What can happen, and what should the classmate have done after the fix?</li><li>In your change set, the RDS database shows <code>Replacement: True</code>. What do you do before executing it?</li><li>The board app's next release renames the <code>text</code> column to <code>body</code>. Why does that break both rolling and blue/green deployments?</li><li>The NAT gateway is a third of your Puff bill. Name two ways to shrink that cost, and what each one costs you in security or reliability.</li><li>Why does copying backups to another region protect you from different problems than copying them to another account?</li></ul><details><summary>💡 Hints</summary><div class="dt"><ul><li>That's drift, the next update may put back the template's version of that resource, or fail on it. The fix belongs in the template, the same day.</li><li>Replacement means a new, empty database. Think snapshots, and whether you really need that change.</li><li>During any rollout, old and new code talk to one database at the same time. Look up "expand and contract" migrations.</li><li>What do your private servers use the internet for? Endpoints, pre-built images, or a shared NAT.</li><li>One protects against a place failing, the other against a person or a stolen credential.</li></ul></div></details><h2 id="go-deeper">📚 Go deeper</h2><ul><li><a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html">What is AWS CloudFormation?</a></li><li><a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html">Update CloudFormation stacks using change sets</a></li><li><a href="https://developer.hashicorp.com/terraform/language/state">Terraform state</a></li><li><a href="https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html">Disaster recovery options in the cloud (AWS whitepaper)</a></li><li><a href="https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html">AWS Well-Architected Framework</a></li><li><a href="https://calculator.aws/">AWS Pricing Calculator</a></li></ul><p class="next"><a href="../">Back to the timeline</a></p>
+</main></div><script>document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.nextElementSibling.textContent);b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200)});
+const l=[...document.querySelectorAll('.toc a')],o=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){l.forEach(a=>a.classList.toggle('on',a.hash==='#'+x.target.id))}}),{rootMargin:'-20% 0px -70% 0px'});document.querySelectorAll('h2[id]').forEach(h=>o.observe(h));</script></body></html>
