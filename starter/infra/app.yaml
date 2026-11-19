@@ -1,0 +1,149 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Your app on top of your network stack (M5) - ALB, ECS, RDS, secret, logs, roles
+
+Parameters:
+  NamePrefix: {Type: String, Description: "Your group id, e.g. g07"}
+  VpcId: {Type: String}
+  PublicSubnetIds: {Type: CommaDelimitedList}
+  PrivateSubnetIds: {Type: CommaDelimitedList}
+  AlbSecurityGroupId: {Type: String}
+  AppSecurityGroupId: {Type: String}
+  DbSecurityGroupId: {Type: String}
+  Image: {Type: String, Description: "e.g. localhost:5100/g07-app:v1"}
+  DesiredCount: {Type: Number, Default: 2}
+
+Resources:
+  # The database password: generated, never written anywhere
+  DbSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "${NamePrefix}/db-password"
+      GenerateSecretString: {PasswordLength: 24, ExcludePunctuation: true}
+
+  # The database, in the private subnets, behind its own security group
+  DbSubnets:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: private subnets
+      SubnetIds: !Ref PrivateSubnetIds
+  Db:
+    Type: AWS::RDS::DBInstance
+    DependsOn: DbSecret
+    Properties:
+      DBInstanceIdentifier: !Sub "${NamePrefix}-db2"
+      Engine: postgres
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: "20"
+      MasterUsername: app
+      MasterUserPassword: !Sub "{{resolve:secretsmanager:${NamePrefix}/db-password}}"
+      DBSubnetGroupName: !Ref DbSubnets
+      VPCSecurityGroups: [!Ref DbSecurityGroupId]
+      PubliclyAccessible: false
+      Tags: [{Key: Project, Value: !Ref NamePrefix}]
+
+  # Logs, kept one week
+  Logs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${NamePrefix}-app"
+      RetentionInDays: 7
+
+  # The identity ECS uses to start your container: read the secret, write logs
+  ExecRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${NamePrefix}-exec-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{Effect: Allow, Principal: {Service: ecs-tasks.amazonaws.com}, Action: "sts:AssumeRole"}]
+      Policies:
+        - PolicyName: read-secret-write-logs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - {Effect: Allow, Action: "secretsmanager:GetSecretValue", Resource: !Ref DbSecret}
+              - {Effect: Allow, Action: ["logs:CreateLogStream", "logs:PutLogEvents"], Resource: !GetAtt Logs.Arn}
+
+  # The load balancer, its target group and listener
+  Alb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${NamePrefix}-alb2"
+      Subnets: !Ref PublicSubnetIds
+      SecurityGroups: [!Ref AlbSecurityGroupId]
+      Tags: [{Key: Project, Value: !Ref NamePrefix}]
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${NamePrefix}-tg2"
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VpcId
+      HealthCheckPath: /
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Alb
+      Port: 80
+      Protocol: HTTP
+      DefaultActions: [{Type: forward, TargetGroupArn: !Ref TargetGroup}]
+
+  # Your app on ECS, private, with the secret injected and logs on
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties: {ClusterName: !Ref NamePrefix}
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "${NamePrefix}-app"
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: "256"
+      Memory: "512"
+      ExecutionRoleArn: !GetAtt ExecRole.Arn
+      ContainerDefinitions:
+        - Name: app
+          Image: !Ref Image
+          Essential: true
+          PortMappings: [{ContainerPort: 80}]
+          Environment:
+            - {Name: DB_HOST, Value: !GetAtt Db.Endpoint.Address}
+            - {Name: DB_PORT, Value: !GetAtt Db.Endpoint.Port}
+          Secrets: [{Name: DB_PASSWORD, ValueFrom: !Ref DbSecret}]
+          LogConfiguration:
+            LogDriver: awslogs
+            Options: {awslogs-group: !Ref Logs, awslogs-region: !Ref "AWS::Region", awslogs-stream-prefix: app}
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn: Listener
+    Properties:
+      ServiceName: !Sub "${NamePrefix}-app2"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration: {Subnets: !Ref PrivateSubnetIds, SecurityGroups: [!Ref AppSecurityGroupId], AssignPublicIp: DISABLED}
+      LoadBalancers: [{ContainerName: app, ContainerPort: 80, TargetGroupArn: !Ref TargetGroup}]
+
+  # Least privilege for humans: deploy your one service, nothing else
+  DeployerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${NamePrefix}-deployer"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{Effect: Allow, Principal: {AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"}, Action: "sts:AssumeRole"}]
+      Policies:
+        - PolicyName: deploy-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - {Effect: Allow, Action: ["ecs:DescribeServices", "ecs:UpdateService"], Resource: !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${NamePrefix}/${NamePrefix}-app2"}
+              - {Effect: Allow, Action: ["ecs:RegisterTaskDefinition", "ecs:DescribeTaskDefinition", "logs:GetLogEvents", "logs:FilterLogEvents", "logs:DescribeLogStreams"], Resource: "*"}
+              - {Effect: Allow, Action: "iam:PassRole", Resource: !GetAtt ExecRole.Arn}
+
+Outputs:
+  AlbDns: {Value: !GetAtt Alb.DNSName}
+  ServiceArn: {Value: !Ref Service}

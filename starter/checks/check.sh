@@ -1,5 +1,5 @@
 #!/bin/bash
-# Milestone checks. Usage: ./checks/check.sh M0   (or M1 to M4)
+# Milestone checks. Usage: ./checks/check.sh M0   (or M1 to M5)
 # Paste the output in your group's NOTES.md at the end of each session.
 cd "$(dirname "$0")/.." && . ./env.sh >/dev/null
 G=${GROUP:?set GROUP first, e.g. export GROUP=g07}
@@ -88,5 +88,18 @@ M4)
   ok "M4 CloudFront serves your status page" $([ -n "$CF" ] && [ "$CF" != None ] && [ "$(curl -s -m5 -o /dev/null -w '%{http_code}' http://$CF.cloudfront.localhost.floci.io:4566/)" = 200 ] && echo 1)
   ok "M4 your twist is designed in NOTES.md" $([ "$(sed -n '/^## Twist/,/^## /p' NOTES.md 2>/dev/null | grep -c .)" -ge 4 ] && echo 1)
   ;;
-*) echo "usage: $0 M0|M1|M2|M3|M4"; exit 1 ;;
+M5)
+  for s in network app; do ST=$(q cloudformation describe-stacks --stack-name $G-$s --query 'Stacks[0].StackStatus' --output text)
+    ok "M5 stack $G-$s is deployed ($ST)" $(echo "$ST" | grep -q -E '^(CREATE|UPDATE)_COMPLETE$' && echo 1); done
+  RES=$(q cloudformation list-stack-resources --stack-name $G-network --query 'StackResourceSummaries[].ResourceType' --output text; q cloudformation list-stack-resources --stack-name $G-app --query 'StackResourceSummaries[].ResourceType' --output text)
+  for r in AWS::EC2::VPC AWS::ElasticLoadBalancingV2::LoadBalancer AWS::ECS::Service AWS::RDS::DBInstance AWS::SecretsManager::Secret; do
+    ok "M5 $r comes from your templates" $(echo "$RES" | grep -q "$r" && echo 1); done
+  ok "M5 your stacks are tagged Project=$G" $(q cloudformation describe-stacks --stack-name $G-app --query "Stacks[0].Tags[?Key=='Project'].Value" --output text | grep -qx "$G" && echo 1)
+  DNS=$(q cloudformation describe-stacks --stack-name $G-app --query "Stacks[0].Outputs[?OutputKey=='AlbDns'].OutputValue" --output text)
+  ok "M5 the rebuilt app answers 200" $([ "$(curl -s -m5 -o /dev/null -w '%{http_code}' http://$DNS/)" = 200 ] && echo 1)
+  ok "M5 infra/rebuild.sh and templates committed" $(git ls-files --error-unmatch infra/rebuild.sh infra/network.yaml infra/app.yaml >/dev/null 2>&1 && echo 1)
+  ok "M5 a rebuild from zero is recorded in NOTES.md" $(grep -q -E 'Rebuilt in [0-9]+ s' NOTES.md 2>/dev/null && echo 1)
+  ok "M5 your twist is built (a 'Built:' line under ## Twist)" $(sed -n '/^## Twist/,/^## /p' NOTES.md 2>/dev/null | grep -q -i '^- *built:' && echo 1)
+  ;;
+*) echo "usage: $0 M0|M1|M2|M3|M4|M5"; exit 1 ;;
 esac
