@@ -1,5 +1,5 @@
 #!/bin/bash
-# Milestone checks. Usage: ./checks/check.sh M0   (or M1)
+# Milestone checks. Usage: ./checks/check.sh M0   (or M1, M2)
 # Paste the output in your group's NOTES.md at the end of each session.
 cd "$(dirname "$0")/.." && . ./env.sh >/dev/null
 G=${GROUP:?set GROUP first, e.g. export GROUP=g07}
@@ -22,5 +22,28 @@ M1)
   ok "M1 S3 status page online" $(curl -s -m5 -o /dev/null -w '%{http_code}' http://$G-site.s3-website-us-east-1.localhost:4566/ | grep -q 200 && echo 1)
   ok "M1 infra/deploy.sh committed" $(git ls-files --error-unmatch infra/deploy.sh >/dev/null 2>&1 && echo 1)
   ;;
-*) echo "usage: $0 M0|M1"; exit 1 ;;
+M2)
+  VPC=$(q ec2 describe-vpcs --filters Name=tag:Name,Values=$G-vpc --query 'Vpcs[0].VpcId' --output text)
+  ok "M2 VPC $G-vpc exists" $([ -n "$VPC" ] && [ "$VPC" != None ] && echo 1)
+  PUB=$(q ec2 describe-route-tables --filters Name=vpc-id,Values=$VPC --query "RouteTables[?Routes[?starts_with(GatewayId||'','igw-')]].Associations[].SubnetId" --output text)
+  PRIV=$(q ec2 describe-route-tables --filters Name=vpc-id,Values=$VPC --query "RouteTables[?Routes[?NatGatewayId]].Associations[].SubnetId" --output text)
+  ok "M2 2 public subnets (route to IGW)" $([ $(echo $PUB | wc -w) -ge 2 ] && echo 1)
+  ok "M2 2 private subnets (route to NAT)" $([ $(echo $PRIV | wc -w) -ge 2 ] && echo 1)
+  ALB=$(q elbv2 describe-load-balancers --query "LoadBalancers[?VpcId=='$VPC']|[0].[DNSName,LoadBalancerArn]" --output text); DNS=${ALB%%[[:space:]]*}
+  AZS=$(q elbv2 describe-load-balancers --query "LoadBalancers[?VpcId=='$VPC']|[0].AvailabilityZones[].SubnetId" --output text)
+  ok "M2 ALB in the public subnets" $(for s in $AZS; do echo "$PUB" | grep -qw $s || exit; done; [ -n "$AZS" ] && echo 1)
+  ok "M2 ALB answers 200" $([ "$(curl -s -m5 -o /dev/null -w '%{http_code}' http://$DNS/)" = 200 ] && echo 1)
+  SVC=$(q ecs list-services --cluster $G --output text --query 'serviceArns[]' | tr '\t' '\n' | sed 's#.*/##' | while read s; do n=$(q ecs describe-services --cluster $G --services $s --query 'services[0].networkConfiguration.awsvpcConfiguration.subnets[0]' --output text); echo "$PRIV" | grep -qw "$n" && echo $s; done | head -1)
+  ok "M2 app service in the private subnets" $([ -n "$SVC" ] && echo 1)
+  ok "M2 app tasks without public IP" $([ "$(q ecs describe-services --cluster $G --services $SVC --query 'services[0].networkConfiguration.awsvpcConfiguration.assignPublicIp' --output text)" = DISABLED ] && echo 1)
+  APPSG=$(q ecs describe-services --cluster $G --services $SVC --query 'services[0].networkConfiguration.awsvpcConfiguration.securityGroups[0]' --output text)
+  ok "M2 app security group not open to 0.0.0.0/0" $([ -n "$APPSG" ] && [ "$(q ec2 describe-security-groups --group-ids $APPSG --query "length(SecurityGroups[0].IpPermissions[?IpRanges[?CidrIp=='0.0.0.0/0']])")" = 0 ] && echo 1)
+  DB=$(q rds describe-db-instances --query "DBInstances[?DBSubnetGroup.VpcId=='$VPC']|[0].[DBInstanceIdentifier,PubliclyAccessible]" --output text)
+  ok "M2 database in the VPC, not public" $(echo "$DB" | grep -q False && echo 1)
+  DBSG=$(q rds describe-db-instances --db-instance-identifier ${DB%%[[:space:]]*} --query 'DBInstances[0].VpcSecurityGroups[0].VpcSecurityGroupId' --output text)
+  ok "M2 database only reachable from the app's group" $([ "$(q ec2 describe-security-groups --group-ids $DBSG --query 'SecurityGroups[0].IpPermissions[0].UserIdGroupPairs[0].GroupId' --output text)" = "$APPSG" ] && [ "$(q ec2 describe-security-groups --group-ids $DBSG --query 'length(SecurityGroups[0].IpPermissions[].IpRanges[])')" = 0 ] && echo 1)
+  I=$(./checks/intruder.sh 2>/dev/null | grep app); ok "M2 intruder blocked from the app" $(echo "$I" | grep -q BLOCKED && echo 1)
+  ok "M2 naive deploy deleted (no public DB, no service outside the VPC)" $([ "$(q rds describe-db-instances --query 'length(DBInstances[?PubliclyAccessible])')" = 0 ] && [ "$(q ecs list-services --cluster $G --query 'length(serviceArns)')" = 1 ] && echo 1)
+  ;;
+*) echo "usage: $0 M0|M1|M2"; exit 1 ;;
 esac
