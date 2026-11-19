@@ -1,0 +1,16 @@
+services:
+  floci:
+    image: floci/floci:2.5.0
+    container_name: floci
+    network_mode: bridge
+    ports:
+      - "4566:4566"   # AWS API
+      - "80:80"       # ALB listeners
+    environment:
+      FLOCI_STORAGE_MODE: persistent
+      FLOCI_NETWORK_SECURITY_GROUP_ENFORCEMENT_ENABLED: "true"
+      FLOCI_SERVICES_IAM_ENFORCEMENT_ENABLED: "true"
+      FLOCI_SERVICES_CLOUDFRONT_ALLOWED_PRIVATE_ORIGIN_HOSTS: "${ALB_ORIGINS:-none}"
+    volumes:
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock

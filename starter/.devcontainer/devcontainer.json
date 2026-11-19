@@ -1,0 +1,12 @@
+{
+  "name": "puff-floci",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/aws-cli:1": {},
+    "ghcr.io/devcontainers/features/python:1": {}
+  },
+  "hostRequirements": { "cpus": 2, "memory": "8gb" },
+  "forwardPorts": [80, 4566],
+  "postStartCommand": "bash -lc 'for i in $(seq 1 60); do docker info >/dev/null 2>&1 && break; sleep 2; done; docker compose up -d'"
+}
