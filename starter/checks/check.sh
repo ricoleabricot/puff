@@ -1,5 +1,5 @@
 #!/bin/bash
-# Milestone checks. Usage: ./checks/check.sh M0   (or M1, M2, M3)
+# Milestone checks. Usage: ./checks/check.sh M0   (or M1 to M4)
 # Paste the output in your group's NOTES.md at the end of each session.
 cd "$(dirname "$0")/.." && . ./env.sh >/dev/null
 G=${GROUP:?set GROUP first, e.g. export GROUP=g07}
@@ -65,5 +65,28 @@ M3)
   ok "M3 deployer AccessDenied proof saved in NOTES.md" $(grep -A2 -i deployer NOTES.md 2>/dev/null | grep -q -E 'AccessDenied|not authorized' && echo 1)
   ok "M3 no password left in your current scripts" $(! git grep -q -E "ChangeMe|master-user-password '" HEAD -- infra 2>/dev/null && echo 1)
   ;;
-*) echo "usage: $0 M0|M1|M2|M3"; exit 1 ;;
+M4)
+  SVC=$(q ecs list-services --cluster $G --query 'serviceArns[-1]' --output text); SVC=${SVC##*/}
+  read D R < <(q ecs describe-services --cluster $G --services $SVC --query 'services[0].[desiredCount,runningCount]' --output text)
+  ok "M4 at least 2 containers running ($R)" $([ "${R:-0}" -ge 2 ] && echo 1)
+  NETS=$(q ecs describe-services --cluster $G --services $SVC --query 'services[0].networkConfiguration.awsvpcConfiguration.subnets' --output text)
+  ok "M4 the service spans 2 Availability Zones" $([ "$(q ec2 describe-subnets --subnet-ids $NETS --query 'Subnets[].AvailabilityZone' --output text | tr '\t' '\n' | sort -u | wc -l)" -ge 2 ] && echo 1)
+  VPC=$(q ec2 describe-vpcs --filters Name=tag:Name,Values=$G-vpc --query 'Vpcs[0].VpcId' --output text)
+  DNS=$(q elbv2 describe-load-balancers --query "LoadBalancers[?VpcId=='$VPC']|[0].DNSName" --output text)
+  ok "M4 the load balancer answers 200" $([ "$(curl -s -m5 -o /dev/null -w '%{http_code}' http://$DNS/)" = 200 ] && echo 1)
+  FN=$(q lambda get-function --function-name $G-scaler --query 'Configuration.[FunctionArn,Role]' --output text)
+  ok "M4 your autoscaler function exists" $([ -n "$FN" ] && echo 1)
+  RN=$(echo "$FN" | awk '{print $2}'); RN=${RN##*/}
+  ok "M4 its role can scale your service only" $([ -n "$RN" ] && ! q iam list-attached-role-policies --role-name $RN --output text | grep -q AdministratorAccess && q iam list-role-policies --role-name $RN --query 'PolicyNames[0]' --output text | xargs -I{} aws iam get-role-policy --role-name $RN --policy-name {} --query PolicyDocument --output json 2>/dev/null | grep -q "service/$G/" && echo 1)
+  FA=$(echo "$FN" | awk '{print $1}')
+  WIRED=$(q cloudwatch describe-alarms --query 'MetricAlarms[].AlarmActions[]' --output text | tr '\t' '\n' | sort -u | while read t; do q sns list-subscriptions-by-topic --topic-arn $t --query 'Subscriptions[].Endpoint' --output text | grep -q "$FA" && echo $t; done)
+  ok "M4 an alarm calls your autoscaler" $([ -n "$WIRED" ] && echo 1)
+  LOG=$(q logs filter-log-events --log-group-name /aws/lambda/$G-scaler --query 'events[].message' --output text | grep -o -E '[0-9]+ -> [0-9]+')
+  ok "M4 your autoscaler scaled out" $(echo "$LOG" | awk '$1<$3{f=1} END{exit !f}' && echo 1)
+  ok "M4 your autoscaler scaled back in" $(echo "$LOG" | awk '$1>$3{f=1} END{exit !f}' && echo 1)
+  CF=$(q cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName,'$G-site')]|[0].Id" --output text)
+  ok "M4 CloudFront serves your status page" $([ -n "$CF" ] && [ "$CF" != None ] && [ "$(curl -s -m5 -o /dev/null -w '%{http_code}' http://$CF.cloudfront.localhost.floci.io:4566/)" = 200 ] && echo 1)
+  ok "M4 your twist is designed in NOTES.md" $([ "$(sed -n '/^## Twist/,/^## /p' NOTES.md 2>/dev/null | grep -c .)" -ge 4 ] && echo 1)
+  ;;
+*) echo "usage: $0 M0|M1|M2|M3|M4"; exit 1 ;;
 esac
