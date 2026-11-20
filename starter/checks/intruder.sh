@@ -25,6 +25,6 @@ q ecs register-task-definition --family $G-intruder --network-mode awsvpc --requ
 T=$(q ecs run-task --cluster $G --task-definition $G-intruder --launch-type FARGATE \
   --network-configuration "awsvpcConfiguration={subnets=[$SUBNET],securityGroups=[$SG]}" --query 'tasks[0].taskArns' --output text)
 T=$(q ecs list-tasks --cluster $G --family $G-intruder --query 'taskArns[-1]' --output text); T=${T##*/}
-for i in $(seq 1 20); do OUT=$(docker logs floci-aws-ecs-$T-x 2>&1 | grep -E 'REACHED|BLOCKED'); [ $(echo "$OUT" | grep -c .) -ge 2 ] && break; sleep 2; done
+for i in $(seq 1 60); do OUT=$(docker logs floci-aws-ecs-$T-x 2>&1 | grep -E 'REACHED|BLOCKED'); [ $(echo "$OUT" | grep -c .) -ge 2 ] && break; sleep 2; done
 echo "intruder -> app $APP_IP:80        : $(echo "$OUT" | grep -o 'APP_[A-Z]*' | sed 's/APP_//')"
 echo "intruder -> db  $DB_HOST:$DB_PORT : $(echo "$OUT" | grep -o 'DB_[A-Z]*' | sed 's/DB_//')"
