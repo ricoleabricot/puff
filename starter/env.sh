@@ -12,3 +12,5 @@ case "$(uname -m)" in
   *)             export AMI='ami-0abcdef1234567891'      TYPE='t3.micro'  ;;
 esac
 echo "Floci env ready: $AWS_ENDPOINT_URL, region $AWS_DEFAULT_REGION, EC2 $TYPE"
+# macOS terminals run zsh: make it read pasted comments and split variables like bash
+if [ -n "$ZSH_VERSION" ]; then setopt interactive_comments sh_word_split; fi
